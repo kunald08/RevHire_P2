@@ -36,10 +36,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
     public String handleUnauthorized(UnauthorizedException ex, Model model) {
-        logger.error("Unauthorized access: {}", ex.getMessage());
-        model.addAttribute("errorTitle", "Unauthorized");
+        logger.error("Forbidden access attempt: {}", ex.getMessage());
+        model.addAttribute("errorTitle", "Access Denied");
         model.addAttribute("errorMessage", ex.getMessage());
-        model.addAttribute("errorCode", 401);
+        model.addAttribute("errorCode", 403); // Change from 401 to 403
         return "error";
     }
 
