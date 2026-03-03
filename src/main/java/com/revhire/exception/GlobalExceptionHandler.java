@@ -78,4 +78,7 @@ public class GlobalExceptionHandler {
         model.addAttribute("errorCode", 500);
         return "error";
     }
+    
+    
+
 }

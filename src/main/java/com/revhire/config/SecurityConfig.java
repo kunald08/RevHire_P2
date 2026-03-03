@@ -25,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-
+    private final CustomLoginSuccessHandler successHandler;
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -42,12 +43,12 @@ public class SecurityConfig {
                     .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
 
                     // 3. SEEKER ONLY 
-                    .requestMatchers("/profile/**", "/resume/**").hasRole("SEEKER")
-                    .requestMatchers("/applications/**", "/favorites/**").hasRole("SEEKER")
+                    .requestMatchers("/profile/**", "/resume/**").hasAuthority("SEEKER")
+                    .requestMatchers("/applications/**", "/favorites/**").hasAuthority("SEEKER")
 
                     // 4. EMPLOYER ONLY 
-                    .requestMatchers("/employer/**", "/employers/profile/**").hasRole("EMPLOYER")
-                    .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my").hasRole("EMPLOYER")
+                    .requestMatchers("/employer/**", "/employers/profile/**").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my").hasAuthority("EMPLOYER")
                     .requestMatchers("/auth/me").authenticated()
                     
                     // 5. REQUIRE LOGIN FOR EVERYTHING ELSE (Notifications, /auth/me, etc.)
@@ -56,7 +57,8 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/login") // Matches <form th:action="@{/login}">
-                .defaultSuccessUrl("/", true)
+                //.defaultSuccessUrl("/", true)
+                .successHandler(successHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
             )
