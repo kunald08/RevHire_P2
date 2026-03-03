@@ -1,4 +1,4 @@
-package com.revhire.config;
+package com.revhire.auth.security;
 
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;

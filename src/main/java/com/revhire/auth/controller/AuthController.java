@@ -71,6 +71,15 @@ public class AuthController {
         return "auth/error"; 
     }
     
+//    handles the 404 page not found error.
+//    @GetMapping("/not-found")
+//    public String notFound(Model model) {
+//        model.addAttribute("errorCode", "404");
+//        model.addAttribute("errorTitle", "Page Not Found");
+//        model.addAttribute("errorMessage", "The page you are looking for doesn't exist or has been moved.");
+//        return "auth/error"; 
+//    }
+    
     @GetMapping("/me")
     public String showAccountSettings(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         if (userDetails == null) {
