@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::body})}">
+
+<head>
+    <title>Job Detail</title>
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+    <!-- SUCCESS MESSAGE -->
+    <div th:if="${success}" 
+         class="alert alert-success alert-dismissible fade show">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a th:href="@{/jobs/my}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to My Jobs
+        </a>
+    </div>
+
+    <!-- Job Title -->
+    <h2 class="fw-bold mb-3" th:text="${job.title}"></h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <div th:if="${job.description != null}">
+                <strong>Description:</strong>
+                <p th:text="${job.description}"></p>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6" th:if="${job.location != null}">
+                    <strong>Location:</strong>
+                    <p th:text="${job.location}"></p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Status:</strong>
+                    <span class="badge"
+                          th:classappend="
+                              ${job.status == T(com.revhire.common.enums.JobStatus).ACTIVE} ? ' bg-success' :
+                              (${job.status == T(com.revhire.common.enums.JobStatus).CLOSED} ? ' bg-warning text-dark' :
+                              ' bg-danger')"
+                          th:text="${job.status}">
+                    </span>
+                </div>
+            </div>
+
+            <div class="row mt-3"
+                 th:if="${job.salaryMin != null or job.salaryMax != null}">
+                <div class="col-md-6">
+                    <strong>Salary Range:</strong>
+                    <p>
+                        <span th:text="${job.salaryMin}"></span>
+                        <span th:if="${job.salaryMin != null and job.salaryMax != null}"> - </span>
+                        <span th:text="${job.salaryMax}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="row mt-3" th:if="${job.jobType != null}">
+                <div class="col-md-6">
+                    <strong>Job Type:</strong>
+                    <p th:text="${job.jobType}"></p>
+                </div>
+            </div>
+
+            <div class="row mt-3" th:if="${job.deadline != null}">
+                <div class="col-md-6">
+                    <strong>Application Deadline:</strong>
+                    <p th:text="${job.deadline}"></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a th:href="@{/jobs/{id}/edit(id=${job.id})}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+
+        <form th:if="${job.status == T(com.revhire.common.enums.JobStatus).ACTIVE}"
+              th:action="@{/jobs/{id}/close(id=${job.id})}"
+              method="post">
+            <button type="submit" class="btn btn-warning">Close</button>
+        </form>
+
+        <form th:if="${job.status == T(com.revhire.common.enums.JobStatus).CLOSED}"
+              th:action="@{/jobs/{id}/reopen(id=${job.id})}"
+              method="post">
+            <button type="submit" class="btn btn-success">Reopen</button>
+        </form>
+
+        <form th:if="${job.status == T(com.revhire.common.enums.JobStatus).ACTIVE}"
+              th:action="@{/jobs/{id}/fill(id=${job.id})}"
+              method="post">
+            <button type="submit" class="btn btn-dark">Mark as Filled</button>
+        </form>
+
+        <a th:href="@{/jobs/{id}/stats(id=${job.id})}"
+           class="btn btn-outline-dark">
+            View Statistics
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>
