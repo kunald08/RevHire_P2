@@ -47,8 +47,8 @@ public class SecurityConfig {
                     .requestMatchers("/").permitAll()                                  
                     .requestMatchers("/error", "/auth/denied").permitAll()             // CRITICAL: Allows 404/403 pages to be seen
                     .requestMatchers("/jobs/search/**", "/jobs/search/results").permitAll() 
-                    .requestMatchers("/jobs/{id}").permitAll()                         
-                    .requestMatchers("/employers/{id}").permitAll()                    
+                    .requestMatchers("/jobs/{id:[0-9]+}").permitAll()   
+                    .requestMatchers("/employers/{id:[0-9]+}").permitAll()                 
                     
                     // 2. AUTHENTICATION & STATIC ASSETS
                     .requestMatchers("/auth/login", "/auth/register/**", "/login").permitAll()
@@ -66,7 +66,7 @@ public class SecurityConfig {
 
                     // 5. EMPLOYER ONLY 
                     .requestMatchers("/employer/**", "/employers/profile/**").hasAuthority("EMPLOYER")
-                    .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my").hasAuthority("EMPLOYER")
+                    
                     
                     // 6. CATCH-ALL PROTECTION
                     .anyRequest().authenticated()
