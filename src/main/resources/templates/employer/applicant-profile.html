@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Applicant Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+
+<body class="container mt-4">
+
+<a th:href="@{/employer/jobs/{id}/applicants(id=${application.job.id})}"
+   class="btn btn-link">← Back to Applicants</a>
+
+<h3 th:text="${application.applicant.fullName}"></h3>
+<p>Status: <span th:text="${application.status}"></span></p>
+<p>Applied Date:
+    <span th:text="${#temporals.format(application.appliedDate,'dd MMM yyyy')}"></span>
+</p>
+
+<div class="mb-3">
+    <button class="btn btn-success">Shortlist</button>
+    <button class="btn btn-danger">Reject</button>
+    <button class="btn btn-secondary">Add Note</button>
+    <a th:href="@{/resume/{id}(id=${application.id})}"
+       class="btn btn-primary">
+        View Resume
+    </a>
+</div>
+
+<hr>
+
+<h5>OBJECTIVE</h5>
+<p th:text="${application.applicant.objective}"></p>
+
+<h5>SUMMARY</h5>
+<p th:text="${application.applicant.summary}"></p>
+
+<h5>EDUCATION</h5>
+<div th:each="edu : ${application.applicant.educations}">
+    <p th:text="${edu.degree} + ' - ' + ${edu.institution}"></p>
+</div>
+
+<h5>EXPERIENCE</h5>
+<div th:each="exp : ${application.applicant.experiences}">
+    <p th:text="${exp.role} + ' - ' + ${exp.company}"></p>
+</div>
+
+<h5>CERTIFICATIONS</h5>
+<div th:each="cert : ${application.applicant.certifications}">
+    <p th:text="${cert.name}"></p>
+</div>
+
+<h5>SKILLS</h5>
+<p th:text="${application.applicant.skills}"></p>
+
+<hr>
+
+<h5>EMPLOYER NOTES</h5>
+<div th:each="note : ${application.notes}" class="card p-2 mb-2">
+    <p th:text="${note.content}"></p>
+</div>
+
+</body>
+</html>

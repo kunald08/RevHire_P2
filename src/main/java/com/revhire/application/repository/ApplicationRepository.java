@@ -2,6 +2,9 @@ package com.revhire.application.repository;
 
 import com.revhire.application.entity.Application;
 import com.revhire.common.enums.ApplicationStatus;
+
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -22,4 +25,5 @@ public interface ApplicationRepository
      * Traverses Application -> Job -> Employer -> ID + Application Status
      */
     long countByJobEmployerIdAndStatus(Long employerId, ApplicationStatus status);
+    List<Application> findByJobId(Long jobId);
 }

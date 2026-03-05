@@ -1,6 +1,11 @@
 package com.revhire.employer.service;
 
+import com.revhire.application.entity.Application;
+import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.job.entity.Job;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,4 +20,12 @@ public interface ApplicantService {
             String keyword, 
             Pageable pageable
     );
+    List<ApplicantRowDTO> getApplicantsByJob(Long jobId);
+
+    long getApplicantCount(Long jobId);
+
+    String getJobTitle(Long jobId);
+    void bulkUpdateStatus(List<Long> applicationIds, String action,String comment);
+
+    Application getApplicationEntity(Long appId);
 }

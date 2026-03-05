@@ -1,5 +1,5 @@
 package com.revhire.job.service;
-
+import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.JobStatus;
@@ -24,7 +24,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.common.enums.ApplicationStatus;
 
 @Service

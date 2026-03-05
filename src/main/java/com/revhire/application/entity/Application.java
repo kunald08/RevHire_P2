@@ -61,5 +61,6 @@ public class Application {
         return status != ApplicationStatus.WITHDRAWN && 
                status != ApplicationStatus.SHORTLISTED && 
                status != ApplicationStatus.REJECTED;
+        
     }
 }

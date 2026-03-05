@@ -1,35 +1,96 @@
 package com.revhire.employer.service;
 
-import com.revhire.employer.repository.ApplicantRepository;
-import com.revhire.job.entity.Job;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import com.revhire.application.entity.Application;
+import com.revhire.application.repository.ApplicationRepository;
+import com.revhire.common.enums.ApplicationStatus;
+import com.revhire.employer.dto.ApplicantRowDTO;
+import com.revhire.employer.repository.ApplicantRepository;
+import com.revhire.employer.service.ApplicantService;
+import com.revhire.job.entity.Job;
+import com.revhire.job.repository.JobRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class ApplicantServiceImpl implements ApplicantService {
 
+    private final ApplicationRepository applicationRepository;
+    private final JobRepository jobRepository;
     private final ApplicantRepository applicantRepository;
 
     @Override
-    @Transactional(readOnly = true)
+    public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
+        return applicationRepository
+                .findByJobId(jobId)
+                .stream()
+                .map(app -> new ApplicantRowDTO(
+                        app.getId(),
+                        app.getSeeker().getName(),
+                        app.getStatus().name(),
+                        app.getAppliedAt(),  // ✅ CORRECT FIELD
+                        app.getEmployerComment() != null ? app.getEmployerComment() : "-",
+                        "-" // ✅ Since you don't have reviewer notes entity
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public long getApplicantCount(Long jobId) {
+        return applicationRepository.countByJobId(jobId);
+    }
+
+    @Override
+    public String getJobTitle(Long jobId) {
+        return jobRepository.findById(jobId)
+                .orElseThrow()
+                .getTitle();
+    }
+
+    
+    @Override
+    public Application getApplicationEntity(Long appId) {
+        return applicationRepository.findById(appId)
+                .orElseThrow();
+    }
+
+    @Override
     public Page<Job> getEmployerJobsWithApplications(
             String email,
             String keyword,
             Pageable pageable) {
 
-        // Handle null keyword to prevent issues with the 'Containing' query
-        String searchKeyword = (keyword == null) ? "" : keyword.trim();
+        String searchKeyword =
+                (keyword == null) ? "" : keyword.trim();
 
-        // This calls the custom method in ApplicantRepository 
-        // that navigates Job -> Employer -> User -> Email
-        return applicantRepository.findByEmployerUserEmailAndTitleContainingIgnoreCase(
-                email,
-                searchKeyword,
-                pageable
-        );
+        return applicantRepository
+                .findByEmployerUserEmailAndTitleContainingIgnoreCase(
+                        email,
+                        searchKeyword,
+                        pageable
+                );
     }
+
+	@Override
+	public void bulkUpdateStatus(List<Long> ids, String action,String comment) {
+		List<Application> applications = applicationRepository.findAllById(ids);
+         for (Application app : applications) {
+        	 if ("SHORTLIST".equalsIgnoreCase(action)) {
+	            app.setStatus(ApplicationStatus.SHORTLISTED);
+	        } else if ("REJECT".equalsIgnoreCase(action)) {
+	            app.setStatus(ApplicationStatus.REJECTED);
+	        }
+	        app.setEmployerComment(comment);
+	    }
+
+	    applicationRepository.saveAll(applications);
+	}
+
 }
