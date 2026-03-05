@@ -30,7 +30,11 @@
                 </li>
 
                 <!-- Show when logged in as SEEKER -->
-                
+                <li class="nav-item" sec:authorize="hasAuthority('SEEKER')">
+                    <a class="nav-link" th:href="@{/profile}">
+                        <i class="bi bi-person me-1"></i>My Profile
+                    </a>
+                </li>
                 <li class="nav-item" sec:authorize="hasRole('SEEKER')">
                     <a class="nav-link" th:href="@{/applications}">
                         <i class="bi bi-file-earmark-text me-1"></i>My Applications
