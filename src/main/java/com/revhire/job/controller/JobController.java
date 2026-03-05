@@ -4,9 +4,13 @@ import com.revhire.exception.BadRequestException;
 import com.revhire.job.dto.JobRequest;
 import com.revhire.job.dto.JobResponse;
 import com.revhire.job.dto.JobStatsResponse;
+import com.revhire.job.entity.Job;
 import com.revhire.job.service.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -54,7 +58,7 @@ public class JobController {
         return "job/my-jobs";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public String viewJob(@PathVariable Long id, Model model) {
         model.addAttribute("job", jobService.getJobById(id));
         return "job/job-detail";
@@ -159,5 +163,15 @@ public class JobController {
 
         model.addAttribute("stats", stats);
         return "job/job-stats";
+    }
+    @GetMapping("/active")
+    public String activeJobs(Authentication authentication, Model model) {
+
+        String email = authentication.getName();
+
+        model.addAttribute("jobs",
+                jobService.getActiveJobsByEmployer(email));
+
+        return "job/my-jobs";   // reuse same page
     }
 }

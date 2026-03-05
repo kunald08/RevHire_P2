@@ -25,5 +25,5 @@ public interface JobService {
     JobResponse updateJob(Long id, JobRequest request, String email);
     
     JobStatsResponse getJobStatistics(Long jobId, String email);
-    
+    List<JobResponse> getActiveJobsByEmployer(String email);
 }

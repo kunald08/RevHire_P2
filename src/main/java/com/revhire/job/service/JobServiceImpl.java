@@ -304,4 +304,14 @@ public class JobServiceImpl implements JobService {
                 .viewCount(job.getViewCount())
                 .build();
     }
+    @Override
+    public List<JobResponse> getActiveJobsByEmployer(String email) {
+
+        List<Job> jobs = jobRepository
+                .findByEmployer_User_EmailAndStatus(email, JobStatus.ACTIVE);
+
+        return jobs.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 }

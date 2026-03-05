@@ -1,5 +1,6 @@
 package com.revhire.job.entity;
 
+import com.revhire.application.entity.Application;
 import com.revhire.common.enums.JobStatus;
 import com.revhire.common.enums.JobType;
 import com.revhire.employer.entity.Employer;
@@ -9,6 +10,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "jobs")
@@ -71,4 +73,14 @@ public class Job {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+    
+    /**
+     * CHANGE: Added bi-directional mapping.
+     * PURPOSE: To allow Thymeleaf to access job.applications.size().
+     * mappedBy="job" refers to the 'job' field inside the Application entity.
+     */
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude // Prevent infinite recursion with Lombok's ToString
+    private List<Application> applications;
+    
 }

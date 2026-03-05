@@ -12,4 +12,14 @@ public interface ApplicationRepository
     long countByJobId(Long jobId);
 
     long countByJobIdAndStatus(Long jobId, ApplicationStatus status);
+    
+    /**
+     * Traverses Application -> Job -> Employer -> ID
+     */
+    long countByJobEmployerId(Long employerId);
+
+    /**
+     * Traverses Application -> Job -> Employer -> ID + Application Status
+     */
+    long countByJobEmployerIdAndStatus(Long employerId, ApplicationStatus status);
 }
