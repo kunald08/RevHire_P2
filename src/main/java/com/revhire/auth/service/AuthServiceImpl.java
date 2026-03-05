@@ -129,5 +129,42 @@ public class AuthServiceImpl implements AuthService {
         // Also cleanup pending registrations that have no matching active OTP
         pendingRegistrations.keySet().removeIf(email -> !otpStore.containsKey(email));
     }
+    
+    @Override
+    public void changePassword(String email, String oldPassword, String newPassword) {
+        // 1. Fetch the user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Verify Old Password
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("The current password you entered is incorrect.");
+        }
+
+        // 3. Check that New Password is not the same as Old Password
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new RuntimeException("New password cannot be the same as your current password!");
+        }
+
+        // 4. Validate Strength (Reuse your existing method)
+        validatePasswordStrength(newPassword);
+
+        // 5. Update and Save
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        sendPasswordChangeNotification(email);
+    }
+    
+    private void sendPasswordChangeNotification(String email) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(email);
+        message.setSubject("RevHire Security Alert: Password Changed");
+        message.setText("Hello,\n\nThis is a confirmation that the password for your RevHire account was recently changed. " +
+                "If you did not perform this action, please contact our support team immediately.\n\n" +
+                "Securely,\nThe RevHire Team");
+        mailSender.send(message);
+    }
 
 }

@@ -8,4 +8,7 @@ import com.revhire.auth.dto.RegisterRequest;
  */
 public interface AuthService {
     void register(RegisterRequest request);
+    
+    void changePassword(String email, String oldPassword, String newPassword);
+    
 }

@@ -4,8 +4,10 @@ import com.revhire.auth.dto.RegisterRequest;
 import com.revhire.auth.service.AuthService;
 import com.revhire.auth.service.AuthServiceImpl;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -116,5 +118,38 @@ public class AuthController {
         model.addAttribute("isEmployer", isEmployer);
 
         return "auth/account-settings"; // The HTML page for common features
+    }
+    
+    @GetMapping("/change-password")
+    public String showChangePasswordForm() {
+        return "auth/change-password";
+    }
+
+    @PostMapping("/change-password")
+    public String processChangePassword(@AuthenticationPrincipal UserDetails userDetails,
+                                        @RequestParam String oldPassword,
+                                        @RequestParam String newPassword,
+                                        @RequestParam String confirmPassword,
+                                        HttpServletRequest  request,
+                                        Model model) {
+        // 1. Check if new passwords match
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("error", "New passwords do not match!");
+            return "auth/change-password";
+        }
+
+        try {
+            // 2. Call service logic
+            authService.changePassword(userDetails.getUsername(), oldPassword, newPassword);
+
+            // 3. Auto-logout logic
+            request.getSession().invalidate(); // Clear session
+            
+         // Change 'success' to 'pwUpdated'
+            return "redirect:/auth/login?pwUpdated=Password updated! Please login with your new password.";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "auth/change-password";
+        }
     }
 }
