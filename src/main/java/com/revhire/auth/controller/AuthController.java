@@ -2,6 +2,8 @@ package com.revhire.auth.controller;
 
 import com.revhire.auth.dto.RegisterRequest;
 import com.revhire.auth.service.AuthService;
+import com.revhire.auth.service.AuthServiceImpl;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/auth")
@@ -46,15 +49,33 @@ public class AuthController {
     public String processRegistration(@ModelAttribute("user") RegisterRequest request, Model model) {
         try {
             authService.register(request);
-            return "redirect:/auth/login?success";
+            // Redirect to verification page with email as a parameter
+            return "redirect:/auth/verify?email=" + request.getEmail();
         } catch (RuntimeException e) {
-            // Log the error and send the message back to the specific form
             model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("user", request); // Keep the data in the form so they don't have to re-type
-            
-            // Determine which form to return to based on the role
+            model.addAttribute("user", request);
             String role = request.getRole() != null ? request.getRole().toLowerCase() : "seeker";
             return "auth/register-" + role;
+        }
+    }
+
+    @GetMapping("/verify")
+    public String showVerifyPage(@RequestParam String email, Model model) {
+        model.addAttribute("email", email);
+        // 300 seconds = 5 minutes
+        model.addAttribute("secondsRemaining", 300); 
+        return "auth/verify-otp";
+    }
+    
+    @PostMapping("/verify")
+    public String verifyOtp(@RequestParam String email, @RequestParam String otp, Model model) {
+        try {
+            ((AuthServiceImpl) authService).confirmRegistration(email, otp);
+            return "redirect:/auth/login?success=Account verified! Please login.";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("email", email);
+            return "auth/verify-otp";
         }
     }
     

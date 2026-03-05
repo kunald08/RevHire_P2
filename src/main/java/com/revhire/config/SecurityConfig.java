@@ -60,7 +60,7 @@ public class SecurityConfig {
                     .requestMatchers("/employers/{id:[0-9]+}").permitAll()                 
                     
                     // 2. AUTHENTICATION & STATIC ASSETS
-                    .requestMatchers("/auth/login", "/auth/register/**", "/login").permitAll()
+                    .requestMatchers("/auth/login", "/auth/register/**","/auth/verify",  "/login").permitAll()
                     .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                     
                     // 3. COMMON AUTHENTICATED AREA

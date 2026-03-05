@@ -4,60 +4,130 @@ import com.revhire.auth.dto.RegisterRequest;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.Role;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
-
-/**
- * Author: Aswathy J Lal
- * why this code is better: 
- * It validates 'raw' data before processing. We check email existence first 
- * because it's a quick indexed lookup. We validate password strength before 
- * encoding it because PasswordEncoder.encode() is a heavy CPU operation.
-
- */
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JavaMailSender mailSender;
+
+    private final Map<String, RegisterRequest> pendingRegistrations = new ConcurrentHashMap<>();
+    
+    // 1. Ensure you only have ONE declaration of otpStore using OtpData
+    private final Map<String, OtpData> otpStore = new ConcurrentHashMap<>();
+
+    @Value("${mail.from.address}")
+    private String fromEmail;
+
+    // 2. Helper class for expiration logic
+    private static class OtpData {
+        String otp;
+        long expiryTime;
+
+        OtpData(String otp, long expiryTime) {
+            this.otp = otp;
+            this.expiryTime = expiryTime;
+        }
+    }
 
     @Override
     public void register(RegisterRequest request) {
-        // 1. Validate if the email is already taken using your existing repository method
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email is already registered!");
         }
-        
-        // 2. Password Complexity Validation
-     // This protects the database from weak passwords and the CPU from encoding junk.
         validatePasswordStrength(request.getPassword());
 
-        // 2. Map the DTO to the User Entity and encrypt the password
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        // 3. Set expiry to 5 minutes from now
+        long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
+
+        pendingRegistrations.put(request.getEmail(), request);
+        otpStore.put(request.getEmail(), new OtpData(otp, expiryTime));
+
+        sendOtpEmail(request.getEmail(), otp);
+    }
+    
+    
+    public void confirmRegistration(String email, String userOtp) {
+        OtpData data = otpStore.get(email);
+        RegisterRequest request = pendingRegistrations.get(email);
+
+        // 4. Check if OTP exists
+        if (data == null || request == null) {
+            throw new RuntimeException("No pending registration found or OTP expired.");
+        }
+
+        // 5. Check if OTP has expired
+        if (System.currentTimeMillis() > data.expiryTime) {
+            otpStore.remove(email);
+            pendingRegistrations.remove(email);
+            throw new RuntimeException("OTP has expired! Please register again.");
+        }
+
+        // 6. Check if OTP matches
+        if (!data.otp.equals(userOtp)) {
+            throw new RuntimeException("Invalid OTP!");
+        }
+
+        // Final Step: Save to Database
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                // Encrypting the password before it touches the database
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .location(request.getLocation())
-                // Mapping the string role from the request to your Role Enum
                 .role(Role.valueOf(request.getRole().toUpperCase()))
                 .build();
 
-        // 3. Save the new user to MySQL
         userRepository.save(user);
+
+        // Cleanup
+        otpStore.remove(email);
+        pendingRegistrations.remove(email);
     }
-    
+
+    private void sendOtpEmail(String email, String otp) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(email);
+        message.setSubject("RevHire - Verify Your Email");
+        message.setText("Your verification code is: " + otp + "\nThis code will expire shortly.");
+        mailSender.send(message);
+    }
+
     private void validatePasswordStrength(String password) {
-    	//Requires 1 Number, 1 Lower, 1 Upper, AND 1 Special Character
-    	String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$";
-    	if (password == null || !password.matches(pattern)) {
+        String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$";
+        if (password == null || !password.matches(pattern)) {
             throw new RuntimeException("Password must be at least 8 characters long and " +
-                                       "include uppercase, lowercase, a number, and a special character.");
+                    "include uppercase, lowercase, a number, and a special character.");
         }
     }
+    
+//    Automatic Background Cleanup
+    
+    @Scheduled(fixedRate = 600000) // Runs every 10 minutes
+    public void cleanExpiredEntries() {
+        long now = System.currentTimeMillis();
+        // Remove if expired
+        otpStore.entrySet().removeIf(entry -> now > entry.getValue().expiryTime);
+        
+        // Also cleanup pending registrations that have no matching active OTP
+        pendingRegistrations.keySet().removeIf(email -> !otpStore.containsKey(email));
+    }
+
 }
