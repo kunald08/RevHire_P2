@@ -63,15 +63,24 @@
                             </td>
 
                             <!-- Status Badge -->
-                            <td>
-                                <span class="badge"
-                                      th:classappend="
-                                          ${job.status.name() == 'ACTIVE'} ? ' bg-success' :
-                                          (${job.status.name() == 'CLOSED'} ? ' bg-warning text-dark' :
-                                          ' bg-danger')"
-                                      th:text="${job.status}">
-                                </span>
-                            </td>
+							<!--
+								 * The view count update here triggers a Hibernate 'dirty' state.
+								 * * WHY REGEX CHANGED THINGS: Adding {id:[0-9]+} in SecurityConfig enforced 
+								 * stricter path binding. When combined with this database update, Hibernate 
+								 * often provides a 'Proxy' of the Job entity to Thymeleaf.
+								 * * UI IMPACT: Because of this Proxy behavior, the UI must compare Enums as 
+								 * Strings to avoid a ClassCastException (EL1013E) during rendering.
+							-->
+								<td>
+								    <span class="badge"
+								          th:classappend="
+								              ${#strings.toString(job.status) == 'ACTIVE'} ? ' bg-success' :
+								              (${#strings.toString(job.status) == 'CLOSED'} ? ' bg-warning text-dark' :
+								              ' bg-danger')"
+								          th:text="${job.status ?: 'ACTIVE'}">
+								    </span>
+								</td>
+                            
 
                             <td th:text="${job.deadline}"></td>
 

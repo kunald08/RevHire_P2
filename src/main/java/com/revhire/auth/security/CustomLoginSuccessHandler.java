@@ -46,7 +46,7 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
                 if (!profileExists) {
                     response.sendRedirect("/employers/profile/create");
                 } else {
-                    response.sendRedirect("/jobs/my");
+                    response.sendRedirect("/employer/dashboard");
                 }
 
                 return;

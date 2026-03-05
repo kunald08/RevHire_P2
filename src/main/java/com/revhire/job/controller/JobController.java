@@ -54,13 +54,13 @@ public class JobController {
         return "job/my-jobs";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
     public String viewJob(@PathVariable Long id, Model model) {
         model.addAttribute("job", jobService.getJobById(id));
         return "job/job-detail";
     }
 
-    @GetMapping("/{id}/edit")
+    @GetMapping("/{id:[0-9]+}/edit")
     public String editJob(@PathVariable Long id, Model model) {
 
         JobResponse job = jobService.getJobById(id);

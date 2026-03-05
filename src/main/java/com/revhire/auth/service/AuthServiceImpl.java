@@ -8,6 +8,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
+/**
+ * Author: Aswathy J Lal
+ * why this code is better: 
+ * It validates 'raw' data before processing. We check email existence first 
+ * because it's a quick indexed lookup. We validate password strength before 
+ * encoding it because PasswordEncoder.encode() is a heavy CPU operation.
+
+ */
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -21,6 +31,10 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email is already registered!");
         }
+        
+        // 2. Password Complexity Validation
+     // This protects the database from weak passwords and the CPU from encoding junk.
+        validatePasswordStrength(request.getPassword());
 
         // 2. Map the DTO to the User Entity and encrypt the password
         User user = User.builder()
@@ -36,5 +50,14 @@ public class AuthServiceImpl implements AuthService {
 
         // 3. Save the new user to MySQL
         userRepository.save(user);
+    }
+    
+    private void validatePasswordStrength(String password) {
+    	//Requires 1 Number, 1 Lower, 1 Upper, AND 1 Special Character
+    	String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$";
+    	if (password == null || !password.matches(pattern)) {
+            throw new RuntimeException("Password must be at least 8 characters long and " +
+                                       "include uppercase, lowercase, a number, and a special character.");
+        }
     }
 }

@@ -47,6 +47,15 @@ public class SecurityConfig {
                     .requestMatchers("/").permitAll()                                  
                     .requestMatchers("/error", "/auth/denied").permitAll()             // CRITICAL: Allows 404/403 pages to be seen
                     .requestMatchers("/jobs/search/**", "/jobs/search/results").permitAll() 
+                    
+                    /* * NOTE: The Regex {id:[0-9]+} is used here to enforce strict input validation 
+                     * at the security layer (preventing non-numeric IDs from reaching the service).
+                     *
+                     * SIDE EFFECT: This strict matching changes the timing of Entity loading. 
+                     * If you experience 'ClassCastException' in Thymeleaf when comparing Enums, 
+                     * ensure the template uses String-based comparison (#strings.toString()) 
+                     * to handle Hibernate Proxies correctly.
+                     */
                     .requestMatchers("/jobs/{id:[0-9]+}").permitAll()   
                     .requestMatchers("/employers/{id:[0-9]+}").permitAll()                 
                     
