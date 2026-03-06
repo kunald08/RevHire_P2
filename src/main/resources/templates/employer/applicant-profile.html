@@ -1,296 +1,229 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
 <head>
-<title>Applicant Profile</title>
-
-<th:block th:replace="~{fragments/layout :: head}"></th:block>
-
-<style>
-
-.profile-header{
-background:#ffffff;
-padding:25px;
-border-radius:10px;
-box-shadow:0 2px 10px rgba(0,0,0,0.08);
-margin-bottom:20px;
-}
-
-.section-card{
-background:#ffffff;
-padding:20px;
-border-radius:10px;
-margin-top:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.skill-badge{
-font-size:14px;
-padding:8px 12px;
-margin:4px;
-}
-
-.review-box{
-background:#f8f9fa;
-border-left:4px solid #0d6efd;
-padding:15px;
-border-radius:6px;
-}
-
-.profile-img{
-width:90px;
-height:90px;
-border-radius:50%;
-object-fit:cover;
-}
-
-</style>
-
+    <title>Applicant Profile</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        .profile-header {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .section-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .skill-badge {
+            font-size: 14px;
+            padding: 8px 12px;
+            margin: 4px;
+        }
+        .review-box {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .profile-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
 </head>
 
 <body>
-
-<div th:replace="~{fragments/navbar :: navbar}"></div>
-
-<main class="container mt-4">
-
-<!-- ================= REVIEWER NOTES ================= -->
-
-<div class="section-card">
-
-<h5 class="fw-bold">Reviewer Notes</h5>
-
-<div class="review-box mb-3">
-
-<p th:text="${applicant.employerComment} ?: 'No notes added yet'"></p>
-
-</div>
-
-<textarea class="form-control mb-2"
-rows="3"
-placeholder="Add reviewer note..."></textarea>
-
-<button class="btn btn-primary btn-sm">Add Note</button>
-<button class="btn btn-warning btn-sm">Edit</button>
-<button class="btn btn-danger btn-sm">Delete</button>
-
-</div>
-
-
-<!-- ================= PROFILE HEADER ================= -->
-
-<div class="profile-header">
-
-<div class="row align-items-center">
-
-<div class="col-md-2 text-center">
-
-<img th:src="${profile.profilePictureUrl}"
-     class="profile-img"
-     alt="Profile Picture"/>
-
-</div>
-
-<div class="col-md-6">
-
-<h3 class="fw-bold"
-th:text="${profile.userName}"></h3>
-
-<h6 class="text-muted"
-th:text="${profile.headline}"></h6>
-
-<p class="mt-2"
-th:text="${profile.summary}"></p>
-
-</div>
-
-<div class="col-md-4 text-end">
-
-<a th:href="@{/resume/download/{id}(id=${applicant.resumeId})}"
-class="btn btn-outline-dark mb-2">
-Download Resume
-</a>
-
-<br>
-
-<button class="btn btn-info mb-2"
-data-bs-toggle="modal"
-data-bs-target="#coverLetterModal">
-View Cover Letter
-</button>
-
-<br>
-
-<button class="btn btn-success"
-th:disabled="${applicant.status=='SHORTLISTED'}">
-Shortlist
-</button>
-
-<button class="btn btn-danger"
-th:disabled="${applicant.status=='REJECTED'}">
-Reject
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- ================= EDUCATION ================= -->
-
-<div class="section-card">
-
-<h4 class="fw-bold">Education</h4>
-
-<table class="table table-hover">
-
-<thead>
-<tr>
-<th>Institution</th>
-<th>Degree</th>
-<th>Field</th>
-<th>Duration</th>
-</tr>
-</thead>
-
-<tbody>
-
-<tr th:each="edu : ${profile.educations}">
-
-<td th:text="${edu.institution}"></td>
-
-<td th:text="${edu.degree}"></td>
-
-<td th:text="${edu.fieldOfStudy}"></td>
-
-<td>
-<span th:text="${edu.startDate}"></span> -
-<span th:text="${edu.endDate}"></span>
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
-
-
-<!-- ================= EXPERIENCE ================= -->
-
-<div class="section-card">
-
-<h4 class="fw-bold">Experience</h4>
-
-<div th:each="exp : ${profile.experiences}" class="card mb-3">
-
-<div class="card-body">
-
-<h5 class="fw-bold" th:text="${exp.title}"></h5>
-
-<p class="text-muted">
-
-<span th:text="${exp.company}"></span>
-|
-
-<span th:text="${exp.location}"></span>
-
-</p>
-
-<p th:text="${exp.description}"></p>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- ================= SKILLS ================= -->
-
-<div class="section-card">
-
-<h4 class="fw-bold">Skills</h4>
-
-<div>
-
-<span class="badge bg-primary skill-badge"
-th:each="skill : ${profile.skills}"
-th:text="${skill.name}">
-</span>
-
-</div>
-
-</div>
-
-
-<!-- ================= CERTIFICATIONS ================= -->
-
-<div class="section-card">
-
-<h4 class="fw-bold">Certifications</h4>
-
-<ul>
-
-<li th:each="cert : ${profile.certifications}">
-
-<b th:text="${cert.name}"></b>
--
-
-<span th:text="${cert.issuingOrg}"></span>
-
-</li>
-
-</ul>
-
-</div>
-
-</main>
-
-
-<!-- ================= COVER LETTER MODAL ================= -->
-
-<div class="modal fade"
-id="coverLetterModal"
-tabindex="-1">
-
-<div class="modal-dialog modal-lg">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h5 class="modal-title">Cover Letter</h5>
-
-<button type="button"
-class="btn-close"
-data-bs-dismiss="modal"></button>
-
-</div>
-
-<div class="modal-body">
-
-<textarea class="form-control"
-rows="8"
-readonly
-th:text="${applicant.coverLetter}">
-</textarea>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<div th:replace="~{fragments/footer :: footer}"></div>
-
-<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main class="container mt-4">
+
+        <div class="section-card">
+            <h5 class="fw-bold">Reviewer Notes</h5>
+            <div class="review-box mb-3">
+                <p th:text="${applicant.employerComment} ?: 'No notes added yet'"></p>
+            </div>
+            
+            <textarea class="form-control mb-2" rows="3" placeholder="Add reviewer note..."></textarea>
+            <button class="btn btn-primary btn-sm">Add Note</button>
+            <button class="btn btn-warning btn-sm">Edit</button>
+            <button class="btn btn-danger btn-sm">Delete</button>
+        </div>
+
+        <div class="profile-header">
+		    <div class="row align-items-center">
+		        <div class="col-lg-2 col-md-3 text-center text-md-start mb-3 mb-md-0">
+		            <img th:src="${profile.profilePictureUrl}" class="profile-img" alt="Profile Picture" />
+		        </div>
+		
+		        <div class="col-lg-6 col-md-9 text-center text-md-start">
+		            <h3 class="fw-bold mb-1" th:text="${profile.userName}"></h3>
+		            <div class="mb-2 d-flex justify-content-center justify-content-md-start">
+		                <span class="badge" 
+		                      th:classappend="${applicant.status == 'SHORTLISTED' ? 'bg-success' : (applicant.status == 'REJECTED' ? 'bg-danger' : 'bg-secondary')}" 
+		                      th:text="${applicant.status}">
+		                    STATUS
+		                </span>
+		            </div>
+		            <h6 class="text-muted" th:text="${profile.headline}"></h6>
+		            <p class="mt-2 mb-0" th:text="${profile.summary}"></p>
+		        </div>
+		
+		        <div class="col-lg-4 col-md-12 text-center text-lg-end mt-4 mt-lg-0">
+		            <div class="d-grid d-md-block">
+		                <a th:href="@{/resume/download/{id}(id=${applicant.resumeId})}" class="btn btn-outline-dark mb-2 me-md-2">
+		                    <i class="bi bi-download"></i> Resume
+		                </a>
+		                <button class="btn btn-info mb-2 text-white" data-bs-toggle="modal" data-bs-target="#coverLetterModal">
+		                    <i class="bi bi-file-earmark-text"></i> View Cover Letter
+		                </button>
+		            </div>
+		
+		            <div class="d-flex gap-2 mt-2 justify-content-center justify-content-lg-end">
+		                <button type="button" class="btn btn-success flex-grow-1 flex-md-grow-0" 
+		                        th:onclick="'openActionModal(\'SHORTLIST\', ' + ${applicant.applicationId} + ')'"
+		                        th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('SHORTLISTED')}">
+		                    Shortlist
+		                </button>
+		
+		                <button type="button" class="btn btn-danger flex-grow-1 flex-md-grow-0" 
+		                        th:onclick="'openActionModal(\'REJECT\', ' + ${applicant.applicationId} + ')'"
+		                        th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('REJECTED')}">
+		                    Reject
+		                </button>
+		            </div>
+		        </div>
+		    </div>
+		</div>
+
+        <div class="section-card">
+            <h4 class="fw-bold">Education</h4>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Institution</th>
+                        <th>Degree</th>
+                        <th>Field</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="edu : ${profile.educations}">
+                        <td th:text="${edu.institution}"></td>
+                        <td th:text="${edu.degree}"></td>
+                        <td th:text="${edu.fieldOfStudy}"></td>
+                        <td>
+                            <span th:text="${edu.startDate}"></span> - <span th:text="${edu.endDate}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-card">
+            <h4 class="fw-bold">Experience</h4>
+            <div th:each="exp : ${profile.experiences}" class="card mb-3">
+                <div class="card-body">
+                    <h5 class="fw-bold" th:text="${exp.title}"></h5>
+                    <p class="text-muted">
+                        <span th:text="${exp.company}"></span> | <span th:text="${exp.location}"></span>
+                    </p>
+                    <p th:text="${exp.description}"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h4 class="fw-bold">Skills</h4>
+            <div>
+                <span class="badge bg-primary skill-badge" th:each="skill : ${profile.skills}" th:text="${skill.name}"></span>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h4 class="fw-bold">Certifications</h4>
+            <ul>
+                <li th:each="cert : ${profile.certifications}">
+                    <b th:text="${cert.name}"></b> - <span th:text="${cert.issuingOrg}"></span>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form th:action="@{/employer/applicants/process-action}" method="post" class="modal-content">
+                <input type="hidden" name="appId" id="modalAppId">
+                <input type="hidden" name="action" id="modalAction">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title" id="actionModalTitle">Confirm Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="actionModalText">Are you sure you want to proceed?</p>
+                    <div class="mb-3">
+                        <label for="actionComment" class="form-label">Add a note (optional):</label>
+                        <textarea name="comment" id="actionComment" class="form-control" rows="3" placeholder="Enter your reason or feedback..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="modalSubmitBtn" class="btn">Confirm Action</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="coverLetterModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cover Letter</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea class="form-control" rows="8" readonly th:text="${applicant.coverLetter}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+    <script th:inline="javascript">
+        function openActionModal(action, appId) {
+            // Set hidden form values
+            document.getElementById('modalAppId').value = appId;
+            document.getElementById('modalAction').value = action;
+            
+            // Customize Modal text based on action
+            const title = document.getElementById('actionModalTitle');
+            const text = document.getElementById('actionModalText');
+            const submitBtn = document.getElementById('modalSubmitBtn');
+
+            if (action === 'SHORTLIST') {
+                title.innerText = "Shortlist Applicant";
+                text.innerText = "You are about to shortlist this candidate. This will notify them of their progress.";
+                submitBtn.className = "btn btn-success";
+                submitBtn.innerText = "Confirm Shortlist";
+            } else {
+                title.innerText = "Reject Applicant";
+                text.innerText = "You are about to reject this candidate. This action cannot be undone easily.";
+                submitBtn.className = "btn btn-danger";
+                submitBtn.innerText = "Confirm Rejection";
+            }
+
+            // Show the modal
+            var myModal = new bootstrap.Modal(document.getElementById('actionModal'));
+            myModal.show();
+        }
+    </script>
 </body>
 </html>

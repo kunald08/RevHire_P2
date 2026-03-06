@@ -77,23 +77,7 @@ public class ApplicantController {
         return "employer/applicant-list";
     }
 
-    // =====================================================
-    // 3️⃣ Bulk Shortlist / Reject
-    // =====================================================
-
-//    @PostMapping("/jobs/{jobId}/applicants/bulk")
-//    public String bulkAction(
-//            @PathVariable Long jobId,
-//            @RequestParam List<Long> applicationIds,
-//            @RequestParam String action) {
-//
-//        applicantService.bulkUpdateStatus(applicationIds, action);
-//
-//        return "redirect:/employer/jobs/" + jobId + "/applicants";
-//    }
- // =====================================================
- // 3️⃣ Bulk Shortlist
- // =====================================================
+    
     @PostMapping("/jobs/{jobId}/applicants/bulk-shortlist")
     @ResponseBody
     public String bulkShortlist(
@@ -147,4 +131,56 @@ public class ApplicantController {
 	
 	     return "employer/applicant-profile";
 	 }
+//	// =====================================================
+//	// 5️⃣ Update Single Applicant Status (Shortlist/Reject)
+//	// =====================================================
+//	@PostMapping("/applicants/{appId}/status")
+//	public String updateApplicantStatus(
+//	        @PathVariable Long appId,
+//	        @RequestParam String action,
+//	        @RequestParam(required = false) String comment) {
+//
+//	    // Reusing your existing bulkUpdateStatus logic for a single ID
+//	    applicantService.bulkUpdateStatus(
+//	            List.of(appId), 
+//	            action, 
+//	            (comment != null ? comment : "Status updated from profile view")
+//	    );
+//
+//	    // Redirect back to the profile page to refresh the view and button states
+//	    return "redirect:/employer/applicants/" + appId;
+//	}
+	// =====================================================
+	// 5️⃣ Shortlist Applicant
+	// URL: /employer/applicants/{appId}/shortlist
+	// =====================================================
+	@PostMapping("/applicants/process-action")
+	public String processAction(
+	        @RequestParam Long appId, 
+	        @RequestParam String action, 
+	        @RequestParam(required = false) String comment) {
+	    
+	    // Ensure 'action' matches what your Service expects (e.g., "SHORTLIST" or "REJECT")
+	    applicantService.bulkUpdateStatus(
+	            List.of(appId), 
+	            action, 
+	            (comment != null && !comment.isEmpty()) ? comment : (action + " via profile")
+	    );
+	    
+	    return "redirect:/employer/applicants/" + appId;
+	}
+
+//	// =====================================================
+//	// 6️⃣ Reject Applicant
+//	// URL: /employer/applicants/{appId}/reject
+//	// =====================================================
+//	@GetMapping("/applicants/{appId}/reject")
+//	public String rejectApplicant(@PathVariable Long appId) {
+//	    applicantService.bulkUpdateStatus(
+//	            List.of(appId), 
+//	            "REJECT", 
+//	            "Rejected via profile view"
+//	    );
+//	    return "redirect:/employer/applicants/" + appId;
+//	}
 }
