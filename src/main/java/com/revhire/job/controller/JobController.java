@@ -1,18 +1,20 @@
 package com.revhire.job.controller;
 
-import com.revhire.exception.BadRequestException;
+import com.revhire.exception.BadRequestException; 
 import com.revhire.job.dto.JobRequest;
 import com.revhire.job.dto.JobResponse;
 import com.revhire.job.dto.JobStatsResponse;
 import com.revhire.job.service.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.data.domain.Page;
 
 @Controller
 @RequiredArgsConstructor
@@ -48,15 +50,30 @@ public class JobController {
     }
 
     @GetMapping("/my")
-    public String myJobs(Authentication authentication, Model model) {
-        model.addAttribute("jobs",
-                jobService.getEmployerJobs(authentication.getName()));
+    public String myJobs(
+            @RequestParam(defaultValue = "0") int page,
+            Authentication authentication,
+            Model model) {
+
+        Page<JobResponse> jobsPage =
+                jobService.getEmployerJobs(authentication.getName(), page);
+
+        model.addAttribute("jobsPage", jobsPage);
+        model.addAttribute("jobs", jobsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", jobsPage.getTotalPages());
+
         return "job/my-jobs";
     }
-
+    
     @GetMapping("/{id:\\d+}")
-    public String viewJob(@PathVariable Long id, Model model) {
-        model.addAttribute("job", jobService.getJobById(id));
+    public String viewJob(@PathVariable Long id,
+                          Authentication authentication,
+                          Model model) {
+
+        String email = authentication.getName();
+
+        model.addAttribute("job", jobService.getJobById(id, email));
         return "job/job-detail";
     }
 
