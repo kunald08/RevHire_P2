@@ -1,6 +1,7 @@
 package com.revhire.employer.service;
 
 import com.revhire.application.entity.Application;
+import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.job.entity.Job;
 
@@ -28,4 +29,7 @@ public interface ApplicantService {
     void bulkUpdateStatus(List<Long> applicationIds, String action,String comment);
 
     Application getApplicationEntity(Long appId);
+    
+    ApplicantProfileDTO getApplicantProfile(Long appId);
+    
 }

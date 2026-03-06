@@ -10,11 +10,14 @@ import org.springframework.stereotype.Service;
 import com.revhire.application.entity.Application;
 import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.common.enums.ApplicationStatus;
+import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.employer.repository.ApplicantRepository;
 import com.revhire.employer.service.ApplicantService;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
+import com.revhire.profile.entity.JobSeekerProfile;
+import com.revhire.profile.repository.ProfileRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +28,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final ApplicantRepository applicantRepository;
+    private final ProfileRepository profileRepository;
 
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
@@ -92,5 +96,29 @@ public class ApplicantServiceImpl implements ApplicantService {
 
 	    applicationRepository.saveAll(applications);
 	}
+	
+	@Override
+	public ApplicantProfileDTO getApplicantProfile(Long appId) {
 
+	    // Step 1: get application
+	    Application application = applicationRepository.findById(appId)
+	            .orElseThrow(() -> new RuntimeException("Application not found"));
+
+	    // Step 2: get seeker id
+	    Long seekerId = application.getSeeker().getId();
+
+	    // Step 3: fetch job seeker profile
+	    JobSeekerProfile profile = profileRepository.findByUserId(seekerId)
+	            .orElseThrow(() -> new RuntimeException("Profile not found with userId: " + seekerId));
+
+	    return ApplicantProfileDTO.builder()
+	            .applicationId(application.getId())
+	            .applicantName(application.getSeeker().getName())
+	            .seekerId(application.getSeeker().getId())
+	            .headline(profile.getHeadline())
+	            .summary(profile.getSummary())
+	            .profilePicture(profile.getProfilePictureUrl())
+	            .coverLetter(application.getCoverLetter())
+	            .build();
+	}
 }

@@ -1,5 +1,6 @@
 package com.revhire.employer.controller;
 import com.revhire.application.entity.Application;
+import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.employer.service.ApplicantService;
 import com.revhire.job.entity.Job;
@@ -133,17 +134,16 @@ public class ApplicantController {
 	 @GetMapping("/applicants/{appId}")
 	 public String viewApplicant(@PathVariable Long appId, Model model) {
 	
-	     // Get application using ApplicantService
-	     Application application = applicantService.getApplicationEntity(appId);
+	     // Get applicant (application data)
+	     ApplicantProfileDTO applicant =
+	             applicantService.getApplicantProfile(appId);
 	
-	     // Get job seeker userId
-	     Long userId = application.getSeeker().getId();
+	     // Get profile using seekerId (userId)
+	     ProfileResponse profile =
+	             profileService.getProfileByUserId(applicant.getSeekerId());
 	
-	     // Fetch profile
-	     ProfileResponse profile = profileService.getProfileByUserId(userId);
-	
+	     model.addAttribute("applicant", applicant);
 	     model.addAttribute("profile", profile);
-	     model.addAttribute("application", application);
 	
 	     return "employer/applicant-profile";
 	 }

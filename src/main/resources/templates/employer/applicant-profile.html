@@ -3,7 +3,49 @@
 
 <head>
 <title>Applicant Profile</title>
+
 <th:block th:replace="~{fragments/layout :: head}"></th:block>
+
+<style>
+
+.profile-header{
+background:#ffffff;
+padding:25px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,0.08);
+margin-bottom:20px;
+}
+
+.section-card{
+background:#ffffff;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+.skill-badge{
+font-size:14px;
+padding:8px 12px;
+margin:4px;
+}
+
+.review-box{
+background:#f8f9fa;
+border-left:4px solid #0d6efd;
+padding:15px;
+border-radius:6px;
+}
+
+.profile-img{
+width:90px;
+height:90px;
+border-radius:50%;
+object-fit:cover;
+}
+
+</style>
+
 </head>
 
 <body>
@@ -12,28 +54,80 @@
 
 <main class="container mt-4">
 
-<!-- ================= HEADER ================= -->
+<!-- ================= REVIEWER NOTES ================= -->
 
-<div class="d-flex justify-content-between align-items-center">
+<div class="section-card">
 
-<h2 class="fw-bold"
-    th:text="${profile.userName}">
-</h2>
+<h5 class="fw-bold">Reviewer Notes</h5>
 
-<div>
+<div class="review-box mb-3">
 
-<a th:href="@{/resume/download/{id}(id=${application.resumeId})}"
-   class="btn btn-secondary">
+<p th:text="${applicant.employerComment} ?: 'No notes added yet'"></p>
+
+</div>
+
+<textarea class="form-control mb-2"
+rows="3"
+placeholder="Add reviewer note..."></textarea>
+
+<button class="btn btn-primary btn-sm">Add Note</button>
+<button class="btn btn-warning btn-sm">Edit</button>
+<button class="btn btn-danger btn-sm">Delete</button>
+
+</div>
+
+
+<!-- ================= PROFILE HEADER ================= -->
+
+<div class="profile-header">
+
+<div class="row align-items-center">
+
+<div class="col-md-2 text-center">
+
+<img th:src="${profile.profilePictureUrl}"
+     class="profile-img"
+     alt="Profile Picture"/>
+
+</div>
+
+<div class="col-md-6">
+
+<h3 class="fw-bold"
+th:text="${profile.userName}"></h3>
+
+<h6 class="text-muted"
+th:text="${profile.headline}"></h6>
+
+<p class="mt-2"
+th:text="${profile.summary}"></p>
+
+</div>
+
+<div class="col-md-4 text-end">
+
+<a th:href="@{/resume/download/{id}(id=${applicant.resumeId})}"
+class="btn btn-outline-dark mb-2">
 Download Resume
 </a>
 
+<br>
+
+<button class="btn btn-info mb-2"
+data-bs-toggle="modal"
+data-bs-target="#coverLetterModal">
+View Cover Letter
+</button>
+
+<br>
+
 <button class="btn btn-success"
-        th:disabled="${application.status=='SHORTLISTED'}">
+th:disabled="${applicant.status=='SHORTLISTED'}">
 Shortlist
 </button>
 
 <button class="btn btn-danger"
-        th:disabled="${application.status=='REJECTED'}">
+th:disabled="${applicant.status=='REJECTED'}">
 Reject
 </button>
 
@@ -41,27 +135,27 @@ Reject
 
 </div>
 
-<hr>
-
-<!-- ================= HEADLINE ================= -->
-
-<h5 th:text="${profile.headline}"></h5>
-
-<p th:text="${profile.summary}"></p>
+</div>
 
 
 <!-- ================= EDUCATION ================= -->
 
-<h4 class="mt-4">Education</h4>
+<div class="section-card">
 
-<table class="table table-bordered">
+<h4 class="fw-bold">Education</h4>
 
+<table class="table table-hover">
+
+<thead>
 <tr>
 <th>Institution</th>
 <th>Degree</th>
 <th>Field</th>
 <th>Duration</th>
 </tr>
+</thead>
+
+<tbody>
 
 <tr th:each="edu : ${profile.educations}">
 
@@ -78,22 +172,29 @@ Reject
 
 </tr>
 
+</tbody>
+
 </table>
+
+</div>
 
 
 <!-- ================= EXPERIENCE ================= -->
 
-<h4 class="mt-4">Experience</h4>
+<div class="section-card">
+
+<h4 class="fw-bold">Experience</h4>
 
 <div th:each="exp : ${profile.experiences}" class="card mb-3">
 
 <div class="card-body">
 
-<h5 th:text="${exp.title}"></h5>
+<h5 class="fw-bold" th:text="${exp.title}"></h5>
 
 <p class="text-muted">
 
-<span th:text="${exp.company}"></span> |
+<span th:text="${exp.company}"></span>
+|
 
 <span th:text="${exp.location}"></span>
 
@@ -105,24 +206,32 @@ Reject
 
 </div>
 
+</div>
+
 
 <!-- ================= SKILLS ================= -->
 
-<h4 class="mt-4">Skills</h4>
+<div class="section-card">
+
+<h4 class="fw-bold">Skills</h4>
 
 <div>
 
-<span class="badge bg-primary me-2"
-      th:each="skill : ${profile.skills}"
-      th:text="${skill.name}">
+<span class="badge bg-primary skill-badge"
+th:each="skill : ${profile.skills}"
+th:text="${skill.name}">
 </span>
+
+</div>
 
 </div>
 
 
 <!-- ================= CERTIFICATIONS ================= -->
 
-<h4 class="mt-4">Certifications</h4>
+<div class="section-card">
+
+<h4 class="fw-bold">Certifications</h4>
 
 <ul>
 
@@ -130,44 +239,58 @@ Reject
 
 <b th:text="${cert.name}"></b>
 -
+
 <span th:text="${cert.issuingOrg}"></span>
 
 </li>
 
 </ul>
 
-
-<!-- ================= EMPLOYER COMMENT ================= -->
-
-<h4 class="mt-4">Employer Comment</h4>
-
-<p th:text="${application.employerComment} ?: 'No comments yet'"></p>
-
-
-<!-- ================= NOTES ================= -->
-
-<h4 class="mt-4">Reviewer Notes</h4>
-
-<textarea class="form-control"
-          rows="3"
-          placeholder="Add note..."></textarea>
-
-<div class="mt-2">
-
-<button class="btn btn-primary">Add Note</button>
-
-<button class="btn btn-warning">Edit</button>
-
-<button class="btn btn-danger">Delete</button>
-
 </div>
 
 </main>
+
+
+<!-- ================= COVER LETTER MODAL ================= -->
+
+<div class="modal fade"
+id="coverLetterModal"
+tabindex="-1">
+
+<div class="modal-dialog modal-lg">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h5 class="modal-title">Cover Letter</h5>
+
+<button type="button"
+class="btn-close"
+data-bs-dismiss="modal"></button>
+
+</div>
+
+<div class="modal-body">
+
+<textarea class="form-control"
+rows="8"
+readonly
+th:text="${applicant.coverLetter}">
+</textarea>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 
 </body>
-
 </html>
