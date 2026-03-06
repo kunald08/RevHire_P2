@@ -3,85 +3,232 @@
       th:replace="~{fragments/layout :: layout(~{::body})}">
 
 <head>
-    <title>Company Profile</title>
+<title>Company Profile</title>
 </head>
 
 <body>
 
-<div class="container mt-4">
-	<!-- SUCCESS MESSAGE -->
-	<div th:if="${success}" 
-	     class="alert alert-success alert-dismissible fade show">
-	    <span th:text="${success}"></span>
-	    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-	</div>
+<style>
 
-    <!-- Top Header Row -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+body{
+background:#eef2ff;
+}
 
-        <div class="d-flex align-items-center gap-3">
-            <!-- Back Button -->
-            <a th:href="@{/jobs/my}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-            </a>
+/* HEADER */
 
-            <h2 class="fw-bold mb-0">
-                <i class="bi bi-building me-2"></i>Company Profile
-            </h2>
-        </div>
+.page-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+}
 
-        <!-- Edit Button -->
-        <a th:href="@{/employers/profile/edit}"
-           class="btn btn-outline-primary">
-            <i class="bi bi-pencil"></i> Edit Profile
-        </a>
-    </div>
+/* PROFILE CARD */
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+.profile-card{
+background:white;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+padding:32px;
+}
 
-            <h4 class="fw-semibold mb-3"
-                th:text="${employer.companyName}"></h4>
+/* COMPANY NAME */
 
-            <div class="row">
+.company-title{
+font-size:26px;
+font-weight:700;
+color:#111827;
+margin-bottom:25px;
+}
 
-                <div class="col-md-6 mb-3">
-                    <strong>Industry:</strong>
-                    <p th:text="${employer.industry}"></p>
-                </div>
+/* INFO BLOCK */
 
-                <div class="col-md-6 mb-3">
-                    <strong>Company Size:</strong>
-                    <p th:text="${employer.companySize}"></p>
-                </div>
+.info-item{
+margin-bottom:22px;
+border-bottom:1px solid #f1f5f9;
+padding-bottom:14px;
+}
 
-            </div>
+/* LABEL */
 
-            <div class="row">
+.info-label{
+font-size:13px;
+font-weight:600;
+color:#6366f1;
+display:flex;
+align-items:center;
+gap:6px;
+text-transform:uppercase;
+letter-spacing:0.5px;
+}
 
-                <div class="col-md-6 mb-3">
-                    <strong>Location:</strong>
-                    <p th:text="${employer.location}"></p>
-                </div>
+/* VALUE */
 
-                <div class="col-md-6 mb-3">
-                    <strong>Website:</strong>
-                    <p>
-                        <a th:href="${employer.website}"
-                           th:text="${employer.website}"
-                           target="_blank"></a>
-                    </p>
-                </div>
+.info-value{
+font-size:16px;
+font-weight:500;
+color:#1f2937;
+margin-top:4px;
+line-height:1.5;
 
-            </div>
+/* fixes long text overflow */
+word-break:break-word;
+overflow-wrap:anywhere;
+}
 
-            <div class="mb-3">
-                <strong>Description:</strong>
-                <p th:text="${employer.description}"></p>
-            </div>
+/* ICON COLORS */
 
-        </div>
-    </div>
+.icon-industry{ color:#4f46e5; }
+.icon-size{ color:#10b981; }
+.icon-location{ color:#f59e0b; }
+.icon-website{ color:#0ea5e9; }
+.icon-description{ color:#7c3aed; }
+
+/* WEBSITE */
+
+.website-link{
+text-decoration:none;
+color:#2563eb;
+font-weight:500;
+word-break:break-all;
+}
+
+.website-link:hover{
+text-decoration:underline;
+}
+
+/* CARD HOVER */
+
+.profile-card:hover{
+box-shadow:0 12px 28px rgba(0,0,0,0.12);
+transition:0.2s;
+}
+
+</style>
+
+
+<div class="container mt-4" style="max-width:900px;">
+
+<!-- SUCCESS MESSAGE -->
+<div th:if="${success}" 
+     class="alert alert-success alert-dismissible fade show">
+    <span th:text="${success}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
+
+<!-- HEADER -->
+<div class="page-header">
+
+<div class="d-flex align-items-center gap-3">
+
+<a th:href="@{/jobs/my}" class="btn btn-outline-secondary btn-sm">
+<i class="bi bi-arrow-left"></i> Back
+</a>
+
+<h2 class="fw-bold mb-0">
+<i class="bi bi-building text-primary me-2"></i>
+Company Profile
+</h2>
+
+</div>
+
+<a th:href="@{/employers/profile/edit}"
+   class="btn btn-primary">
+<i class="bi bi-pencil"></i> Edit Profile
+</a>
+
+</div>
+
+
+<!-- PROFILE CARD -->
+
+<div class="profile-card">
+
+<div class="company-title"
+     th:text="${employer.companyName}">
+</div>
+
+
+<div class="row">
+
+<div class="col-md-6 info-item">
+
+<div class="info-label icon-industry">
+<i class="bi bi-briefcase"></i> Industry
+</div>
+
+<div class="info-value"
+     th:text="${employer.industry}">
+</div>
+
+</div>
+
+
+<div class="col-md-6 info-item">
+
+<div class="info-label icon-size">
+<i class="bi bi-people"></i> Company Size
+</div>
+
+<div class="info-value"
+     th:text="${employer.companySize}">
+</div>
+
+</div>
+
+</div>
+
+
+<div class="row">
+
+<div class="col-md-6 info-item">
+
+<div class="info-label icon-location">
+<i class="bi bi-geo-alt"></i> Location
+</div>
+
+<div class="info-value"
+     th:text="${employer.location}">
+</div>
+
+</div>
+
+
+<div class="col-md-6 info-item">
+
+<div class="info-label icon-website">
+<i class="bi bi-globe"></i> Website
+</div>
+
+<div class="info-value">
+
+<a class="website-link"
+   th:href="${employer.website}"
+   th:text="${employer.website}"
+   target="_blank">
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="info-item">
+
+<div class="info-label icon-description">
+<i class="bi bi-card-text"></i> Description
+</div>
+
+<div class="info-value"
+     th:text="${employer.description}">
+</div>
+
+</div>
+
+</div>
 
 </div>
 

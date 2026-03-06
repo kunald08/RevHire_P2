@@ -7,21 +7,21 @@ import com.revhire.employer.dto.EmployerRequest;
 import com.revhire.employer.entity.Employer;
 import com.revhire.employer.repository.EmployerRepository;
 import com.revhire.exception.UnauthorizedException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
-@ExtendWith(SpringExtension.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest
-class EmployerServiceTest {
+public class EmployerServiceTest {
 
     @Autowired
     private EmployerService employerService;
@@ -32,12 +32,9 @@ class EmployerServiceTest {
     @MockBean
     private UserRepository userRepository;
 
-    // ==============================
-    // CREATE OR UPDATE SUCCESS
-    // ==============================
-
+    // CREATE PROFILE SUCCESS
     @Test
-    void testCreateOrUpdateEmployer_Success() {
+    public void createEmployer_success() {
 
         User user = new User();
         user.setEmail("emp@test.com");
@@ -49,22 +46,19 @@ class EmployerServiceTest {
                 .thenReturn(Optional.of(user));
 
         Mockito.when(employerRepository.findByUser(user))
-                .thenReturn(Optional.empty()); // simulate first-time profile
+                .thenReturn(Optional.empty());
 
         Mockito.when(employerRepository.save(Mockito.any(Employer.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(i -> i.getArgument(0));
 
         assertNotNull(
                 employerService.createOrUpdateEmployer(request, "emp@test.com")
         );
     }
 
-    // ==============================
     // UNAUTHORIZED USER
-    // ==============================
-
-    @Test
-    void testCreateOrUpdateEmployer_Unauthorized() {
+    @Test(expected = UnauthorizedException.class)
+    public void createEmployer_unauthorized() {
 
         User user = new User();
         user.setEmail("user@test.com");
@@ -75,21 +69,17 @@ class EmployerServiceTest {
         Mockito.when(userRepository.findByEmail("user@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertThrows(UnauthorizedException.class,
-                () -> employerService.createOrUpdateEmployer(request, "user@test.com"));
+        employerService.createOrUpdateEmployer(request, "user@test.com");
     }
 
-    // ==============================
     // HELPER METHOD
-    // ==============================
-
     private EmployerRequest validRequest() {
 
         EmployerRequest request = new EmployerRequest();
         request.setCompanyName("Tech Corp");
         request.setIndustry("IT");
         request.setCompanySize("50-100");
-        request.setDescription("Software company");
+        request.setDescription("Software Company");
         request.setWebsite("https://techcorp.com");
         request.setLocation("Hyderabad");
 
