@@ -3,6 +3,8 @@ import com.revhire.application.entity.Application;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.employer.service.ApplicantService;
 import com.revhire.job.entity.Job;
+import com.revhire.profile.dto.ProfileResponse;
+import com.revhire.profile.service.ProfileService;
 import com.revhire.employer.dto.BulkActionDTO;
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class ApplicantController {
 
     private final ApplicantService applicantService;
+    private final ProfileService profileService;
 
     // =====================================================
     // 1️⃣ Employer Jobs List (Already Working)
@@ -127,16 +130,21 @@ public class ApplicantController {
     // URL: /employer/applicants/{appId}
     // =====================================================
 
-    @GetMapping("/applicants/{appId}")
-    public String viewApplicantProfile(
-            @PathVariable Long appId,
-            Model model) {
-
-        Application application =
-                applicantService.getApplicationEntity(appId);
-
-        model.addAttribute("application", application);
-
-        return "employer/applicant-profile";
-    }
+	 @GetMapping("/applicants/{appId}")
+	 public String viewApplicant(@PathVariable Long appId, Model model) {
+	
+	     // Get application using ApplicantService
+	     Application application = applicantService.getApplicationEntity(appId);
+	
+	     // Get job seeker userId
+	     Long userId = application.getSeeker().getId();
+	
+	     // Fetch profile
+	     ProfileResponse profile = profileService.getProfileByUserId(userId);
+	
+	     model.addAttribute("profile", profile);
+	     model.addAttribute("application", application);
+	
+	     return "employer/applicant-profile";
+	 }
 }

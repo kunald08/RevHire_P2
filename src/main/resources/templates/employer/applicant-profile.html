@@ -1,1 +1,173 @@
-<h1>dfghj</h1>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>Applicant Profile</title>
+<th:block th:replace="~{fragments/layout :: head}"></th:block>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container mt-4">
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center">
+
+<h2 class="fw-bold"
+    th:text="${profile.userName}">
+</h2>
+
+<div>
+
+<a th:href="@{/resume/download/{id}(id=${application.resumeId})}"
+   class="btn btn-secondary">
+Download Resume
+</a>
+
+<button class="btn btn-success"
+        th:disabled="${application.status=='SHORTLISTED'}">
+Shortlist
+</button>
+
+<button class="btn btn-danger"
+        th:disabled="${application.status=='REJECTED'}">
+Reject
+</button>
+
+</div>
+
+</div>
+
+<hr>
+
+<!-- ================= HEADLINE ================= -->
+
+<h5 th:text="${profile.headline}"></h5>
+
+<p th:text="${profile.summary}"></p>
+
+
+<!-- ================= EDUCATION ================= -->
+
+<h4 class="mt-4">Education</h4>
+
+<table class="table table-bordered">
+
+<tr>
+<th>Institution</th>
+<th>Degree</th>
+<th>Field</th>
+<th>Duration</th>
+</tr>
+
+<tr th:each="edu : ${profile.educations}">
+
+<td th:text="${edu.institution}"></td>
+
+<td th:text="${edu.degree}"></td>
+
+<td th:text="${edu.fieldOfStudy}"></td>
+
+<td>
+<span th:text="${edu.startDate}"></span> -
+<span th:text="${edu.endDate}"></span>
+</td>
+
+</tr>
+
+</table>
+
+
+<!-- ================= EXPERIENCE ================= -->
+
+<h4 class="mt-4">Experience</h4>
+
+<div th:each="exp : ${profile.experiences}" class="card mb-3">
+
+<div class="card-body">
+
+<h5 th:text="${exp.title}"></h5>
+
+<p class="text-muted">
+
+<span th:text="${exp.company}"></span> |
+
+<span th:text="${exp.location}"></span>
+
+</p>
+
+<p th:text="${exp.description}"></p>
+
+</div>
+
+</div>
+
+
+<!-- ================= SKILLS ================= -->
+
+<h4 class="mt-4">Skills</h4>
+
+<div>
+
+<span class="badge bg-primary me-2"
+      th:each="skill : ${profile.skills}"
+      th:text="${skill.name}">
+</span>
+
+</div>
+
+
+<!-- ================= CERTIFICATIONS ================= -->
+
+<h4 class="mt-4">Certifications</h4>
+
+<ul>
+
+<li th:each="cert : ${profile.certifications}">
+
+<b th:text="${cert.name}"></b>
+-
+<span th:text="${cert.issuingOrg}"></span>
+
+</li>
+
+</ul>
+
+
+<!-- ================= EMPLOYER COMMENT ================= -->
+
+<h4 class="mt-4">Employer Comment</h4>
+
+<p th:text="${application.employerComment} ?: 'No comments yet'"></p>
+
+
+<!-- ================= NOTES ================= -->
+
+<h4 class="mt-4">Reviewer Notes</h4>
+
+<textarea class="form-control"
+          rows="3"
+          placeholder="Add note..."></textarea>
+
+<div class="mt-2">
+
+<button class="btn btn-primary">Add Note</button>
+
+<button class="btn btn-warning">Edit</button>
+
+<button class="btn btn-danger">Delete</button>
+
+</div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+
+</html>
