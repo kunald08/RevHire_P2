@@ -72,6 +72,7 @@
     </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
-
+	<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+	<script th:src="@{/js/auth/auth.js}"></script>
 </body>
 </html>
