@@ -115,6 +115,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- JUnit Vintage Engine — runs JUnit 4 tests on JUnit Platform -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Spring Security Test -->
         <dependency>
             <groupId>org.springframework.security</groupId>

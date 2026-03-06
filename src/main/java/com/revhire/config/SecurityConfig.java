@@ -48,6 +48,7 @@ public class SecurityConfig {
                     .requestMatchers("/error", "/auth/denied").permitAll()             // CRITICAL: Allows 404/403 pages to be seen
                     .requestMatchers("/jobs/search/**", "/jobs/search/results").permitAll() 
                     
+
                     /* * NOTE: The Regex {id:[0-9]+} is used here to enforce strict input validation 
                      * at the security layer (preventing non-numeric IDs from reaching the service).
                      *
@@ -56,8 +57,8 @@ public class SecurityConfig {
                      * ensure the template uses String-based comparison (#strings.toString()) 
                      * to handle Hibernate Proxies correctly.
                      */
-                    .requestMatchers("/jobs/{id:[0-9]+}").permitAll()   
-                    .requestMatchers("/employers/{id:[0-9]+}").permitAll()                 
+                    .requestMatchers("/jobs/{id:\\d+}/").permitAll()   
+                    .requestMatchers("/employers/{id:\\d+}/").permitAll()                 
                     
                     // 2. AUTHENTICATION & STATIC ASSETS
                     .requestMatchers("/auth/login", "/auth/register/**","/auth/verify",  "/login").permitAll()
@@ -66,6 +67,7 @@ public class SecurityConfig {
                     // 3. COMMON AUTHENTICATED AREA
                     .requestMatchers("/profile/view/{id}", "/resume/view/{id}").authenticated()
                     .requestMatchers("/auth/me").authenticated()
+
 
                     // 4. SEEKER ONLY (Standardized on .hasAuthority to match User Entity Enum)
                     .requestMatchers("/profile/edit/**", "/profile/save/**", "/profile/delete/**").hasAuthority("SEEKER")

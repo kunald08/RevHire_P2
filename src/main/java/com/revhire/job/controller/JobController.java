@@ -54,13 +54,14 @@ public class JobController {
         return "job/my-jobs";
     }
 
-    @GetMapping("/{id:[0-9]+}")
+
+    @GetMapping("/{id:\\d+}")
     public String viewJob(@PathVariable Long id, Model model) {
         model.addAttribute("job", jobService.getJobById(id));
         return "job/job-detail";
     }
 
-    @GetMapping("/{id:[0-9]+}/edit")
+    @GetMapping("/{id:\\d+}/edit")
     public String editJob(@PathVariable Long id, Model model) {
 
         JobResponse job = jobService.getJobById(id);
@@ -85,7 +86,7 @@ public class JobController {
         return "job/job-edit";
     }
 
-    @PostMapping("/{id}/update")
+    @PostMapping("/{id:\\d+}/update")
     public String updateJob(@PathVariable Long id,
                             @Valid @ModelAttribute("jobRequest") JobRequest request,
                             BindingResult bindingResult,
@@ -109,7 +110,7 @@ public class JobController {
         }
     }
 
-    @PostMapping("/{id}/delete")
+    @PostMapping("/{id:\\d+}/delete")
     public String deleteJob(@PathVariable Long id,
                             Authentication authentication,
                             RedirectAttributes redirectAttributes) {
@@ -119,7 +120,7 @@ public class JobController {
         return "redirect:/jobs/my";
     }
 
-    @PostMapping("/{id}/close")
+    @PostMapping("/{id:\\d+}/close")
     public String closeJob(@PathVariable Long id,
                            Authentication authentication,
                            RedirectAttributes redirectAttributes) {
@@ -129,7 +130,7 @@ public class JobController {
         return "redirect:/jobs/" + id;
     }
 
-    @PostMapping("/{id}/reopen")
+    @PostMapping("/{id:\\d+}/reopen")
     public String reopenJob(@PathVariable Long id,
                             Authentication authentication,
                             RedirectAttributes redirectAttributes) {
@@ -139,7 +140,7 @@ public class JobController {
         return "redirect:/jobs/" + id;
     }
 
-    @PostMapping("/{id}/fill")
+    @PostMapping("/{id:\\d+}/fill")
     public String markAsFilled(@PathVariable Long id,
                                Authentication authentication,
                                RedirectAttributes redirectAttributes) {
@@ -149,7 +150,7 @@ public class JobController {
         return "redirect:/jobs/" + id;
     }
 
-    @GetMapping("/{id}/stats")
+    @GetMapping("/{id:\\d+}/stats")
     public String getJobStats(@PathVariable Long id,
                               Authentication authentication,
                               Model model) {
