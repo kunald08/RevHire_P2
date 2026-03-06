@@ -43,18 +43,29 @@
 
     <main class="container mt-4">
 
-        <div class="section-card">
-            <h5 class="fw-bold">Reviewer Notes</h5>
-            <div class="review-box mb-3">
-                <p th:text="${applicant.employerComment} ?: 'No notes added yet'"></p>
-            </div>
-            
-            <textarea class="form-control mb-2" rows="3" placeholder="Add reviewer note..."></textarea>
-            <button class="btn btn-primary btn-sm">Add Note</button>
-            <button class="btn btn-warning btn-sm">Edit</button>
-            <button class="btn btn-danger btn-sm">Delete</button>
-        </div>
+		<div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+		    <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+		    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
 
+		<div class="section-card">
+		    <h5 class="fw-bold"><i class="bi bi-chat-dots me-2"></i>Reviewer Notes</h5>
+		    
+		    <form th:action="@{/employer/notes/save}" method="post" id="noteForm">
+		        <input type="hidden" name="appId" th:value="${applicant.applicationId}" />
+		        
+		        <input type="hidden" name="noteId" th:value="${existingNote != null ? existingNote.id : ''}" />
+		        
+		        <textarea name="note" class="form-control mb-2" rows="3" 
+		                  th:text="${existingNote != null ? existingNote.note : ''}" 
+		                  placeholder="Write your note here..."></textarea>
+		                  
+		        <button type="submit" class="btn btn-primary">
+		            <i class="bi bi-save me-1"></i> Save Note
+		        </button>
+		    </form>
+		</div>
+		
         <div class="profile-header">
 		    <div class="row align-items-center">
 		        <div class="col-lg-2 col-md-3 text-center text-md-start mb-3 mb-md-0">
@@ -224,6 +235,23 @@
             var myModal = new bootstrap.Modal(document.getElementById('actionModal'));
             myModal.show();
         }
+		document.getElementById('noteForm').addEventListener('submit', function(e) {
+		    e.preventDefault(); 
+		    
+		    const formData = new FormData(this);
+		    
+		    fetch(this.action, {
+		        method: 'POST',
+		        body: new URLSearchParams(formData)
+		    })
+		    .then(response => {
+		        if (response.ok) {
+		            location.reload(); // Refreshes page to show the new note in the list
+		        } else {
+		            alert("Error saving note.");
+		        }
+		    });
+		});
     </script>
 </body>
 </html>

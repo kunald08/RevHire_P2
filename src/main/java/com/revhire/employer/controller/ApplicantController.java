@@ -2,6 +2,7 @@ package com.revhire.employer.controller;
 import com.revhire.application.entity.Application;
 import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
+import com.revhire.employer.dto.ApplicationNoteDTO;
 import com.revhire.employer.service.ApplicantService;
 import com.revhire.job.entity.Job;
 import com.revhire.profile.dto.ProfileResponse;
@@ -9,6 +10,7 @@ import com.revhire.profile.service.ProfileService;
 import com.revhire.employer.dto.BulkActionDTO;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -116,21 +118,29 @@ public class ApplicantController {
     // =====================================================
 
 	 @GetMapping("/applicants/{appId}")
-	 public String viewApplicant(@PathVariable Long appId, Model model) {
-	
-	     // Get applicant (application data)
-	     ApplicantProfileDTO applicant =
-	             applicantService.getApplicantProfile(appId);
-	
-	     // Get profile using seekerId (userId)
-	     ProfileResponse profile =
-	             profileService.getProfileByUserId(applicant.getSeekerId());
-	
+	 public String viewApplicant(@PathVariable Long appId, Model model, Authentication auth) {
+	     // 1. Get applicant - This is the primary requirement
+	     ApplicantProfileDTO applicant = applicantService.getApplicantProfile(appId);
+	     
+	     // 2. Get profile - If profile is missing, your service now returns a default DTO, 
+	     // so this shouldn't be throwing an exception anymore.
+	     ProfileResponse profile = profileService.getProfileByUserId(applicant.getSeekerId());
+	     
+	     // 3. Get Note - This will return an empty DTO if no note exists
+	     ApplicationNoteDTO existingNote = applicantService.getNoteForApplication(appId);
+	     
 	     model.addAttribute("applicant", applicant);
 	     model.addAttribute("profile", profile);
-	
+	     model.addAttribute("existingNote", existingNote);
+	     
 	     return "employer/applicant-profile";
 	 }
+//	 @PostMapping("/applicants/{appId}/notes/add")
+//	 public String addNote(@PathVariable Long appId, @RequestParam String note, Authentication authentication) {
+//	     applicantService.addNote(appId, note, authentication.getName());
+//	     return "redirect:/employer/applicants/" + appId;
+//	 }
+//	 
 //	// =====================================================
 //	// 5️⃣ Update Single Applicant Status (Shortlist/Reject)
 //	// =====================================================
@@ -169,18 +179,25 @@ public class ApplicantController {
 	    
 	    return "redirect:/employer/applicants/" + appId;
 	}
+	// =====================================================
+    // Reviewer Notes Endpoints
+    // =====================================================
 
-//	// =====================================================
-//	// 6️⃣ Reject Applicant
-//	// URL: /employer/applicants/{appId}/reject
-//	// =====================================================
-//	@GetMapping("/applicants/{appId}/reject")
-//	public String rejectApplicant(@PathVariable Long appId) {
-//	    applicantService.bulkUpdateStatus(
-//	            List.of(appId), 
-//	            "REJECT", 
-//	            "Rejected via profile view"
-//	    );
-//	    return "redirect:/employer/applicants/" + appId;
-//	}
+    // Endpoint: /employer/notes/{appId}/addnote
+    @PostMapping("/notes/{appId}/addnote")
+    public String addNote(@PathVariable Long appId, 
+                          @RequestParam String note, Authentication authentication) {
+        applicantService.addNote(appId, note, authentication.getName());
+        return "redirect:/employer/applicants/" + appId;
+    }
+
+    // Endpoint: /employer/notes/{noteId}/clear
+    @PostMapping("/notes/{noteId}/clear")
+    public String clearNote(@PathVariable Long noteId, 
+                            @RequestParam Long appId) {
+        
+        applicantService.deleteNote(noteId);
+        // Redirect back to the specific applicant profile
+        return "redirect:/employer/applicants/" + appId;
+    }
 }

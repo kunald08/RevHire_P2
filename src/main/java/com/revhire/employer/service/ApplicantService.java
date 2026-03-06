@@ -4,7 +4,7 @@ import com.revhire.application.entity.Application;
 import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.job.entity.Job;
-
+import com.revhire.employer.dto.ApplicationNoteDTO;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -31,5 +31,9 @@ public interface ApplicantService {
     Application getApplicationEntity(Long appId);
     
     ApplicantProfileDTO getApplicantProfile(Long appId);
-    
+    void addNote(Long appId, String note, String employerEmail);
+    void deleteNote(Long noteId);
+    void updateNote(Long noteId, String newNote);
+    ApplicationNoteDTO getNoteForApplication(Long appId);
+    void saveOrUpdateNote(Long appId, String noteText, String employerEmail);
 }
