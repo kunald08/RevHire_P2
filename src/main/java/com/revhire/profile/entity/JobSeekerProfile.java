@@ -1,173 +1,89 @@
 package com.revhire.profile.entity;
 
-import jakarta.persistence.*;
-import java.util.List;
 import com.revhire.auth.entity.User;
+import jakarta.persistence.*;
+import lombok.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * JobSeekerProfile entity — stores the seeker's headline, summary, and employment status.
+ * Has one-to-many relationships with Education, Experience, Skill, Certification, and Resume.
+ */
 @Entity
-@Table(name = "job_seeker_profile")
+@Table(name = "job_seeker_profiles")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class JobSeekerProfile {
-	
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-	@ManyToOne
-	@JoinColumn(name = "user_id")
-	private User user;
 
-    private String fullName;
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    private User user;
 
-    private String phone;
-    
-    private String email;
-    
-    private String location;
-    
-    @Column(length = 2000)
-    private String objective;
+    @Column(length = 200)
+    private String headline;
 
-    @Column(length = 3000)
-    private String projects;
-
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String summary;
-    
-    @OneToMany(mappedBy = "profile",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    private List<Skill> skills;
 
-	@OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Education> educations;
+    @Column(name = "current_employment_status", length = 50)
+    private String currentEmploymentStatus;
 
-	@OneToMany(mappedBy = "profile",
-	           cascade = CascadeType.ALL,
-	           orphanRemoval = true)
-	private List<Experience> experiences;
-	
-	@OneToMany(mappedBy = "profile",
-	           cascade = CascadeType.ALL,
-	           orphanRemoval = true)
-	private List<Certification> certifications;
+    @Column(name = "profile_picture_url", length = 500)
+    private String profilePictureUrl;
 
-    private String linkedInUrl;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    private String githubUrl;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    private String resumePath;
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Education> educations = new ArrayList<>();
 
-    // ===== Getters and Setters =====
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Experience> experiences = new ArrayList<>();
 
-    public Long getId() {
-        return id;
-    }
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Skill> skills = new ArrayList<>();
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public User getUser() {
-        return user;
-    }
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Certification> certifications = new ArrayList<>();
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-    public String getFullName() {
-        return fullName;
-    }
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Resume> resumes = new ArrayList<>();
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getPhone() {
-        return phone;
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-    public String getObjective() {
-        return objective;
-    }
-
-    public void setObjective(String objective) {
-        this.objective = objective;
-    }
-    public String getProjects() {
-        return projects;
-    }
-
-    public void setProjects(String projects) {
-        this.projects = projects;
-    }
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-    public List<Skill> getSkills() {
-        return skills;
-    }
-
-    public void setSkills(List<Skill> skills) {
-        this.skills = skills;
-    }
-    public List<Experience> getExperiences() {
-        return experiences;
-    }
-    
-    public void setExperiences(List<Experience> experiences) {
-        this.experiences = experiences;
-    }
-  
-    public List<Certification> getCertifications() {
-        return certifications;
-    }
-
-    public void setCertifications(List<Certification> certifications) {
-        this.certifications = certifications;
-    }
-    
-    public String getLinkedInUrl() {
-        return linkedInUrl;
-    }
-
-    public void setLinkedInUrl(String linkedInUrl) {
-        this.linkedInUrl = linkedInUrl;
-    }
-
-    public String getGithubUrl() {
-        return githubUrl;
-    }
-
-    public void setGithubUrl(String githubUrl) {
-        this.githubUrl = githubUrl;
-    }
-
-    public String getResumePath() {
-        return resumePath;
-    }
-
-    public void setResumePath(String resumePath) {
-        this.resumePath = resumePath;
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

@@ -1,43 +1,33 @@
 package com.revhire.profile.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
+/**
+ * Skill entity — stores skills of a job seeker with proficiency level.
+ */
 @Entity
+@Table(name = "skills")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Skill {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "profile_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private JobSeekerProfile profile;
 
-    // getters & setters
+    @Column(nullable = false, length = 100)
+    private String name;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public JobSeekerProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(JobSeekerProfile profile) {
-        this.profile = profile;
-    }
+    @Column(length = 50)
+    private String proficiency;
 }

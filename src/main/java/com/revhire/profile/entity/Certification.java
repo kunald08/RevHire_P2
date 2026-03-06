@@ -1,63 +1,43 @@
 package com.revhire.profile.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
+import java.time.LocalDate;
+
+/**
+ * Certification entity — stores professional certifications of a job seeker.
+ */
 @Entity
+@Table(name = "certifications")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Certification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-
-    private String issuingOrganization;
-
-    private String year;
-
-    @ManyToOne
-    @JoinColumn(name = "profile_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private JobSeekerProfile profile;
 
-    // ===== Getters & Setters =====
+    @Column(nullable = false, length = 200)
+    private String name;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "issuing_org", length = 200)
+    private String issuingOrg;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Column(name = "issue_date")
+    private LocalDate issueDate;
 
-    public String getName() {
-        return name;
-    }
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getIssuingOrganization() {
-        return issuingOrganization;
-    }
-
-    public void setIssuingOrganization(String issuingOrganization) {
-        this.issuingOrganization = issuingOrganization;
-    }
-
-    public String getYear() {
-        return year;
-    }
-
-    public void setYear(String year) {
-        this.year = year;
-    }
-
-    public JobSeekerProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(JobSeekerProfile profile) {
-        this.profile = profile;
-    }
+    @Column(name = "credential_url", length = 500)
+    private String credentialUrl;
 }

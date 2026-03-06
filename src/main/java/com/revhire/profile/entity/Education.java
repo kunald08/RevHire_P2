@@ -1,83 +1,46 @@
 package com.revhire.profile.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
+import java.time.LocalDate;
+
+/**
+ * Education entity — stores educational qualifications of a job seeker.
+ */
 @Entity
+@Table(name = "educations")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Education {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String degree;
-    private String institution;
-    private String startYear;
-    private String endYear;
-    private String yearOfPassing; 
-    @Column(length = 1000)
-    private String description;
-
-    @ManyToOne
-    @JoinColumn(name = "profile_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private JobSeekerProfile profile;
 
-    // Getters and Setters
+    @Column(nullable = false, length = 200)
+    private String institution;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(length = 100)
+    private String degree;
 
-    public String getDegree() {
-        return degree;
-    }
+    @Column(name = "field_of_study", length = 100)
+    private String fieldOfStudy;
 
-    public void setDegree(String degree) {
-        this.degree = degree;
-    }
+    @Column(name = "start_date")
+    private LocalDate startDate;
 
-    public String getInstitution() {
-        return institution;
-    }
+    @Column(name = "end_date")
+    private LocalDate endDate;
 
-    public void setInstitution(String institution) {
-        this.institution = institution;
-    }
-
-    public String getStartYear() {
-        return startYear;
-    }
-
-    public void setStartYear(String startYear) {
-        this.startYear = startYear;
-    }
-
-    public String getEndYear() {
-        return endYear;
-    }
-
-    public void setEndYear(String endYear) {
-        this.endYear = endYear;
-    }
-    public String getYearOfPassing() {   // ✅ MUST EXIST
-        return yearOfPassing;
-    }
-
-    public void setYearOfPassing(String yearOfPassing) {   // ✅ MUST EXIST
-        this.yearOfPassing = yearOfPassing;
-    }
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public JobSeekerProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(JobSeekerProfile profile) {
-        this.profile = profile;
-    }
+    @Column(length = 20)
+    private String grade;
 }

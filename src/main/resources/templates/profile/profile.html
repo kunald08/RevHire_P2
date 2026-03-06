@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>RevHire — My Profile</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        /* ── Hero / Cover ── */
+        .profile-cover {
+            height: 220px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 0 0 28px 28px;
+            position: relative;
+        }
+        .profile-cover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px;
+        }
+
+        /* ── Avatar ── */
+        .profile-avatar-wrap {
+            position: relative;
+            display: inline-block;
+            margin-top: -65px;
+            z-index: 2;
+        }
+        .profile-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            overflow: hidden;
+        }
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ── Cards ── */
+        .p-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        .p-card:hover {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+
+        /* ── Section Header ── */
+        .sec-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        .sec-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .sec-icon.about    { background: #eef2ff; color: #667eea; }
+        .sec-icon.edu      { background: #fef3e2; color: #f59e0b; }
+        .sec-icon.exp      { background: #ecfdf5; color: #10b981; }
+        .sec-icon.skill    { background: #faf5ff; color: #8b5cf6; }
+        .sec-icon.cert     { background: #fef2f2; color: #ef4444; }
+        .sec-icon.resume   { background: #eff6ff; color: #3b82f6; }
+        .sec-header h5 {
+            font-size: 1.15rem;
+            letter-spacing: 0.01em;
+        }
+
+        /* ── Timeline ── */
+        .tl-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 1.75rem;
+            margin-left: 6px;
+        }
+        .tl-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #667eea 0%, #e5e7eb 100%);
+        }
+        .tl-item:last-child::before {
+            display: none;
+        }
+        .tl-item:last-child {
+            padding-bottom: 0;
+        }
+        .tl-item::after {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+            background: #fff;
+        }
+        .tl-item.exp-item::before {
+            background: linear-gradient(180deg, #10b981 0%, #e5e7eb 100%);
+        }
+        .tl-item.exp-item::after {
+            border-color: #10b981;
+        }
+
+        /* ── Edu/Exp Content ── */
+        .tl-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        .tl-subtitle {
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .tl-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.82rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        .tl-meta i {
+            margin-right: 0.25rem;
+        }
+
+        /* ── About Text ── */
+        .about-text {
+            color: #374151;
+            line-height: 1.85;
+            font-size: 0.95rem;
+            white-space: pre-line;
+        }
+
+        /* ── Skill Chips ── */
+        .skill-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.15rem;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            transition: all 0.25s ease;
+        }
+        .skill-chip:hover {
+            background: #8b5cf6;
+            color: #fff;
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139,92,246,0.25);
+        }
+        .skill-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .dot-beginner     { background: #fbbf24; }
+        .dot-intermediate { background: #38bdf8; }
+        .dot-advanced     { background: #34d399; }
+        .dot-expert       { background: #818cf8; }
+
+        /* ── Cert Cards ── */
+        .cert-tile {
+            border: 1px solid #f3f4f6;
+            border-radius: 14px;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
+            transition: all 0.25s ease;
+            height: 100%;
+        }
+        .cert-tile:hover {
+            border-color: #ef4444;
+            box-shadow: 0 6px 20px rgba(239,68,68,0.08);
+            transform: translateY(-3px);
+        }
+
+        /* ── Status Badge ── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-pill.actively   { background: #dcfce7; color: #166534; }
+        .status-pill.open       { background: #dbeafe; color: #1e40af; }
+        .status-pill.employed   { background: #fef9c3; color: #854d0e; }
+        .status-pill.student    { background: #f3e8ff; color: #6b21a8; }
+        .status-pill.freelancer { background: #ffe4e6; color: #9f1239; }
+
+        /* ── Quick Actions ── */
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.25rem;
+            border-radius: 14px;
+            border: 1px solid #f3f4f6;
+            text-decoration: none;
+            color: #374151;
+            transition: all 0.25s ease;
+            background: #fff;
+        }
+        .quick-action:hover {
+            border-color: #667eea;
+            background: #eef2ff;
+            color: #667eea;
+            transform: translateX(4px);
+        }
+        .quick-action .qa-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Edit Button ── */
+        .edit-btn {
+            border-radius: 12px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.35);
+            color: #fff;
+        }
+
+        /* ── Empty State ── */
+        .empty-hint {
+            text-align: center;
+            padding: 2rem;
+            color: #9ca3af;
+            border: 2px dashed #e5e7eb;
+            border-radius: 14px;
+            background: #fafbfc;
+        }
+        .empty-hint i { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
+
+        /* ── Contact Row ── */
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+        .contact-info i {
+            width: 20px;
+            text-align: center;
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        /* ── Left card identity ── */
+        .identity-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.2rem;
+        }
+        .identity-headline {
+            font-size: 0.92rem;
+            color: #6b7280;
+            margin-bottom: 0.6rem;
+        }
+
+        /* ── Divider ── */
+        .card-divider {
+            border: 0;
+            height: 1px;
+            background: #f3f4f6;
+            margin: 1rem 0;
+        }
+
+        /* ── Main Profile Layout ── */
+        .profile-main {
+            margin-top: -55px;
+            position: relative;
+            z-index: 2;
+            padding-bottom: 2rem;
+        }
+        .profile-right-col > .p-card:first-child {
+            margin-top: 1.5rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 991.98px) {
+            .profile-cover { height: 170px; border-radius: 0 0 20px 20px; }
+            .profile-cover::after { border-radius: 0 0 20px 20px; }
+            .profile-main { margin-top: -40px; }
+            .profile-right-col > .p-card:first-child { margin-top: 0; }
+            .profile-avatar { width: 110px; height: 110px; font-size: 2.2rem; }
+            .profile-avatar-wrap { margin-top: -55px; }
+        }
+        @media (max-width: 575.98px) {
+            .profile-cover { height: 140px; }
+            .profile-main { margin-top: -30px; }
+            .p-card .card-body { padding: 1.25rem !important; }
+            .sec-icon { width: 38px; height: 38px; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Cover Banner -->
+    <div class="profile-cover"></div>
+
+    <main class="container profile-main">
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row g-4">
+            <!-- ════════════════ LEFT SIDEBAR ════════════════ -->
+            <div class="col-lg-4">
+                <!-- Identity Card -->
+                <div class="p-card card mb-4">
+                    <div class="card-body text-center px-4 pt-4 pb-3">
+                        <!-- Avatar -->
+                        <div class="d-flex justify-content-center">
+                            <div class="profile-avatar-wrap">
+                                <div class="profile-avatar">
+                                    <img th:if="${profile.profilePictureUrl != null and !profile.profilePictureUrl.isEmpty()}"
+                                         th:src="${profile.profilePictureUrl}" alt="Profile Photo">
+                                    <span th:if="${profile.profilePictureUrl == null or profile.profilePictureUrl.isEmpty()}"
+                                          th:text="${profile.userName != null ? profile.userName.substring(0, 1).toUpperCase() : '?'}">K</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Name & Headline -->
+                        <div class="identity-name mt-3" th:text="${profile.userName}">User Name</div>
+                        <div class="identity-headline" th:if="${profile.headline}" th:text="${profile.headline}">Software Developer</div>
+
+                        <!-- Status Pill -->
+                        <div th:if="${profile.currentEmploymentStatus}" class="mb-3">
+                            <span class="status-pill"
+                                  th:classappend="${profile.currentEmploymentStatus == 'Actively Looking' ? 'actively' :
+                                                   (profile.currentEmploymentStatus == 'Open to Opportunities' ? 'open' :
+                                                   (profile.currentEmploymentStatus == 'Employed' ? 'employed' :
+                                                   (profile.currentEmploymentStatus == 'Student' ? 'student' : 'freelancer')))}"
+                                  th:text="${profile.currentEmploymentStatus}">Status</span>
+                        </div>
+
+                        <hr class="card-divider">
+
+                        <!-- Contact Info -->
+                        <div class="text-start px-2 mb-3">
+                            <div th:if="${profile.userEmail}" class="contact-info">
+                                <i class="bi bi-envelope-fill"></i>
+                                <span th:text="${profile.userEmail}">email@test.com</span>
+                            </div>
+                            <div th:if="${profile.userPhone}" class="contact-info">
+                                <i class="bi bi-telephone-fill"></i>
+                                <span th:text="${profile.userPhone}">+91 9999999999</span>
+                            </div>
+                            <div th:if="${profile.userLocation}" class="contact-info">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span th:text="${profile.userLocation}">Location</span>
+                            </div>
+                        </div>
+
+                        <a th:href="@{/profile/edit}" class="edit-btn btn w-100">
+                            <i class="bi bi-pencil-square me-2"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-uppercase small text-muted mb-3 ls-1">Quick Actions</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <a th:href="@{/resume}" class="quick-action">
+                                <div class="qa-icon" style="background:#eef2ff; color:#667eea;">
+                                    <i class="bi bi-file-earmark-richtext"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Resume Builder</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">Create a textual resume</div>
+                                </div>
+                            </a>
+                            <a th:href="@{/resume/upload}" class="quick-action">
+                                <div class="qa-icon" style="background:#ecfdf5; color:#10b981;">
+                                    <i class="bi bi-cloud-arrow-up"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Upload Resume</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">PDF or DOCX, max 2MB</div>
+                                </div>
+                            </a>
+                            <a th:href="@{/auth/me}" class="quick-action">
+                                <div class="qa-icon" style="background:#fef3e2; color:#f59e0b;">
+                                    <i class="bi bi-gear"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold small">Account Settings</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">Password &amp; preferences</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════ MAIN CONTENT ════════════════ -->
+            <div class="col-lg-8 profile-right-col">
+                <!-- About -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="sec-header">
+                            <div class="sec-icon about"><i class="bi bi-person-lines-fill"></i></div>
+                            <h5 class="fw-bold mb-0">About</h5>
+                        </div>
+                        <div th:if="${profile.summary}" class="about-text" th:text="${profile.summary}">Summary</div>
+                        <div th:if="${profile.summary == null or profile.summary.isEmpty()}" class="empty-hint">
+                            <i class="bi bi-pencil"></i>
+                            <p class="mb-0 small">Add a summary to tell employers about yourself.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Education -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="sec-header">
+                            <div class="sec-icon edu"><i class="bi bi-mortarboard-fill"></i></div>
+                            <h5 class="fw-bold mb-0">Education</h5>
+                        </div>
+                        <div th:if="${profile.educations == null or profile.educations.empty}" class="empty-hint">
+                            <i class="bi bi-mortarboard"></i>
+                            <p class="mb-0 small">No education added yet.</p>
+                        </div>
+                        <div th:if="${profile.educations != null and !profile.educations.empty}">
+                            <div th:each="edu : ${profile.educations}" class="tl-item">
+                                <div class="tl-title">
+                                    <span th:text="${edu.degree}">Degree</span>
+                                    <span th:if="${edu.fieldOfStudy}" class="fw-normal text-muted"> in <span th:text="${edu.fieldOfStudy}">Field</span></span>
+                                </div>
+                                <div class="tl-subtitle text-primary" th:text="${edu.institution}">Institution</div>
+                                <div class="tl-meta">
+                                    <span th:if="${edu.startDate}">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span th:text="${edu.startDate}">Start</span>
+                                        <span th:if="${edu.endDate}"> &mdash; <span th:text="${edu.endDate}">End</span></span>
+                                        <span th:if="${edu.endDate == null}"> &mdash; Present</span>
+                                    </span>
+                                    <span th:if="${edu.grade}">
+                                        <i class="bi bi-star-fill" style="color:#f59e0b; font-size:0.7rem;"></i>
+                                        Grade: <span class="fw-medium" th:text="${edu.grade}">8.5</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Experience -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="sec-header">
+                            <div class="sec-icon exp"><i class="bi bi-briefcase-fill"></i></div>
+                            <h5 class="fw-bold mb-0">Work Experience</h5>
+                        </div>
+                        <div th:if="${profile.experiences == null or profile.experiences.empty}" class="empty-hint">
+                            <i class="bi bi-briefcase"></i>
+                            <p class="mb-0 small">No work experience added yet.</p>
+                        </div>
+                        <div th:if="${profile.experiences != null and !profile.experiences.empty}">
+                            <div th:each="exp : ${profile.experiences}" class="tl-item exp-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="tl-title" th:text="${exp.title}">Job Title</div>
+                                    <span th:if="${exp.isCurrent}" class="badge rounded-pill"
+                                          style="background:#dcfce7; color:#166534; font-size:0.7rem;">Current</span>
+                                </div>
+                                <div class="tl-subtitle" style="color:#10b981;">
+                                    <span th:text="${exp.company}">Company</span>
+                                    <span th:if="${exp.location}" class="text-muted"> &bull; <span th:text="${exp.location}">Location</span></span>
+                                </div>
+                                <div class="tl-meta">
+                                    <span>
+                                        <i class="bi bi-calendar3"></i>
+                                        <span th:if="${exp.startDate}" th:text="${exp.startDate}">Start</span>
+                                        <span th:if="${exp.isCurrent}"> &mdash; Present</span>
+                                        <span th:if="${!exp.isCurrent and exp.endDate != null}"> &mdash; <span th:text="${exp.endDate}">End</span></span>
+                                    </span>
+                                </div>
+                                <p th:if="${exp.description}" class="small text-muted mt-2 mb-0" style="line-height:1.7;" th:text="${exp.description}">Description</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="sec-header">
+                            <div class="sec-icon skill"><i class="bi bi-lightning-fill"></i></div>
+                            <h5 class="fw-bold mb-0">Skills</h5>
+                        </div>
+                        <div th:if="${profile.skills == null or profile.skills.empty}" class="empty-hint">
+                            <i class="bi bi-lightning"></i>
+                            <p class="mb-0 small">No skills added yet.</p>
+                        </div>
+                        <div th:if="${profile.skills != null and !profile.skills.empty}" class="d-flex flex-wrap gap-2">
+                            <span th:each="skill : ${profile.skills}" class="skill-chip">
+                                <span class="dot"
+                                      th:classappend="${skill.proficiency == 'Expert' ? 'dot-expert' :
+                                                       (skill.proficiency == 'Advanced' ? 'dot-advanced' :
+                                                       (skill.proficiency == 'Intermediate' ? 'dot-intermediate' : 'dot-beginner'))}"></span>
+                                <span th:text="${skill.name}">Java</span>
+                                <span th:if="${skill.proficiency}" class="text-muted" style="font-size:0.75rem;"
+                                      th:text="${skill.proficiency}">Advanced</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certifications -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="sec-header">
+                            <div class="sec-icon cert"><i class="bi bi-award-fill"></i></div>
+                            <h5 class="fw-bold mb-0">Certifications</h5>
+                        </div>
+                        <div th:if="${profile.certifications == null or profile.certifications.empty}" class="empty-hint">
+                            <i class="bi bi-award"></i>
+                            <p class="mb-0 small">No certifications added yet.</p>
+                        </div>
+                        <div th:if="${profile.certifications != null and !profile.certifications.empty}" class="row g-3">
+                            <div th:each="cert : ${profile.certifications}" class="col-md-6">
+                                <div class="cert-tile">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                             style="width:40px;height:40px;background:#fef2f2;color:#ef4444;">
+                                            <i class="bi bi-patch-check-fill"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1 small" th:text="${cert.name}">Certification</h6>
+                                            <div th:if="${cert.issuingOrg}" class="text-muted small" th:text="${cert.issuingOrg}">Org</div>
+                                            <div class="text-muted small mt-1">
+                                                <span th:if="${cert.issueDate}"><i class="bi bi-calendar3 me-1"></i><span th:text="${cert.issueDate}">Date</span></span>
+                                                <span th:if="${cert.expiryDate}" class="ms-2">
+                                                    &mdash; <span th:text="${cert.expiryDate}">Exp</span>
+                                                </span>
+                                            </div>
+                                            <a th:if="${cert.credentialUrl}" th:href="${cert.credentialUrl}"
+                                               class="small text-decoration-none mt-1 d-inline-block" target="_blank">
+                                                <i class="bi bi-box-arrow-up-right me-1"></i>Credential
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="mt-5">
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
