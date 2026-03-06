@@ -40,7 +40,7 @@ public class SecurityConfig {
                     
                     // 2. AUTHENTICATION PATHS (Must be public so users can actually log in!)
                     .requestMatchers("/auth/login", "/auth/register/**", "/login").permitAll()
-                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/uploads/**").permitAll()
 
                     // 3. SEEKER ONLY 
                     .requestMatchers("/profile/**", "/resume/**").hasAuthority("SEEKER")
