@@ -5,6 +5,7 @@ import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.Role;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -166,5 +167,52 @@ public class AuthServiceImpl implements AuthService {
                 "Securely,\nThe RevHire Team");
         mailSender.send(message);
     }
+    
+    @Override
+	@Transactional // Added to ensure database consistency
+	public void sendForgotPasswordLink(String email) {
+	    // 1. Find user in DB
+	    User user = userRepository.findByEmail(email)
+	            .orElseThrow(() -> new RuntimeException("No account found with this email."));
+	
+	    // 2. Generate token and expiry
+	    String token = java.util.UUID.randomUUID().toString();
+	    long expiryTime = System.currentTimeMillis() + (15 * 60 * 1000); // 15 mins
+	
+	    // 3. SAVE TO USER ENTITY (Not the Map!)
+	    user.setResetToken(token);
+	    user.setResetTokenExpiry(expiryTime);
+	    userRepository.save(user);
+	
+	    // 4. Send Email
+	    String resetLink = "http://localhost:8080/auth/reset-password?token=" + token;
+	    SimpleMailMessage message = new SimpleMailMessage();
+	    message.setFrom(fromEmail);
+	    message.setTo(email);
+	    message.setSubject("RevHire - Reset Your Password");
+	    message.setText("Click the link below to reset your password. This link expires in 15 minutes:\n" + resetLink);
+	    
+	    mailSender.send(message);
+	}
+	
+	@Override
+	@Transactional
+	public void resetPassword(String token, String newPassword) {
+	    // This method is now correct because it looks where we actually saved the token!
+	    User user = userRepository.findByResetToken(token)
+	            .orElseThrow(() -> new RuntimeException("Invalid or expired reset link."));
+	
+	    if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry() < System.currentTimeMillis()) {
+	        throw new RuntimeException("Invalid or expired reset link.");
+	    }
+	
+	    validatePasswordStrength(newPassword); // Always a good idea to reuse this!
+	    user.setPassword(passwordEncoder.encode(newPassword));
+	    
+	    // Cleanup
+	    user.setResetToken(null);
+	    user.setResetTokenExpiry(null);
+	    userRepository.save(user);
+	}
 
 }

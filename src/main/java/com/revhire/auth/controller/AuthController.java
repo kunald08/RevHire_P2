@@ -120,6 +120,9 @@ public class AuthController {
         return "auth/account-settings"; // The HTML page for common features
     }
     
+//  ===============Change password=======================
+
+    
     @GetMapping("/change-password")
     public String showChangePasswordForm() {
         return "auth/change-password";
@@ -150,6 +153,53 @@ public class AuthController {
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             return "auth/change-password";
+        }
+    }
+    
+//    ===============Forgot password=======================
+// 1. Show Forgot Password Request Page
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordRequest() {
+        return "auth/forgot-password-request";
+    }
+
+    // 2. Process the Request and send Email
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(@RequestParam String email, Model model) {
+        try {
+            authService.sendForgotPasswordLink(email);
+            return "redirect:/auth/login?info=Check your email for the password reset link!";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "auth/forgot-password-request";
+        }
+    }
+
+    // 3. Show the actual New Password Form (from the Email link)
+    @GetMapping("/reset-password")
+    public String showResetPasswordForm(@RequestParam String token, Model model) {
+        model.addAttribute("token", token);
+        return "auth/reset-password";
+    }
+
+    // 4. Process the New Password
+    @PostMapping("/reset-password")
+    public String processResetPassword(@RequestParam String token, 
+                                       @RequestParam String newPassword, 
+                                       @RequestParam String confirmPassword, 
+                                       Model model) {
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("error", "Passwords do not match!");
+            model.addAttribute("token", token);
+            return "auth/reset-password";
+        }
+        try {
+            authService.resetPassword(token, newPassword);
+            return "redirect:/auth/login?pwUpdated=Password reset successful! Please login.";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("token", token);
+            return "auth/reset-password";
         }
     }
 }

@@ -58,7 +58,8 @@ public class SecurityConfig {
                      * to handle Hibernate Proxies correctly.
                      */
                     .requestMatchers("/jobs/{id:\\d+}/").permitAll()   
-                    .requestMatchers("/employers/{id:\\d+}/").permitAll()                 
+                    .requestMatchers("/employers/{id:\\d+}/").permitAll()  
+                    .requestMatchers("/auth/forgot-password", "/auth/reset-password").permitAll()
                     
                     // 2. AUTHENTICATION & STATIC ASSETS
                     .requestMatchers("/auth/login", "/auth/register/**","/auth/verify",  "/login").permitAll()
