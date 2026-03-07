@@ -230,12 +230,19 @@ public class JobSearchServiceImpl implements JobSearchService {
     }
     
     /**
-     * Convert Job to JobResponse
+     * Convert Job to JobResponse - WITH COMPANY NAME FROM EMPLOYER
      */
     private JobResponse convertToResponse(Job job) {
         if (job == null) return null;
         
         try {
+            // Get company name from employer
+            String companyName = null;
+            if (job.getEmployer() != null) {
+                companyName = job.getEmployer().getCompanyName();
+                log.debug("Job {} company name: {}", job.getId(), companyName);
+            }
+            
             JobResponse.JobResponseBuilder builder = JobResponse.builder()
                 .id(job.getId())
                 .title(job.getTitle() != null ? job.getTitle() : "Untitled")
@@ -251,7 +258,8 @@ public class JobSearchServiceImpl implements JobSearchService {
                 .jobType(job.getJobType())
                 .status(job.getStatus())
                 .deadline(job.getDeadline())
-                .viewCount(job.getViewCount());
+                .viewCount(job.getViewCount())
+                .companyName(companyName);  // THIS SETS THE COMPANY NAME
             
             return builder.build();
             

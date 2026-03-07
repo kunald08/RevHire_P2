@@ -35,4 +35,5 @@ public class JobResponse {
     private LocalDate deadline;
 
     private Long viewCount;
+    private String companyName;
 }

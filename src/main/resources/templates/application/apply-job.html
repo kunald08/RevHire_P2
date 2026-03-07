@@ -174,6 +174,11 @@
             document.querySelectorAll('input[name="resumeId"]').forEach(radio => {
                 radio.checked = false;
             });
+            
+            // Remove selected class from all resume cards
+            document.querySelectorAll('.resume-card').forEach(card => {
+                card.classList.remove('selected');
+            });
         });
         
         // Handle existing resume selection
@@ -183,6 +188,12 @@
                     // Clear file input when selecting existing resume
                     document.getElementById('newResume').value = '';
                     document.getElementById('selectedFileName').textContent = '';
+                    
+                    // Update selected card styling
+                    document.querySelectorAll('.resume-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    this.closest('.resume-card').classList.add('selected');
                 }
             });
         });
@@ -193,7 +204,7 @@
         
         fileUploadArea.addEventListener('click', function(e) {
             // Don't trigger if clicking on button
-            if (e.target.tagName !== 'BUTTON') {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
                 fileInput.click();
             }
         });
@@ -219,6 +230,11 @@
                 // Clear any selected resumeId
                 document.querySelectorAll('input[name="resumeId"]').forEach(radio => {
                     radio.checked = false;
+                });
+                
+                // Remove selected class from all resume cards
+                document.querySelectorAll('.resume-card').forEach(card => {
+                    card.classList.remove('selected');
                 });
             }
         });

@@ -42,8 +42,8 @@ public class ApplicationController {
 
     private final ApplicationService applicationService;
     private final UserRepository userRepository;
-    private final ResumeRepository resumeRepository;      // ADD THIS
-    private final ProfileRepository profileRepository;    // ADD THIS
+    private final ResumeRepository resumeRepository;
+    private final ProfileRepository profileRepository;
 
     @GetMapping("/login")
     public String redirectToAuthLogin() {
@@ -76,21 +76,28 @@ public class ApplicationController {
             List<Resume> userResumes = List.of();
             
             try {
+                // Find profile by user ID
                 Optional<JobSeekerProfile> profileOpt = profileRepository.findByUserId(userId);
                 
                 if (profileOpt.isPresent()) {
                     JobSeekerProfile profile = profileOpt.get();
                     log.info("Found profile with ID: {} for user ID: {}", profile.getId(), userId);
                     
+                    // Get resumes for this profile
                     userResumes = resumeRepository.findByProfileId(profile.getId());
                     log.info("Found {} resumes for profile", userResumes.size());
                     
+                    // Log each resume for debugging
                     for (Resume resume : userResumes) {
                         log.info("Resume ID: {}, FileName: {}, Created: {}", 
                             resume.getId(), resume.getFileName(), resume.getCreatedAt());
                     }
                 } else {
                     log.warn("No profile found for user ID: {}", userId);
+                    
+                    // Try to find resumes directly
+                    List<Resume> allResumes = resumeRepository.findAll();
+                    log.info("Total resumes in system: {}", allResumes.size());
                 }
             } catch (Exception e) {
                 log.error("Error fetching resumes: {}", e.getMessage(), e);
