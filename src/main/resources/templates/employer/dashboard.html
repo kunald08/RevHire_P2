@@ -64,12 +64,14 @@
 		</div>
 
         <div class="col-md-3">
-            <div class="card shadow-sm text-center border-0">
+			<a th:href="@{/employer/jobs/review}" class="text-decoration-none text-dark">
+            <div class="card shadow-sm text-center border-0 dashboard-card">
                 <div class="card-body">
                     <h6 class="text-muted">Pending Reviews</h6>
                     <h3 class="fw-bold text-warning" th:text="${stats.pendingReviews}">0</h3>
                 </div>
             </div>
+			</a>
         </div>
     </div>
 

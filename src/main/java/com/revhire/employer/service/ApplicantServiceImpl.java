@@ -45,9 +45,26 @@ public class ApplicantServiceImpl implements ApplicantService {
                         app.getStatus().name(),
                         app.getAppliedAt(),
                         app.getEmployerComment() != null ? app.getEmployerComment() : "-",
-                        "-"
+                        getNoteContent(app.getId())
                 ))
                 .collect(Collectors.toList());
+    }
+ // Inside ApplicantServiceImpl.java
+
+    private ApplicantRowDTO mapToDTO(Application app) {
+        // Fetch the note for this specific application
+        // Ensure findByApplicationId exists in your ApplicantNoteRepository
+        var note = applicantNoteRepository.findByApplicationId(app.getId()).orElse(null);
+        
+        return new ApplicantRowDTO(
+                app.getId(),
+                app.getSeeker().getName(),
+                app.getStatus().name(),
+                app.getAppliedAt(),
+                app.getEmployerComment() != null ? app.getEmployerComment() : "-",
+                // This is the crucial part:
+                (note != null && note.getNote() != null && !note.getNote().isEmpty()) ? note.getNote() : "No notes yet"
+        );
     }
 
     @Override
@@ -67,8 +84,9 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
     public Page<Job> getEmployerJobsWithApplications(String email, String keyword, Pageable pageable) {
-        String searchKeyword = (keyword == null) ? "" : keyword.trim();
-        return applicantRepository.findByEmployerUserEmailAndTitleContainingIgnoreCase(email, searchKeyword, pageable);
+        // Ensure we handle empty keywords to avoid SQL LIKE issues
+        String searchKeyword = (keyword == null || keyword.isEmpty()) ? "" : keyword.trim();
+        return jobRepository.findByEmployerUserEmailAndTitleContainingIgnoreCase(email, searchKeyword, pageable);
     }
 
     @Override
@@ -199,5 +217,52 @@ public class ApplicantServiceImpl implements ApplicantService {
             // Create new
             addNote(appId, noteText, employerEmail);
         }
+    }
+    
+    @Override
+    public Page<Job> getJobsWithPendingApplications(String email, String keyword, Pageable pageable) {
+        List<ApplicationStatus> pendingStatuses = List.of(
+            ApplicationStatus.APPLIED, 
+            ApplicationStatus.UNDER_REVIEW
+        );
+        
+        // Handle empty keyword
+        String searchKeyword = (keyword == null || keyword.isEmpty()) ? "" : keyword.trim();
+        
+        // Pass everything to the repository
+        return jobRepository.findPendingJobsByEmailAndStatusAndTitle(
+                email, 
+                pendingStatuses, 
+                searchKeyword, 
+                pageable
+        );
+    }
+    @Override
+    public List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses) {
+        return applicationRepository.findByJobId(jobId).stream()
+                .filter(app -> statuses.contains(app.getStatus())) // Filter by status
+                .map(app -> new ApplicantRowDTO(
+                        app.getId(),
+                        app.getSeeker().getName(),
+                        app.getStatus().name(),
+                        app.getAppliedAt(),
+                        app.getEmployerComment() != null ? app.getEmployerComment() : "-",
+                       getNoteContent(app.getId())
+                ))
+                .collect(Collectors.toList());
+    }
+    @Override
+    public long getPendingApplicantCount(Long jobId) {
+        List<ApplicationStatus> pendingStatuses = List.of(
+            ApplicationStatus.APPLIED, 
+            ApplicationStatus.UNDER_REVIEW
+        );
+        return applicantRepository.countByJobIdAndStatusIn(jobId, pendingStatuses);
+    }
+    private String getNoteContent(Long appId) {
+        return applicantNoteRepository.findByApplicationId(appId)
+                .map(ApplicantNote::getNote) // Replace getNote() with your actual getter
+                .filter(n -> !n.isEmpty())
+                .orElse("No notes yet");
     }
 }

@@ -172,6 +172,6 @@ public class JobController {
         model.addAttribute("jobs",
                 jobService.getActiveJobsByEmployer(email));
 
-        return "job/my-jobs";   // reuse same page
+        return "job/my-jobs";   
     }
 }

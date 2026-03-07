@@ -10,7 +10,7 @@ public class ApplicantRowDTO {
     private LocalDateTime appliedDate;
     private String employerComment;
     private String reviewerNote;
-
+    private Long noteId;
     public ApplicantRowDTO(Long applicationId,
                             String applicantName,
                             String status,

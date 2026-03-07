@@ -1,6 +1,7 @@
 package com.revhire.employer.service;
 
 import com.revhire.application.entity.Application;
+import com.revhire.common.enums.ApplicationStatus;
 import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.job.entity.Job;
@@ -36,4 +37,8 @@ public interface ApplicantService {
     void updateNote(Long noteId, String newNote);
     ApplicationNoteDTO getNoteForApplication(Long appId);
     void saveOrUpdateNote(Long appId, String noteText, String employerEmail);
+    Page<Job> getJobsWithPendingApplications(String email, String keyword, Pageable pageable);
+    long getPendingApplicantCount(Long jobId);
+ // Add to ApplicantService.java
+    List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses);
 }

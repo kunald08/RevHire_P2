@@ -1,5 +1,5 @@
 package com.revhire.employer.controller;
-import com.revhire.application.entity.Application;
+import com.revhire.common.enums.ApplicationStatus;
 import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.employer.dto.ApplicationNoteDTO;
@@ -10,8 +10,9 @@ import com.revhire.profile.service.ProfileService;
 import com.revhire.employer.dto.BulkActionDTO;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,7 +41,7 @@ public class ApplicantController {
             @RequestParam(defaultValue = "5") int size,
             Model model,
             Authentication authentication) {
-
+    	 System.out.println("DEBUG: Searching with keyword: " + keyword+"'");
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Job> jobsPage =
@@ -52,7 +53,8 @@ public class ApplicantController {
         model.addAttribute("jobsPage", jobsPage);
         model.addAttribute("keyword", keyword);
         model.addAttribute("size", size);
-
+        model.addAttribute("isReviewMode", false);
+       
         return "employer/employer-jobs-list";
     }
 
@@ -75,43 +77,64 @@ public class ApplicantController {
         model.addAttribute("totalApplicants",
                 applicantService.getApplicantCount(jobId));
         model.addAttribute("jobId", jobId);
+        model.addAttribute("isReviewMode", false);
 
         return "employer/applicant-list";
     }
-
     
-    @PostMapping("/jobs/{jobId}/applicants/bulk-shortlist")
+ // This single method now handles both standard jobs and review mode jobs
+    @PostMapping({"/jobs/{jobId}/applicants/bulk-{action}", "/jobs/review/{jobId}/applicants/bulk-{action}"})
     @ResponseBody
-    public String bulkShortlist(
-            @PathVariable Long jobId,
+    public String bulkUpdateStatus(
+            @PathVariable Long jobId, 
+            @PathVariable String action, 
             @RequestBody BulkActionDTO dto) {
+        
+        // Normalize action string if necessary (e.g., lowercase to uppercase)
+        String formattedAction = action.toUpperCase(); 
 
         applicantService.bulkUpdateStatus(
-                dto.getApplicationIds(),
-                "SHORTLIST",
+                dto.getApplicationIds(), 
+                formattedAction, 
                 dto.getComment()
         );
 
-        return "Applicants shortlisted successfully";
+        return "Applicants " + action.toLowerCase() + "ed successfully";
     }
 
- // =====================================================
- // 4️⃣ Bulk Reject
- // =====================================================
- @PostMapping("/jobs/{jobId}/applicants/bulk-reject")
- @ResponseBody
- public String bulkReject(
-         @PathVariable Long jobId,
-         @RequestBody BulkActionDTO dto) {
-
-     applicantService.bulkUpdateStatus(
-             dto.getApplicationIds(),
-             "REJECT",
-             dto.getComment()
-     );
-
-     return "Applicants rejected successfully";
- }
+    
+//    @PostMapping("/jobs/{jobId}/applicants/bulk-shortlist")
+//    @ResponseBody
+//    public String bulkShortlist(
+//            @PathVariable Long jobId,
+//            @RequestBody BulkActionDTO dto) {
+//
+//        applicantService.bulkUpdateStatus(
+//                dto.getApplicationIds(),
+//                "SHORTLIST",
+//                dto.getComment()
+//        );
+//
+//        return "Applicants shortlisted successfully";
+//    }
+//
+// // =====================================================
+// // 4️⃣ Bulk Reject
+// // =====================================================
+// @PostMapping("/jobs/{jobId}/applicants/bulk-reject")
+// @ResponseBody
+// public String bulkReject(
+//         @PathVariable Long jobId,
+//         @RequestBody BulkActionDTO dto) {
+//
+//     applicantService.bulkUpdateStatus(
+//             dto.getApplicationIds(),
+//             "REJECT",
+//             dto.getComment()
+//     );
+//
+//     return "Applicants rejected successfully";
+// }
     // =====================================================
     // 4️⃣ View Applicant Profile
     // URL: /employer/applicants/{appId}
@@ -200,4 +223,73 @@ public class ApplicantController {
         // Redirect back to the specific applicant profile
         return "redirect:/employer/applicants/" + appId;
     }
+ // In ApplicantController.java
+//    @GetMapping("/jobs/review")
+//    public String getPendingReviews(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "5") int size,
+//            Model model,
+//            Authentication authentication) {
+//
+//        Pageable pageable = PageRequest.of(page, size);
+//        
+//        // Add null-safe check if authentication is missing
+//        String email = authentication != null ? authentication.getName() : "";
+//        
+//        Page<Job> jobsPage = applicantService.getJobsWithPendingApplications(email, pageable);
+//
+//        model.addAttribute("jobsPage", jobsPage);
+//        model.addAttribute("keyword", ""); 
+//        model.addAttribute("size", size);
+//        model.addAttribute("isReviewMode", true);
+//
+//        return "employer/employer-jobs-list"; 
+//    }
+    
+    @GetMapping("/jobs/review")
+    public String getPendingReviews(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            Model model,
+            Authentication authentication) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        String email = authentication != null ? authentication.getName() : "";
+        
+        // 1. Get filtered jobs
+        Page<Job> jobsPage = applicantService.getJobsWithPendingApplications(email, keyword, pageable);
+        
+        // 2. Pre-calculate pending counts for this specific page
+        Map<Long, Long> pendingCounts = new HashMap<>();
+        for (Job job : jobsPage.getContent()) {
+            pendingCounts.put(job.getId(), applicantService.getPendingApplicantCount(job.getId()));
+        }
+        
+        model.addAttribute("jobsPage", jobsPage);
+        model.addAttribute("pendingCounts", pendingCounts);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("size", size);
+        model.addAttribute("isReviewMode", true);
+
+        return "employer/employer-jobs-list"; 
+    }
+    @GetMapping("/jobs/review/{id}/applicants")
+    public String getReviewApplicants(@PathVariable Long id, Model model) {
+        List<ApplicationStatus> pendingStatuses = List.of(
+                ApplicationStatus.APPLIED, 
+                ApplicationStatus.UNDER_REVIEW
+        );
+        
+        List<ApplicantRowDTO> applicants = applicantService.getFilteredApplicantsByJob(id, pendingStatuses);
+        
+        model.addAttribute("applicants", applicants);
+        model.addAttribute("jobTitle", applicantService.getJobTitle(id));
+        model.addAttribute("jobId", id);
+        model.addAttribute("isReviewMode", true); // Used in HTML to show/hide certain UI elements
+        
+        return "employer/applicant-list"; 
+    }
+    
+   
 }
