@@ -12,10 +12,10 @@ public class ApplicationResponse {
     private Long id;
     private Long jobId;
     private String jobTitle;
-    private String companyName;  // Add this field
+    private String companyName;
     private String seekerName;
     private String seekerEmail;
-    private String resumeFileName;
+    private String resumeFileName;  // This field MUST exist
     private String coverLetter;
     private ApplicationStatus status;
     private String employerComment;

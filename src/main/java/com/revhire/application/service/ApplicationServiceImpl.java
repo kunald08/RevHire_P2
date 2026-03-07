@@ -13,6 +13,8 @@ import com.revhire.exception.ResourceNotFoundException;
 import com.revhire.exception.UnauthorizedException;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
+import com.revhire.profile.entity.Resume;
+import com.revhire.profile.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -33,13 +35,18 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
+    private final ResumeRepository resumeRepository;
 
     @Override
     @Transactional
     public ApplicationResponse applyForJob(Long seekerId, ApplicationRequest request) {
+        log.info("========== APPLY FOR JOB ==========");
+        log.info("Seeker ID: {}, Job ID: {}, Resume ID from request: {}", 
+            seekerId, 
+            request != null ? request.getJobId() : null,
+            request != null ? request.getResumeId() : null);
+        
         try {
-            log.info("Applying for job - seekerId: {}, jobId: {}", seekerId, request != null ? request.getJobId() : null);
-
             // Validate inputs
             if (seekerId == null) {
                 throw new BadRequestException("Please login to apply");
@@ -55,21 +62,43 @@ public class ApplicationServiceImpl implements ApplicationService {
 
             // Get job
             Job job = jobRepository.findById(request.getJobId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + request.getJobId()));
+            log.info("Found job: {} (ID: {})", job.getTitle(), job.getId());
 
             // Get user
             User user = userRepository.findById(seekerId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + seekerId));
+            log.info("Found user: {} (ID: {})", user.getEmail(), user.getId());
 
-            // Create application
-            Application application = new Application();
-            application.setJob(job);
-            application.setSeeker(user);
-            application.setCoverLetter(request.getCoverLetter());
-            application.setStatus(ApplicationStatus.APPLIED);
+            // Handle resume - THIS IS CRITICAL
+            Resume resume = null;
+            if (request.getResumeId() != null) {
+                log.info("Attempting to fetch resume with ID: {}", request.getResumeId());
+                resume = resumeRepository.findById(request.getResumeId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Resume not found with id: " + request.getResumeId()));
+                log.info("Found resume: {} (ID: {}, Profile ID: {})", 
+                    resume.getFileName(), resume.getId(), 
+                    resume.getProfile() != null ? resume.getProfile().getId() : "null");
+            } else {
+                log.warn("No resume ID provided in request - application will have no resume");
+            }
+
+            // Create application with resume
+            Application application = Application.builder()
+                    .job(job)
+                    .seeker(user)
+                    .resume(resume)  // This sets the resume_id
+                    .coverLetter(request.getCoverLetter())
+                    .status(ApplicationStatus.APPLIED)
+                    .build();
+
+            log.info("Application built with resume: {}", application.getResume() != null ? 
+                application.getResume().getId() : "null");
 
             Application saved = applicationRepository.save(application);
-            log.info("Application saved with id: {}", saved.getId());
+            log.info("✅ Application saved with ID: {}, Resume ID in saved application: {}", 
+                saved.getId(), 
+                saved.getResume() != null ? saved.getResume().getId() : "NULL");
 
             return convertToResponse(saved);
 
@@ -79,6 +108,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         } catch (Exception e) {
             log.error("Unexpected error applying for job: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to apply: " + e.getMessage());
+        } finally {
+            log.info("========== APPLY FOR JOB END ==========");
         }
     }
 
@@ -116,6 +147,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                 throw new UnauthorizedException("Access denied");
             }
 
+            log.info("Application details - Resume ID: {}", 
+                application.getResume() != null ? application.getResume().getId() : "null");
+
             return convertToResponse(application);
 
         } catch (BadRequestException | ResourceNotFoundException | UnauthorizedException e) {
@@ -130,86 +164,44 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     @Transactional
     public void withdrawApplication(Long applicationId, Long seekerId, WithdrawRequest request) {
-        log.info("========== WITHDRAW ATTEMPT ==========");
-        log.info("Attempting to withdraw application ID: {} for user ID: {}", applicationId, seekerId);
+        log.info("Withdrawing application - id: {}, seekerId: {}", applicationId, seekerId);
         
         try {
-            // Validate inputs
-            if (applicationId == null) {
-                log.error("Application ID is null");
-                throw new BadRequestException("Application ID is required");
-            }
-            if (seekerId == null) {
-                log.error("User ID is null");
-                throw new BadRequestException("User ID is required");
+            if (applicationId == null || seekerId == null) {
+                throw new BadRequestException("Invalid request");
             }
 
-            // Find the application
-            log.info("Searching for application with ID: {}", applicationId);
             Application application = applicationRepository.findById(applicationId)
-                    .orElseThrow(() -> {
-                        log.error("No application found with ID: {}", applicationId);
-                        // Log all available application IDs for debugging
-                        List<Application> allApps = applicationRepository.findAll();
-                        log.info("Available application IDs in database: {}", 
-                            allApps.stream().map(a -> a.getId()).toList());
-                        return new ResourceNotFoundException("Application not found with id: " + applicationId);
-                    });
+                    .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + applicationId));
 
-            log.info("Found application: ID={}, Status={}, SeekerID={}", 
-                application.getId(), application.getStatus(), application.getSeeker().getId());
-
-            // Verify ownership
             if (!application.getSeeker().getId().equals(seekerId)) {
-                log.error("Ownership mismatch: Application owner ID={}, Requesting user ID={}", 
-                    application.getSeeker().getId(), seekerId);
-                throw new UnauthorizedException("You don't have permission to withdraw this application");
+                throw new UnauthorizedException("Access denied");
             }
 
-            // Check if already withdrawn
             if (application.getStatus() == ApplicationStatus.WITHDRAWN) {
-                log.error("Application {} is already withdrawn", applicationId);
                 throw new BadRequestException("Application is already withdrawn");
             }
 
-            // Check if can withdraw (not shortlisted or rejected)
             if (application.getStatus() == ApplicationStatus.SHORTLISTED) {
-                log.error("Application {} is shortlisted and cannot be withdrawn", applicationId);
                 throw new BadRequestException("Cannot withdraw a shortlisted application");
             }
             if (application.getStatus() == ApplicationStatus.REJECTED) {
-                log.error("Application {} is rejected and cannot be withdrawn", applicationId);
                 throw new BadRequestException("Cannot withdraw a rejected application");
             }
 
-            // Update status
-            log.info("Updating application {} status from {} to WITHDRAWN", applicationId, application.getStatus());
             application.setStatus(ApplicationStatus.WITHDRAWN);
             
-            // Set withdraw reason
             String reason = (request != null && request.getReason() != null && !request.getReason().isEmpty()) 
                 ? request.getReason() : "Withdrawn by user";
             application.setWithdrawReason(reason);
             application.setUpdatedAt(LocalDateTime.now());
-            log.info("Withdraw reason: {}", reason);
 
-            // Save
             applicationRepository.save(application);
             
-            log.info("✅ Application {} withdrawn successfully", applicationId);
-            log.info("========== WITHDRAW SUCCESS ==========");
+            log.info("Application {} withdrawn successfully", applicationId);
 
-        } catch (ResourceNotFoundException e) {
-            log.error("❌ Application not found: {}", e.getMessage());
-            throw e;
-        } catch (BadRequestException e) {
-            log.error("❌ Bad request: {}", e.getMessage());
-            throw e;
-        } catch (UnauthorizedException e) {
-            log.error("❌ Unauthorized: {}", e.getMessage());
-            throw e;
         } catch (Exception e) {
-            log.error("❌ Unexpected error withdrawing application: {}", e.getMessage(), e);
+            log.error("Error withdrawing application: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to withdraw application: " + e.getMessage(), e);
         }
     }
@@ -254,13 +246,20 @@ public class ApplicationServiceImpl implements ApplicationService {
                     .appliedAt(application.getAppliedAt())
                     .updatedAt(application.getUpdatedAt());
 
+            // CRITICAL: Resume details - check if resume exists
+            if (application.getResume() != null) {
+                builder.resumeFileName(application.getResume().getFileName());
+                log.debug("Added resume filename to response: {}", application.getResume().getFileName());
+            } else {
+                log.debug("No resume found for application {}", application.getId());
+            }
+
             // Job details
             if (application.getJob() != null) {
                 builder.jobId(application.getJob().getId());
                 builder.jobTitle(application.getJob().getTitle() != null ? 
                         application.getJob().getTitle() : "Unknown Job");
 
-                // Company name from employer
                 if (application.getJob().getEmployer() != null) {
                     builder.companyName(application.getJob().getEmployer().getCompanyName() != null ? 
                             application.getJob().getEmployer().getCompanyName() : "Unknown Company");
