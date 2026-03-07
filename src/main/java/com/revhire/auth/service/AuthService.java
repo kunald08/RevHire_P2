@@ -17,5 +17,6 @@ public interface AuthService {
     void resendRegistrationOtp(String email);
     
     long getRemainingSeconds(String email);
+    int getResendCount(String email);
     
 }

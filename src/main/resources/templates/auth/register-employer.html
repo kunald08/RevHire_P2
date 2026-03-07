@@ -33,14 +33,14 @@
                             <input type="email" th:field="*{email}" class="form-control" placeholder="hr@company.com" required>
                         </div>
 						<div class="mb-3">
-						    <label for="password" class="form-label">Password</label>
-						    <input type="password" id="password" name="password" class="form-control" 
-						           onkeyup="checkPasswordStrength(this.value)" required>
-						    
-						    <div class="progress mt-2" style="height: 5px;">
-						        <div id="strength-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+						    <label for="passwordInput" class="form-label">Password</label>
+						    <div class="input-group">
+						        <input type="password" th:field="*{password}" id="passwordInput" 
+						               class="form-control" onkeyup="checkPasswordStrength(this.value)" required>
+						        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+						            <i class="bi bi-eye" id="eyeIcon"></i>
+						        </button>
 						    </div>
-						    <small id="strength-text" class="text-muted">Enter a password</small>
 						</div>
 						                        <div class="mb-3">
                             <label class="form-label">Company Phone</label>

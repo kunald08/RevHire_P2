@@ -5,39 +5,38 @@ function setupPasswordToggle(buttonId, inputId, iconId) {
     const eyeIcon = document.getElementById(iconId);
 
     if (toggleBtn && passwordInput && eyeIcon) {
-        toggleBtn.addEventListener('click', function () {
-            // Toggle the type attribute
+        toggleBtn.addEventListener('click', function (e) {
+            e.preventDefault(); // Prevent accidental form submission
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             
-            // Toggle the Bootstrap icon classes
             eyeIcon.classList.toggle('bi-eye');
             eyeIcon.classList.toggle('bi-eye-slash');
         });
     }
 }
 
-// Initialize when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. Setup Toggle
     setupPasswordToggle('togglePassword', 'passwordInput', 'eyeIcon');
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    const registrationForm = document.querySelector('form[th\\:action*="/auth/register"]');
+    // 2. Setup Loading State
+    // Target any form that submits to /auth/register
+    const registrationForms = document.querySelectorAll('form');
     const regBtn = document.getElementById('regBtn');
     const btnText = document.getElementById('btnText');
     const btnSpinner = document.getElementById('btnSpinner');
 
-    if (registrationForm) {
-        registrationForm.addEventListener('submit', function() {
-            // 1. Disable the button to prevent double submission
-            regBtn.disabled = true;
-
-            // 2. Switch text to "Sending..." and show spinner
-            btnText.innerText = "Sending Verification Code...";
-            btnSpinner.classList.remove('d-none');
-            
-            // The form will now proceed to submit to the backend
-        });
-    }
+    registrationForms.forEach(form => {
+        // Check if the action contains '/auth/register'
+        if (form.getAttribute('action') && form.getAttribute('action').includes('/auth/register')) {
+            form.addEventListener('submit', function() {
+                if (regBtn) {
+                    regBtn.disabled = true;
+                    if (btnText) btnText.innerText = "Sending Verification Code...";
+                    if (btnSpinner) btnSpinner.classList.remove('d-none');
+                }
+            });
+        }
+    });
 });

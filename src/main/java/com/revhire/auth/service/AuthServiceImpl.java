@@ -150,44 +150,48 @@ public class AuthServiceImpl implements AuthService {
         pendingRegistrations.keySet().removeIf(email -> !otpStore.containsKey(email));
     }
 
-    @Override
-    @Transactional // Ensures the otpStore update and email logic are bundled
-    public void resendRegistrationOtp(String email) {
-        long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
-        System.out.println("DEBUG: Resend requested for: " + email);
-
-        if (userRepository.existsByEmail(email)) {
-            System.out.println("DEBUG: User exists. Sending 'Already Registered' mail.");
-            
-            // 1. Create dummy data to keep the timer running
-            otpStore.put(email, new OtpData("000000", expiryTime, 0, true));
-            
-            // 2. Trigger the email
-            sendAlreadyRegisteredEmail(email);
-            return; 
-        }
-
-        // Normal flow for new users
-        RegisterRequest request = pendingRegistrations.get(email);
-        OtpData oldData = otpStore.get(email);
-
-        if (request != null && oldData != null) {
-            if (oldData.resendCount >= 3) {
-                throw new RuntimeException("Maximum resend attempts reached.");
-            }
-
-            String newOtp = String.format("%06d", new Random().nextInt(999999));
-            otpStore.put(email, new OtpData(newOtp, expiryTime, oldData.resendCount + 1, false));
-
-            sendHtmlEmail(email, "RevHire - New Verification Code", "Your New Code", 
-                "As requested, here is your new verification code.", newOtp, null, null);
-        } else {
-            // Log this to see if the session is actually null
-            System.out.println("DEBUG: Resend failed - No pending registration for " + email);
-            throw new RuntimeException("Registration session expired. Please register again.");
-        }
-    }
-
+   @Override
+	@Transactional
+	public void resendRegistrationOtp(String email) {
+	    long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
+	    OtpData oldData = otpStore.get(email);
+	
+	    // 1. Check limit
+	    if (oldData != null && oldData.resendCount >= 3) {
+	        throw new RuntimeException("LIMIT_REACHED");
+	    }
+	
+	    int nextCount = (oldData != null) ? oldData.resendCount + 1 : 1;
+	    int remaining = 3 - nextCount;
+	
+	    // 2. Handle Existing User
+	    if (userRepository.existsByEmail(email)) {
+	        otpStore.put(email, new OtpData("000000", expiryTime, nextCount, true));
+	        sendAlreadyRegisteredEmail(email);
+	        // Throwing a custom message allows the frontend to see the count even on "success"
+	        throw new RuntimeException("SENT_REMAINING:" + remaining); 
+	    }
+	
+	    // 3. Handle Real User
+	    RegisterRequest request = pendingRegistrations.get(email);
+	    if (request != null && oldData != null) {
+	        String newOtp = String.format("%06d", new Random().nextInt(999999));
+	        otpStore.put(email, new OtpData(newOtp, expiryTime, nextCount, false));
+	        sendHtmlEmail(email, "RevHire - New Verification Code", "Your New Code", 
+	            "As requested, here is your new verification code.", newOtp, null, null);
+	        
+	        // Throwing this helps the AJAX handler update the "Attempts Left" label
+	        throw new RuntimeException("SENT_REMAINING:" + remaining);
+	    } else {
+	        throw new RuntimeException("SESSION_EXPIRED");
+	    }
+	}
+   
+   @Override
+   public int getResendCount(String email) {
+       OtpData data = otpStore.get(email);
+       return (data != null) ? data.resendCount : 0;
+   }
     @Override
     public long getRemainingSeconds(String email) {
         OtpData data = otpStore.get(email);

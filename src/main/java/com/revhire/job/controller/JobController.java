@@ -65,12 +65,7 @@ public class JobController {
 
         return "job/my-jobs";
     }
-<<<<<<< HEAD
 
-
-=======
-    
->>>>>>> develop
     @GetMapping("/{id:\\d+}")
     public String viewJob(@PathVariable Long id,
                           Authentication authentication,

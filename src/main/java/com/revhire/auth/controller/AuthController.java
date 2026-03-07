@@ -70,6 +70,11 @@ public class AuthController {
         long remaining = authService.getRemainingSeconds(email);
         model.addAttribute("secondsRemaining", remaining); 
         
+        // NEW: Fetch and add the current resend count
+        // This will return 0, 1, 2, or 3 based on your otpStore
+        int count = authService.getResendCount(email);
+        model.addAttribute("resendCount", count);
+        
         return "auth/verify-otp";
     }
     
