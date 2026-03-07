@@ -6,7 +6,6 @@ import com.revhire.job.entity.Job;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +14,7 @@ import java.util.List;
 
 public interface JobRepository extends JpaRepository<Job, Long> {
 
+	// OLD method (for dashboard)
     List<Job> findByEmployer(Employer employer);
 
     long countByEmployerId(Long employerId);
@@ -35,4 +35,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             String email, 
             String title, 
             Pageable pageable);
+
+    // NEW method (for pagination)
+    Page<Job> findByEmployer(Employer employer, Pageable pageable);
+
 }
+
+

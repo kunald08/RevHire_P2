@@ -2,133 +2,175 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{fragments/layout :: layout(~{::body})}">
 
-<head>
-    <title>Job Detail</title>
-</head>
-
 <body>
 
-<div class="container mt-4">
+<style>
+    body { background: #eef2ff; }
 
-    <!-- SUCCESS MESSAGE -->
-    <div th:if="${success}" 
-         class="alert alert-success alert-dismissible fade show">
-        <span th:text="${success}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+    /* HEADER */
+    .job-header {
+        background: linear-gradient(120deg,#4f46e5,#7c3aed);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
 
-    <!-- Back Button -->
+    /* ACTION BAR */
+    .action-bar {
+        background: white;
+        padding: 18px;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* JOB CARDS */
+    .job-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+    }
+
+    /* INFO TILES */
+    .info-tile {
+        background: white;
+        border-radius: 10px;
+        padding: 18px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: 0.2s;
+        height: 100%;
+    }
+
+    .info-tile:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+    }
+
+    .tile-icon { font-size: 22px; margin-bottom: 6px; color: #6366f1; }
+    .tile-label { font-size: 13px; color: #6b7280; font-weight: 600; }
+    .tile-value { font-size: 16px; font-weight: 600; color: #111827; }
+
+    /* SECTION TITLES */
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #1f2937;
+        border-left: 4px solid #6366f1;
+        padding-left: 10px;
+    }
+
+    /* BADGES */
+    .badge-active { background: #16a34a; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+    .badge-closed { background: #f59e0b; padding: 6px 12px; border-radius: 20px; font-size: 13px; color: black; }
+    .badge-filled { background: #dc2626; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+</style>
+
+<div class="container mt-4" style="max-width:1100px;">
+
     <div class="mb-3">
         <a th:href="@{/jobs/my}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Back to My Jobs
+            ← Back to My Jobs
         </a>
     </div>
 
-    <!-- Job Title -->
-    <h2 class="fw-bold mb-3" th:text="${job.title}"></h2>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-
-            <div th:if="${job.description != null}">
-                <strong>Description:</strong>
-                <p th:text="${job.description}"></p>
-            </div>
-
-            <div class="row mt-3">
-                <div class="col-md-6" th:if="${job.location != null}">
-                    <strong>Location:</strong>
-                    <p th:text="${job.location}"></p>
-                </div>
-
-                <div class="col-md-6">
-                    <strong>Status:</strong>
-					<!--
-						 * The view count update here triggers a Hibernate 'dirty' state.
-						 * * WHY REGEX CHANGED THINGS: Adding {id:[0-9]+} in SecurityConfig enforced 
-						 * stricter path binding. When combined with this database update, Hibernate 
-						 * often provides a 'Proxy' of the Job entity to Thymeleaf.
-						 * * UI IMPACT: Because of this Proxy behavior, the UI must compare Enums as 
-						 * Strings to avoid a ClassCastException (EL1013E) during rendering.
-					-->
-					<span class="badge"
-					      th:classappend="
-					          ${#strings.toString(job.status) == 'ACTIVE'} ? ' bg-success' :
-					          (${#strings.toString(job.status) == 'CLOSED'} ? ' bg-warning text-dark' :
-					          ' bg-danger')"
-					      th:text="${job.status}">
-					</span>
-                </div>
-            </div>
-
-            <div class="row mt-3"
-                 th:if="${job.salaryMin != null or job.salaryMax != null}">
-                <div class="col-md-6">
-                    <strong>Salary Range:</strong>
-                    <p>
-                        <span th:text="${job.salaryMin}"></span>
-                        <span th:if="${job.salaryMin != null and job.salaryMax != null}"> - </span>
-                        <span th:text="${job.salaryMax}"></span>
-                    </p>
-                </div>
-            </div>
-
-            <div class="row mt-3" th:if="${job.jobType != null}">
-                <div class="col-md-6">
-                    <strong>Job Type:</strong>
-                    <p th:text="${job.jobType}"></p>
-                </div>
-            </div>
-
-            <div class="row mt-3" th:if="${job.deadline != null}">
-                <div class="col-md-6">
-                    <strong>Application Deadline:</strong>
-                    <p th:text="${job.deadline}"></p>
-                </div>
-            </div>
-
+    <div class="job-header">
+        <h2 class="fw-bold mb-2" th:text="${job.title}"></h2>
+        <div class="mt-2">
+            <span th:if="${#strings.toString(job.status) == 'ACTIVE'}" class="badge badge-active">ACTIVE</span>
+            <span th:if="${#strings.toString(job.status) == 'CLOSED'}" class="badge badge-closed">CLOSED</span>
+            <span th:if="${#strings.toString(job.status) == 'FILLED'}" class="badge badge-filled">FILLED</span>
         </div>
     </div>
 
-    <div class="d-flex flex-wrap gap-2">
-
-        <a th:href="@{/jobs/{id}/edit(id=${job.id})}"
-           class="btn btn-outline-primary">
-            <i class="bi bi-pencil"></i> Edit
+    <div class="action-bar">
+        <a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="btn btn-primary">
+            ✏ Edit Job
         </a>
-	<!--
-	
-	 * The view count update here triggers a Hibernate 'dirty' state.
-	 * * WHY REGEX CHANGED THINGS: Adding {id:[0-9]+} in SecurityConfig enforced 
-	 * stricter path binding. When combined with this database update, Hibernate 
-	 * often provides a 'Proxy' of the Job entity to Thymeleaf.
-	 * * UI IMPACT: Because of this Proxy behavior, the UI must compare Enums as 
-	 * Strings to avoid a ClassCastException (EL1013E) during rendering.
 
-		-->
-		<form th:if="${#strings.toString(job.status) == 'ACTIVE'}"
-		      th:action="@{/jobs/{id}/close(id=${job.id})}"
-		      method="post">
-		    <button type="submit" class="btn btn-warning">Close</button>
-		</form>
+        <form th:if="${#strings.toString(job.status) == 'ACTIVE'}" th:action="@{/jobs/{id}/close(id=${job.id})}" method="post">
+            <button type="submit" class="btn btn-warning">⛔ Close Job</button>
+        </form>
 
-		<form th:if="${#strings.toString(job.status) == 'CLOSED'}"
-		      th:action="@{/jobs/{id}/reopen(id=${job.id})}"
-		      method="post">
-		    <button type="submit" class="btn btn-success">Reopen</button>
-		</form>
+        <form th:if="${#strings.toString(job.status) == 'ACTIVE'}" th:action="@{/jobs/{id}/fill(id=${job.id})}" method="post">
+            <button type="submit" class="btn btn-dark">✔ Mark as Filled</button>
+        </form>
 
-		<form th:if="${#strings.toString(job.status) == 'ACTIVE'}"
-		      th:action="@{/jobs/{id}/fill(id=${job.id})}"
-		      method="post">
-		    <button type="submit" class="btn btn-dark">Mark as Filled</button>
-		</form>
-        <a th:href="@{/jobs/{id}/stats(id=${job.id})}"
-           class="btn btn-outline-dark">
-            View Statistics
+        <form th:if="${#strings.toString(job.status) == 'CLOSED'}" th:action="@{/jobs/{id}/reopen(id=${job.id})}" method="post">
+            <button type="submit" class="btn btn-success">🔄 Reopen Job</button>
+        </form>
+
+        <a th:href="@{/jobs/{id}/stats(id=${job.id})}" class="btn btn-outline-dark">
+            📊 View Statistics
         </a>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="info-tile">
+                <div class="tile-icon">📍</div>
+                <div class="tile-label">Location</div>
+                <div class="tile-value" th:text="${job.location}"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-tile">
+                <div class="tile-icon">💼</div>
+                <div class="tile-label">Job Type</div>
+                <div class="tile-value" th:text="${job.jobType}"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-tile">
+                <div class="tile-icon">💰</div>
+                <div class="tile-label">Salary Range</div>
+                <div class="tile-value"><span th:text="${job.salaryMin}"></span> - <span th:text="${job.salaryMax}"></span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-tile">
+                <div class="tile-icon">⭐</div>
+                <div class="tile-label">Experience</div>
+                <div class="tile-value"><span th:text="${job.experienceMin}"></span> - <span th:text="${job.experienceMax}"></span> years</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-tile">
+                <div class="tile-icon">👥</div>
+                <div class="tile-label">Open Positions</div>
+                <div class="tile-value" th:text="${job.numOpenings}"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-tile">
+                <div class="tile-icon">⏳</div>
+                <div class="tile-label">Deadline</div>
+                <div class="tile-value" th:text="${job.deadline}"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="job-card">
+        <div class="section-title">Job Description</div>
+        <p th:text="${job.description}"></p>
+    </div>
+
+    <div class="job-card">
+        <div class="section-title">Required Skills</div>
+        <p th:text="${job.requiredSkills}"></p>
+    </div>
+
+    <div class="job-card">
+        <div class="section-title">Education Requirement</div>
+        <p th:text="${job.educationReq}"></p>
+    </div>
 </div>
 
 </body>

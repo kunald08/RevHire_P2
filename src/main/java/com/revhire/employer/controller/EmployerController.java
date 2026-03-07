@@ -1,6 +1,6 @@
 package com.revhire.employer.controller;
 
-import com.revhire.employer.dto.EmployerRequest;  
+import com.revhire.employer.dto.EmployerRequest;   
 import com.revhire.employer.service.EmployerService;
 import com.revhire.job.service.JobService;
 

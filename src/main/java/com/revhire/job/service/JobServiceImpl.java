@@ -1,4 +1,5 @@
 package com.revhire.job.service;
+
 import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
@@ -19,6 +20,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -168,17 +173,24 @@ public class JobServiceImpl implements JobService {
     // ==============================
 
     @Override
-    public JobResponse getJobById(Long id) {
+    public JobResponse getJobById(Long id, String email) {
 
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + id));
 
-        if (job.getViewCount() == null) {
-            job.setViewCount(0L);
-        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
-        job.setViewCount(job.getViewCount() + 1);
-        jobRepository.save(job);
+        // Count only seeker views
+        if (user.getRole() == Role.SEEKER) {
+
+            if (job.getViewCount() == null) {
+                job.setViewCount(0L);
+            }
+
+            job.setViewCount(job.getViewCount() + 1);
+            jobRepository.save(job);
+        }
 
         return mapToResponse(job);
     }
@@ -303,6 +315,7 @@ public class JobServiceImpl implements JobService {
                 .viewCount(job.getViewCount())
                 .build();
     }
+    
     @Override
     public List<JobResponse> getActiveJobsByEmployer(String email) {
 
@@ -312,5 +325,30 @@ public class JobServiceImpl implements JobService {
         return jobs.stream()
                 .map(this::mapToResponse)
                 .toList();
+        }
+    
+    @Override
+    public JobResponse getJobById(Long id) {
+
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + id));
+
+        return mapToResponse(job);
+    }
+    
+    @Override
+    public Page<JobResponse> getEmployerJobs(String email, int page) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        Employer employer = employerRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found."));
+
+        Pageable pageable = PageRequest.of(page, 5, Sort.by("id").descending());
+
+        Page<Job> jobsPage = jobRepository.findByEmployer(employer, pageable);
+
+        return jobsPage.map(this::mapToResponse);
     }
 }
