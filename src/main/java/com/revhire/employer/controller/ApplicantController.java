@@ -108,90 +108,23 @@ public class ApplicantController {
     }
 
     
-//    @PostMapping("/jobs/{jobId}/applicants/bulk-shortlist")
-//    @ResponseBody
-//    public String bulkShortlist(
-//            @PathVariable Long jobId,
-//            @RequestBody BulkActionDTO dto) {
-//
-//        applicantService.bulkUpdateStatus(
-//                dto.getApplicationIds(),
-//                "SHORTLIST",
-//                dto.getComment()
-//        );
-//
-//        return "Applicants shortlisted successfully";
-//    }
-//
-// // =====================================================
-// // 4️⃣ Bulk Reject
-// // =====================================================
-// @PostMapping("/jobs/{jobId}/applicants/bulk-reject")
-// @ResponseBody
-// public String bulkReject(
-//         @PathVariable Long jobId,
-//         @RequestBody BulkActionDTO dto) {
-//
-//     applicantService.bulkUpdateStatus(
-//             dto.getApplicationIds(),
-//             "REJECT",
-//             dto.getComment()
-//     );
-//
-//     return "Applicants rejected successfully";
-// }
-    // =====================================================
-    // 4️⃣ View Applicant Profile
-    // URL: /employer/applicants/{appId}
-    // =====================================================
 
-	 @GetMapping("/applicants/{appId}")
-	 public String viewApplicant(@PathVariable Long appId, Model model, Authentication auth) {
-	     // 1. Get applicant - This is the primary requirement
-	     ApplicantProfileDTO applicant = applicantService.getApplicantProfile(appId);
-	     
-	     // 2. Get profile - If profile is missing, your service now returns a default DTO, 
-	     // so this shouldn't be throwing an exception anymore.
-	     ProfileResponse profile = profileService.getProfileByUserId(applicant.getSeekerId());
-	     
-	     // 3. Get Note - This will return an empty DTO if no note exists
-	     ApplicationNoteDTO existingNote = applicantService.getNoteForApplication(appId);
-	     
-	     model.addAttribute("applicant", applicant);
-	     model.addAttribute("profile", profile);
-	     model.addAttribute("existingNote", existingNote);
-	     
-	     return "employer/applicant-profile";
-	 }
-//	 @PostMapping("/applicants/{appId}/notes/add")
-//	 public String addNote(@PathVariable Long appId, @RequestParam String note, Authentication authentication) {
-//	     applicantService.addNote(appId, note, authentication.getName());
-//	     return "redirect:/employer/applicants/" + appId;
-//	 }
-//	 
-//	// =====================================================
-//	// 5️⃣ Update Single Applicant Status (Shortlist/Reject)
-//	// =====================================================
-//	@PostMapping("/applicants/{appId}/status")
-//	public String updateApplicantStatus(
-//	        @PathVariable Long appId,
-//	        @RequestParam String action,
-//	        @RequestParam(required = false) String comment) {
-//
-//	    // Reusing your existing bulkUpdateStatus logic for a single ID
-//	    applicantService.bulkUpdateStatus(
-//	            List.of(appId), 
-//	            action, 
-//	            (comment != null ? comment : "Status updated from profile view")
-//	    );
-//
-//	    // Redirect back to the profile page to refresh the view and button states
-//	    return "redirect:/employer/applicants/" + appId;
-//	}
-	// =====================================================
-	// 5️⃣ Shortlist Applicant
-	// URL: /employer/applicants/{appId}/shortlist
-	// =====================================================
+    @GetMapping("/applicants/{appId}")
+    public String viewApplicant(@PathVariable Long appId, Model model, Authentication auth) {
+        ApplicantProfileDTO applicant = applicantService.getApplicantProfile(appId);
+        ProfileResponse profile = profileService.getProfileByUserId(applicant.getSeekerId());
+        
+        // Fetch the latest resume using the profile ID
+        Resume latestResume = applicantService.getLatestResumeByProfileId(profile.getId());
+        
+        model.addAttribute("applicant", applicant);
+        model.addAttribute("profile", profile);
+        model.addAttribute("existingNote", applicantService.getNoteForApplication(appId));
+        model.addAttribute("resume", latestResume); // Now accessible in Thymeleaf as ${resume}
+        
+        return "employer/applicant-profile";
+    }
+
 	@PostMapping("/applicants/process-action")
 	public String processAction(
 	        @RequestParam Long appId, 
@@ -228,28 +161,7 @@ public class ApplicantController {
         // Redirect back to the specific applicant profile
         return "redirect:/employer/applicants/" + appId;
     }
- // In ApplicantController.java
-//    @GetMapping("/jobs/review")
-//    public String getPendingReviews(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "5") int size,
-//            Model model,
-//            Authentication authentication) {
-//
-//        Pageable pageable = PageRequest.of(page, size);
-//        
-//        // Add null-safe check if authentication is missing
-//        String email = authentication != null ? authentication.getName() : "";
-//        
-//        Page<Job> jobsPage = applicantService.getJobsWithPendingApplications(email, pageable);
-//
-//        model.addAttribute("jobsPage", jobsPage);
-//        model.addAttribute("keyword", ""); 
-//        model.addAttribute("size", size);
-//        model.addAttribute("isReviewMode", true);
-//
-//        return "employer/employer-jobs-list"; 
-//    }
+ 
     
     @GetMapping("/jobs/review")
     public String getPendingReviews(
@@ -301,7 +213,6 @@ public class ApplicantController {
         Resume resume = resumeService.downloadResume(id);
 
         if (resume == null || resume.getFileData() == null) {
-            // Return a plain message with a 404 status
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                  .body("Resume file not found.");
         }
@@ -315,5 +226,35 @@ public class ApplicantController {
                         (resume.getFileName() != null ? resume.getFileName() : "resume.pdf") + "\"")
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resume.getFileData()); // Returning byte[]
+    }
+    @GetMapping("/jobs/{jobId}/applicants/filter")
+    public String filterApplicants(
+            @PathVariable Long jobId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer experience,
+            @RequestParam(required = false) String education,
+            @RequestParam(required = false) String certification,
+            @RequestParam(required = false) String skills,
+            Model model) {
+
+        // Normalize inputs: convert empty strings to null so they don't break logic
+        String cleanStatus = (status != null && status.isBlank()) ? null : status;
+        String cleanName = (name != null && name.isBlank()) ? null : name;
+        String cleanEdu = (education != null && education.isBlank()) ? null : education;
+        String cleanCert = (certification != null && certification.isBlank()) ? null : certification;
+        String cleanSkills = (skills != null && skills.isBlank()) ? null : skills;
+
+        // Call the service with cleaned parameters
+        List<ApplicantRowDTO> filteredApplicants = applicantService.getFilteredApplicants(
+                jobId, cleanStatus, cleanName, experience, cleanEdu, cleanCert, cleanSkills);
+
+        // Populate the model
+        model.addAttribute("applicants", filteredApplicants);
+        model.addAttribute("jobTitle", applicantService.getJobTitle(jobId));
+        model.addAttribute("jobId", jobId);
+        model.addAttribute("isReviewMode", false); 
+
+        return "employer/applicant-list"; 
     }
 }

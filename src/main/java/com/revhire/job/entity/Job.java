@@ -82,5 +82,4 @@ public class Job {
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude // Prevent infinite recursion with Lombok's ToString
     private List<Application> applications;
-    
-}
+   }

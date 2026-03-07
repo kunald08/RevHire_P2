@@ -273,4 +273,5 @@ public class ApplicationController {
         redirectAttributes.addFlashAttribute("errorMessage", "An error occurred: " + ex.getMessage());
         return "redirect:/applications";
     }
+    
 }

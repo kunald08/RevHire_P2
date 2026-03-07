@@ -137,7 +137,21 @@
                 </tbody>
             </table>
         </div>
+		<div class="section-card">
+		            <h4 class="fw-bold">Education</h4>
+		            </div>
 
+		        <div class="section-card">
+		            <h4 class="fw-bold">Objective</h4>
+		            <p style="white-space: pre-wrap;" th:text="${resume.objective}"></p>
+		        </div>
+
+		        <div class="section-card">
+		            <h4 class="fw-bold">Projects</h4>
+		            <div class="p-3 bg-light rounded">
+		                <p style="white-space: pre-wrap;" th:text="${resume.projects}"></p>
+		            </div>
+		        </div>
         <div class="section-card">
             <h4 class="fw-bold">Experience</h4>
             <div th:each="exp : ${profile.experiences}" class="card mb-3">

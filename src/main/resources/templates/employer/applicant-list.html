@@ -29,7 +29,7 @@
 	</p>
 
     <div class="d-flex justify-content-between mb-3">
-        <button class="btn btn-outline-primary">Filter</button>
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">Filter</button>
         <div>
             <button id="bulkShortlistBtn" class="btn btn-success me-2" disabled>Bulk Shortlist</button>
             <button id="bulkRejectBtn" class="btn btn-danger" disabled>Bulk Reject</button>
@@ -68,7 +68,56 @@
 			        </tr>
         </tbody>
     </table>
-
+	<div class="modal fade" id="filterModal" tabindex="-1">
+	    <div class="modal-dialog modal-lg">
+	        <div class="modal-content">
+	            <div class="modal-header bg-primary text-white">
+	                <h5 class="modal-title"><i class="bi bi-funnel"></i> Filter Applicants</h5>
+	                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+	            </div>
+	            <div class="modal-body">
+	                <form id="filterForm" th:action="@{/employer/jobs/{jobId}/applicants/filter(jobId=${jobId})}" method="GET">
+	                    <div class="row g-3">
+							<div class="col-md-12">
+							                <label class="form-label fw-bold">Search by Name</label>
+							                <input type="text" name="name" class="form-control" placeholder="Enter applicant name">
+							            </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Application Status</label>
+	                            <select name="status" class="form-select">
+	                                <option value="">All Statuses</option>
+	                                <option value="APPLIED">Applied</option>
+	                                <option value="SHORTLISTED">Shortlisted</option>
+	                                <option value="REJECTED">Rejected</option>
+	                                <option value="UNDER_REVIEW">Under Review</option>
+	                            </select>
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Min Experience (Years)</label>
+	                            <input type="number" name="experience" class="form-control" placeholder="e.g. 2">
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Education</label>
+	                            <input type="text" name="education" class="form-control" placeholder="e.g. Bachelor's">
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Certification</label>
+	                            <input type="text" name="certification" class="form-control" placeholder="e.g. AWS Certified">
+	                        </div>
+	                        <div class="col-md-12">
+	                            <label class="form-label fw-bold">Skills (Comma separated)</label>
+	                            <input type="text" name="skills" class="form-control" placeholder="e.g. Java, Spring Boot, SQL">
+	                        </div>
+	                    </div>
+	                </form>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-secondary" id="resetFilterBtn">Reset</button>
+	                <button type="submit" form="filterForm" class="btn btn-primary">Apply Filter</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
     <div class="modal fade" id="bulkModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">

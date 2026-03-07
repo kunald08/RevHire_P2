@@ -5,6 +5,7 @@ import com.revhire.common.enums.ApplicationStatus;
 import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.job.entity.Job;
+import com.revhire.profile.entity.Resume;
 import com.revhire.employer.dto.ApplicationNoteDTO;
 import java.util.List;
 
@@ -43,4 +44,15 @@ public interface ApplicantService {
  // Add to ApplicantService.java
     List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses);
     ResponseEntity<?> downloadApplicantResume(Long resumeId);
+ // Inside ApplicantService interface
+    List<ApplicantRowDTO> getFilteredApplicants(
+        Long jobId, 
+        String status,
+        String name,
+        Integer experience, 
+        String education, 
+        String certification, 
+        String skills
+    );
+    Resume getLatestResumeByProfileId(Long profileId);
 }

@@ -24,7 +24,8 @@ public class ApplicantProfileDTO {
     private String profilePicture;
 
     private String coverLetter;
-
+    private String objective;
+    private String projects;
     private String status;
 
     private String employerComment;

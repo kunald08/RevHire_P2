@@ -109,25 +109,6 @@ public class ApplicantServiceImpl implements ApplicantService {
         }
         applicationRepository.saveAll(applications);
     }
-
-//    @Override
-//    public ApplicantProfileDTO getApplicantProfile(Long appId) {
-//        Application application = applicationRepository.findById(appId)
-//                .orElseThrow(() -> new RuntimeException("Application not found"));
-//        Long seekerId = application.getSeeker().getId();
-//        JobSeekerProfile profile = profileRepository.findByUserId(seekerId)
-//                .orElseThrow(() -> new RuntimeException("Profile not found"));
-//
-//        return ApplicantProfileDTO.builder()
-//                .applicationId(application.getId())
-//                .applicantName(application.getSeeker().getName())
-//                .seekerId(application.getSeeker().getId())
-//                .headline(profile.getHeadline())
-//                .summary(profile.getSummary())
-//                .profilePicture(profile.getProfilePictureUrl())
-//                .coverLetter(application.getCoverLetter())
-//                .build();
-//    }
     
     @Override
 	public ApplicantProfileDTO getApplicantProfile(Long appId) {
@@ -153,7 +134,14 @@ public class ApplicantServiceImpl implements ApplicantService {
 	    dto.setApplicantName(application.getSeeker().getName());
 	    dto.setSeekerId(seekerId);
 	    dto.setCoverLetter(application.getCoverLetter());
-	    
+	    Resume resume = application.getResume();
+	    if (resume != null) {
+	        dto.setObjective(resume.getObjective() != null ? resume.getObjective() : "No objective provided.");
+	        dto.setProjects(resume.getProjects() != null ? resume.getProjects() : "No projects listed.");
+	    } else {
+	        dto.setObjective("No resume linked.");
+	        dto.setProjects("No projects listed.");
+	    }
 	    // Assuming your Application entity has a getResume() method:
 	    if (application.getResume() != null && application.getResume().getFileData() != null && application.getResume().getFileData().length > 0) {
 	        dto.setResumeId(application.getResume().getId());
@@ -165,10 +153,6 @@ public class ApplicantServiceImpl implements ApplicantService {
 	    
 	    return dto;
 	}
-
-    // ========================================================
-    // CORRECTED NOTE METHODS
-    // ========================================================
     @Override
     @Transactional
     public void addNote(Long appId, String noteText, String employerEmail) {
@@ -305,5 +289,70 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .contentType(MediaType.parseMediaType(contentType))
                 .contentLength(resume.getFileData().length)
                 .body(resume.getFileData());
+    }
+    @Override
+    public List<ApplicantRowDTO> getFilteredApplicants(Long jobId, String status,String name, Integer minExp, 
+                                                       String edu, String cert, String skills) {
+        
+        // 1. Fetch all applications for the job
+        List<Application> apps = applicationRepository.findByJobId(jobId);
+
+        return apps.stream()
+            .filter(app -> {
+                // Filter by Status
+                if (status != null && !status.isEmpty() && !app.getStatus().name().equalsIgnoreCase(status)) {
+                    return false;
+                }
+                if (name != null && !name.isEmpty()) {
+                    String nameLower = name.toLowerCase();
+                    if (app.getSeeker().getName() == null || !app.getSeeker().getName().toLowerCase().contains(nameLower)) {
+                        return false;
+                    }
+                }
+                Long seekerId = app.getSeeker().getId();
+                JobSeekerProfile profile = profileRepository.findByUserId(seekerId).orElse(null);
+                if (profile == null) return false;
+
+                // Filter by Education (Partial match)
+                if (edu != null && !edu.isEmpty()) {
+                    boolean hasEdu = profile.getEducations().stream()
+                            .anyMatch(e -> e.getDegree().toLowerCase().contains(edu.toLowerCase()));
+                    if (!hasEdu) return false;
+                }
+
+                // Filter by Certification (Partial match)
+                if (cert != null && !cert.isEmpty()) {
+                    boolean hasCert = profile.getCertifications().stream()
+                            .anyMatch(c -> c.getName().toLowerCase().contains(cert.toLowerCase()));
+                    if (!hasCert) return false;
+                }
+             // Inside your getFilteredApplicants method filter block:
+                if (minExp != null) {
+                    // Assuming profile.getExperience() returns an Integer or double
+                    // Ensure you handle cases where experience might be null in the profile
+                    Integer candidateExp = profile.getTotalExperience(); // Adjust this to match your actual field name
+                    if (candidateExp == null || candidateExp < minExp) {
+                        return false;
+                    }
+                }
+                // Filter by Skills (Must contain all comma-separated skills)
+                if (skills != null && !skills.isEmpty()) {
+                    String[] requiredSkills = skills.split(",");
+                    for (String s : requiredSkills) {
+                        boolean hasSkill = profile.getSkills().stream()
+                                .anyMatch(sk -> sk.getName().toLowerCase().contains(s.trim().toLowerCase()));
+                        if (!hasSkill) return false;
+                    }
+                }
+
+                return true;
+            })
+            .map(this::mapToDTO) // Reuse your existing mapping logic
+            .collect(Collectors.toList());
+    }
+    @Override
+    public Resume getLatestResumeByProfileId(Long profileId) {
+        return resumeRepository.findTopByProfileIdOrderByCreatedAtDesc(profileId)
+                .orElse(null);
     }
 }
