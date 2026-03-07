@@ -1,8 +1,12 @@
 package com.revhire.profile.controller;
 
 import com.revhire.profile.dto.*;
+import com.revhire.profile.entity.Resume;
 import com.revhire.profile.service.ProfileService;
+import com.revhire.profile.service.ResumeService;
 import jakarta.validation.Valid;
+
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +28,7 @@ public class ProfileController {
     private static final Logger logger = LogManager.getLogger(ProfileController.class);
 
     private final ProfileService profileService;
+    private final ResumeService resumeService;
 
     // ==================== Profile ====================
 
@@ -37,6 +42,13 @@ public class ProfileController {
 
         ProfileResponse profile = profileService.getProfileByEmail(email);
         model.addAttribute("profile", profile);
+
+        // Fetch uploaded resumes (file-based only) for Quick Actions section
+        List<Resume> uploadedResumes = resumeService.getResumesByEmail(email).stream()
+                .filter(r -> r.getFileData() != null)
+                .toList();
+        model.addAttribute("uploadedResumes", uploadedResumes);
+
         return "profile/profile";
     }
 

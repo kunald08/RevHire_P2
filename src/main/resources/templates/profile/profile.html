@@ -450,6 +450,52 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- My Resumes -->
+                <div class="p-card card mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold text-uppercase small text-muted mb-0 ls-1">My Resumes</h6>
+                            <a th:href="@{/resume/upload}" class="btn btn-sm btn-outline-success rounded-pill" style="font-size:0.75rem;">
+                                <i class="bi bi-plus-lg me-1"></i>Upload
+                            </a>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div th:if="${uploadedResumes == null or uploadedResumes.empty}" class="text-center py-3">
+                            <i class="bi bi-inbox text-muted" style="font-size:1.5rem;"></i>
+                            <p class="text-muted small mb-0 mt-1">No resumes uploaded yet</p>
+                        </div>
+
+                        <!-- Resume list -->
+                        <div th:if="${uploadedResumes != null and !uploadedResumes.empty}" class="d-flex flex-column gap-2">
+                            <div th:each="resume : ${uploadedResumes}" class="d-flex align-items-center gap-2 p-2 rounded-3" style="background:#f8f9fa;">
+                                <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                                     th:style="${resume.fileType == 'PDF' ? 'width:36px;height:36px;background:#fde8e8;color:#dc3545;' : 'width:36px;height:36px;background:#e8f4fd;color:#0d6efd;'}">
+                                    <i class="bi" th:classappend="${resume.fileType == 'PDF' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word'}"></i>
+                                </div>
+                                <div class="flex-grow-1 min-width-0">
+                                    <div class="fw-semibold text-truncate" style="font-size:0.8rem;" th:text="${resume.fileName}">resume.pdf</div>
+                                    <div class="text-muted" style="font-size:0.7rem;">
+                                        <span th:text="${resume.fileType}">PDF</span> &bull;
+                                        <span th:text="${#numbers.formatDecimal(resume.fileSize / 1024.0, 0, 1)} + ' KB'">100 KB</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 flex-shrink-0">
+                                    <a th:href="@{/resume/download/{id}(id=${resume.id})}" class="btn btn-sm btn-outline-success rounded-pill" style="font-size:0.7rem; padding:0.2rem 0.5rem;" title="Download">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    <form th:action="@{/resume/delete/{id}(id=${resume.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to delete this resume?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" style="font-size:0.7rem; padding:0.2rem 0.5rem;" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ════════════════ MAIN CONTENT ════════════════ -->
