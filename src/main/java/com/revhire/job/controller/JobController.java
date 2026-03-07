@@ -1,6 +1,6 @@
 package com.revhire.job.controller;
 
-import com.revhire.exception.BadRequestException; 
+import com.revhire.exception.BadRequestException;
 import com.revhire.job.dto.JobRequest;
 import com.revhire.job.dto.JobResponse;
 import com.revhire.job.dto.JobStatsResponse;
@@ -8,20 +8,32 @@ import com.revhire.job.service.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.data.domain.Page;
 
+/**
+ * Controller for job posting operations (Module 3 — Chaitanya).
+ * Maps to /jobs/* endpoints. Returns Thymeleaf views.
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/jobs")
 public class JobController {
 
+    private static final Logger logger = LogManager.getLogger(JobController.class);
+
     private final JobService jobService;
+
+    // ────────────────────────────────────────────
+    // CREATE JOB
+    // ────────────────────────────────────────────
 
     @GetMapping("/create")
     public String createForm(Model model) {
@@ -41,7 +53,7 @@ public class JobController {
 
         try {
             jobService.createJob(request, authentication.getName());
-            redirectAttributes.addFlashAttribute("success", "Job created successfully.");
+            redirectAttributes.addFlashAttribute("success", "Job posted successfully! It's now live.");
             return "redirect:/jobs/my";
         } catch (BadRequestException ex) {
             bindingResult.reject("globalError", ex.getMessage());
@@ -49,33 +61,43 @@ public class JobController {
         }
     }
 
-    @GetMapping("/my")
-    public String myJobs(
-            @RequestParam(defaultValue = "0") int page,
-            Authentication authentication,
-            Model model) {
+    // ────────────────────────────────────────────
+    // MY JOBS (paginated)
+    // ────────────────────────────────────────────
 
-        Page<JobResponse> jobsPage =
-                jobService.getEmployerJobs(authentication.getName(), page);
+    @GetMapping("/my")
+    public String myJobs(@RequestParam(defaultValue = "0") int page,
+                         Authentication authentication,
+                         Model model) {
+
+        Page<JobResponse> jobsPage = jobService.getEmployerJobs(authentication.getName(), page);
 
         model.addAttribute("jobsPage", jobsPage);
         model.addAttribute("jobs", jobsPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", jobsPage.getTotalPages());
+        model.addAttribute("totalJobs", jobsPage.getTotalElements());
 
         return "job/my-jobs";
     }
-    
+
+    // ────────────────────────────────────────────
+    // VIEW JOB DETAIL
+    // ────────────────────────────────────────────
+
     @GetMapping("/{id:\\d+}")
     public String viewJob(@PathVariable Long id,
                           Authentication authentication,
                           Model model) {
 
         String email = authentication.getName();
-
         model.addAttribute("job", jobService.getJobById(id, email));
         return "job/job-detail";
     }
+
+    // ────────────────────────────────────────────
+    // EDIT JOB
+    // ────────────────────────────────────────────
 
     @GetMapping("/{id:\\d+}/edit")
     public String editJob(@PathVariable Long id, Model model) {
@@ -126,15 +148,23 @@ public class JobController {
         }
     }
 
+    // ────────────────────────────────────────────
+    // DELETE
+    // ────────────────────────────────────────────
+
     @PostMapping("/{id:\\d+}/delete")
     public String deleteJob(@PathVariable Long id,
                             Authentication authentication,
                             RedirectAttributes redirectAttributes) {
 
         jobService.deleteJob(id, authentication.getName());
-        redirectAttributes.addFlashAttribute("success", "Job deleted successfully.");
+        redirectAttributes.addFlashAttribute("success", "Job posting deleted.");
         return "redirect:/jobs/my";
     }
+
+    // ────────────────────────────────────────────
+    // LIFECYCLE ACTIONS
+    // ────────────────────────────────────────────
 
     @PostMapping("/{id:\\d+}/close")
     public String closeJob(@PathVariable Long id,
@@ -142,7 +172,7 @@ public class JobController {
                            RedirectAttributes redirectAttributes) {
 
         jobService.closeJob(id, authentication.getName());
-        redirectAttributes.addFlashAttribute("success", "Job closed successfully.");
+        redirectAttributes.addFlashAttribute("success", "Job closed — no new applications will be accepted.");
         return "redirect:/jobs/" + id;
     }
 
@@ -152,7 +182,7 @@ public class JobController {
                             RedirectAttributes redirectAttributes) {
 
         jobService.reopenJob(id, authentication.getName());
-        redirectAttributes.addFlashAttribute("success", "Job reopened successfully.");
+        redirectAttributes.addFlashAttribute("success", "Job is now active and accepting applications.");
         return "redirect:/jobs/" + id;
     }
 
@@ -162,29 +192,32 @@ public class JobController {
                                RedirectAttributes redirectAttributes) {
 
         jobService.markAsFilled(id, authentication.getName());
-        redirectAttributes.addFlashAttribute("success", "Job marked as filled.");
+        redirectAttributes.addFlashAttribute("success", "Job marked as filled. Congratulations!");
         return "redirect:/jobs/" + id;
     }
+
+    // ────────────────────────────────────────────
+    // STATISTICS
+    // ────────────────────────────────────────────
 
     @GetMapping("/{id:\\d+}/stats")
     public String getJobStats(@PathVariable Long id,
                               Authentication authentication,
                               Model model) {
 
-        String email = authentication.getName();
-        JobStatsResponse stats = jobService.getJobStatistics(id, email);
-
+        JobStatsResponse stats = jobService.getJobStatistics(id, authentication.getName());
         model.addAttribute("stats", stats);
         return "job/job-stats";
     }
+
+    // ────────────────────────────────────────────
+    // ACTIVE JOBS
+    // ────────────────────────────────────────────
+
     @GetMapping("/active")
     public String activeJobs(Authentication authentication, Model model) {
 
-        String email = authentication.getName();
-
-        model.addAttribute("jobs",
-                jobService.getActiveJobsByEmployer(email));
-
-        return "job/my-jobs";   
+        model.addAttribute("jobs", jobService.getActiveJobsByEmployer(authentication.getName()));
+        return "job/my-jobs";
     }
 }

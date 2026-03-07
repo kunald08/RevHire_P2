@@ -1,207 +1,432 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(~{::body})}">
-
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Job Statistics</title>
-
+    <title>RevHire — Job Statistics</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        .summary-card {
-            height: 130px;
-        }
-
-        .chart-card {
-            height: 420px;
-        }
-
-        .chart-area {
-            height: 330px;
+        /* ── Cover ── */
+        .stats-cover {
+            height: 160px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+            border-radius: 0 0 28px 28px;
             position: relative;
         }
-
-        .no-data-message {
+        .stats-cover::after {
+            content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #6c757d;
-            font-size: 18px;
-            text-align: center;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px;
         }
 
-        canvas {
-            height: 100% !important;
+        /* ── Cards ── */
+        .s-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        .s-card:hover {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+
+        /* Header Card */
+        .header-card {
+            margin-top: -55px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ── KPI Cards ── */
+        .kpi-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-radius: 14px;
+            border: 1px solid #f3f4f6;
+            transition: all 0.25s ease;
+            background: #fff;
+        }
+        .kpi-card:hover {
+            border-color: #10b981;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(16,185,129,0.1);
+        }
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin: 0 auto 0.75rem;
+        }
+        .kpi-number {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.35rem;
+        }
+        .kpi-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+        }
+
+        /* ── Chart Canvas ── */
+        .chart-container {
+            position: relative;
+            padding: 1rem;
+        }
+        .chart-container canvas {
+            max-height: 300px;
+        }
+
+        /* ── Section Header ── */
+        .sec-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        .sec-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Conversion Ring ── */
+        .conversion-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            padding: 1.5rem;
+        }
+        .conversion-ring {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 8px solid #e5e7eb;
+            position: relative;
+        }
+        .conversion-rate {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .conversion-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        /* ── Breakdown List ── */
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid #f9fafb;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Back Link ── */
+        .btn-back {
+            border-radius: 12px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            border-color: #d1d5db;
+            background: #f9fafb;
         }
     </style>
 </head>
-
 <body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="container mt-4">
+    <!-- Cover -->
+    <div class="stats-cover"></div>
 
-    <!-- Back Button -->
-    <div class="mb-3">
-        <a th:href="@{/jobs/{id}(id=${stats.jobId})}"
-           class="btn btn-outline-secondary btn-sm">
-            ← Back to Job
-        </a>
-    </div>
+    <div class="container" style="max-width: 1100px;">
 
-    <h2 class="fw-bold mb-4">📊 Job Statistics</h2>
-
-    <!-- SUMMARY CARDS -->
-    <div class="row text-center mb-4">
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm bg-light summary-card">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <h6>Total Views</h6>
-                    <h3 class="fw-bold text-primary"
-                        th:text="${stats.viewCount} ?: 0">0</h3>
+        <!-- Header Card -->
+        <div class="s-card header-card p-4 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        <i class="bi bi-bar-chart-line me-2" style="color:#10b981;"></i>
+                        Job Statistics
+                    </h4>
+                    <p class="text-muted mb-0" style="font-size:0.9rem;" th:text="${jobTitle}">Senior Software Engineer</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/jobs/{id}(id=${jobId})}" class="btn btn-back">
+                        <i class="bi bi-eye me-1"></i> View Job
+                    </a>
+                    <a th:href="@{/jobs/my}" class="btn btn-back">
+                        <i class="bi bi-arrow-left me-1"></i> All Jobs
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm bg-light summary-card">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <h6>Total Applications</h6>
-                    <h3 class="fw-bold text-success"
-                        th:text="${stats.totalApplications} ?: 0">0</h3>
+        <!-- KPI Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#eef2ff;color:#4f46e5;">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="kpi-number text-primary" th:text="${stats.totalViews}">0</div>
+                    <div class="kpi-label">Total Views</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#ecfdf5;color:#10b981;">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="kpi-number text-success" th:text="${stats.totalApplications}">0</div>
+                    <div class="kpi-label">Applications</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fef3c7;color:#f59e0b;">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="kpi-number" style="color:#f59e0b;" th:text="${stats.numOpenings}">0</div>
+                    <div class="kpi-label">Openings</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#faf5ff;color:#7c3aed;">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <div class="kpi-number" style="color:#7c3aed;"
+                         th:text="${stats.conversionRate + '%'}">0%</div>
+                    <div class="kpi-label">Conversion</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm bg-light summary-card">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <h6>Job Status</h6>
-                    <h5 th:text="${stats.jobStatus}">ACTIVE</h5>
+        <div class="row g-4">
+            <!-- ── LEFT: Charts ── -->
+            <div class="col-lg-8">
+
+                <!-- Application Status Chart -->
+                <div class="s-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon" style="background:#ecfdf5;color:#10b981;"><i class="bi bi-pie-chart"></i></div>
+                        <h5 class="fw-bold mb-0">Application Breakdown</h5>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Views vs Applications Bar Chart -->
+                <div class="s-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-bar-chart"></i></div>
+                        <h5 class="fw-bold mb-0">Engagement Overview</h5>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="engagementChart"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm bg-light summary-card">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <h6>Applied</h6>
-                    <h3 th:text="${stats.appliedCount} ?: 0">0</h3>
-                </div>
-            </div>
-        </div>
+            <!-- ── RIGHT: Sidebar ── -->
+            <div class="col-lg-4">
 
-    </div>
-
-    <!-- CHART SECTION -->
-    <div class="row">
-
-        <!-- Application Distribution -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm chart-card">
-                <div class="card-body">
-                    <h5 class="mb-3">Application Distribution</h5>
-
-                    <div class="chart-area">
-                        <canvas id="pieChart"></canvas>
-
-                        <div id="noDataMessage"
-                             class="no-data-message"
-                             style="display:none;">
-                            No applications yet.
+                <!-- Conversion Ring -->
+                <div class="s-card p-4 mb-4">
+                    <h6 class="fw-bold text-muted mb-3" style="text-transform:uppercase;font-size:0.78rem;letter-spacing:0.5px;">Conversion Rate</h6>
+                    <div class="conversion-wrap">
+                        <div class="conversion-ring" id="conversionRing">
+                            <span class="conversion-rate" th:text="${stats.conversionRate + '%'}">0%</span>
+                            <span class="conversion-label">View→Apply</span>
                         </div>
                     </div>
-
+                    <p class="text-center text-muted" style="font-size:0.82rem;">
+                        <span th:text="${stats.totalApplications}">0</span> apps from
+                        <span th:text="${stats.totalViews}">0</span> views
+                    </p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Views vs Applications -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm chart-card">
-                <div class="card-body">
-                    <h5 class="mb-3">Views vs Applications</h5>
+                <!-- Status Breakdown -->
+                <div class="s-card p-4 mb-4">
+                    <h6 class="fw-bold text-muted mb-3" style="text-transform:uppercase;font-size:0.78rem;letter-spacing:0.5px;">Application Status</h6>
 
-                    <div class="chart-area">
-                        <canvas id="barChart"></canvas>
+                    <div class="stat-row">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="dot" style="background:#fbbf24;"></span>
+                            <span style="font-size:0.9rem;">Pending</span>
+                        </div>
+                        <span class="fw-bold" th:text="${stats.pendingApps}">0</span>
                     </div>
+                    <div class="stat-row">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="dot" style="background:#38bdf8;"></span>
+                            <span style="font-size:0.9rem;">Reviewed</span>
+                        </div>
+                        <span class="fw-bold" th:text="${stats.reviewedApps}">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="dot" style="background:#34d399;"></span>
+                            <span style="font-size:0.9rem;">Shortlisted</span>
+                        </div>
+                        <span class="fw-bold" th:text="${stats.shortlistedApps}">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="dot" style="background:#f87171;"></span>
+                            <span style="font-size:0.9rem;">Rejected</span>
+                        </div>
+                        <span class="fw-bold" th:text="${stats.rejectedApps}">0</span>
+                    </div>
+                </div>
 
+                <!-- Deadline Info -->
+                <div class="s-card p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="sec-icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-calendar-event"></i></div>
+                        <div>
+                            <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#9ca3af;">Deadline</div>
+                            <div class="fw-semibold" th:text="${#temporals.format(stats.deadline, 'dd MMM yyyy')}">15 Jun 2026</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 
-</div>
+    <div style="height:3rem;"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart Initialisation -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var pending     = /*[[${stats.pendingApps}]]*/     0;
+            var reviewed    = /*[[${stats.reviewedApps}]]*/    0;
+            var shortlisted = /*[[${stats.shortlistedApps}]]*/ 0;
+            var rejected    = /*[[${stats.rejectedApps}]]*/    0;
+            var totalViews  = /*[[${stats.totalViews}]]*/      0;
+            var totalApps   = /*[[${stats.totalApplications}]]*/ 0;
+            var convRate    = /*[[${stats.conversionRate}]]*/   0;
 
-<script th:inline="javascript">
-document.addEventListener("DOMContentLoaded", function () {
-
-    const applied = [[${stats.appliedCount} ?: 0]];
-    const underReview = [[${stats.underReviewCount} ?: 0]];
-    const shortlisted = [[${stats.shortlistedCount} ?: 0]];
-    const rejected = [[${stats.rejectedCount} ?: 0]];
-    const withdrawn = [[${stats.withdrawnCount} ?: 0]];
-    const totalApplications = [[${stats.totalApplications} ?: 0]];
-    const viewCount = [[${stats.viewCount} ?: 0]];
-
-    /* PIE CHART */
-
-    if (totalApplications > 0) {
-
-        new Chart(document.getElementById('pieChart'), {
-            type: 'pie',
-            data: {
-                labels: ['Applied', 'Under Review', 'Shortlisted', 'Rejected', 'Withdrawn'],
-                datasets: [{
-                    data: [applied, underReview, shortlisted, rejected, withdrawn],
-                    backgroundColor: [
-                        '#0d6efd',
-                        '#ffc107',
-                        '#198754',
-                        '#dc3545',
-                        '#6c757d'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+            // ── Donut: Application Status ──
+            new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Reviewed', 'Shortlisted', 'Rejected'],
+                    datasets: [{
+                        data: [pending, reviewed, shortlisted, rejected],
+                        backgroundColor: ['#fbbf24', '#38bdf8', '#34d399', '#f87171'],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 13, weight: '500' },
+                                padding: 16,
+                                usePointStyle: true,
+                                pointStyleWidth: 10
+                            }
+                        }
+                    }
                 }
+            });
+
+            // ── Bar: Engagement ──
+            new Chart(document.getElementById('engagementChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Views', 'Applications'],
+                    datasets: [{
+                        data: [totalViews, totalApps],
+                        backgroundColor: ['rgba(79,70,229,0.15)', 'rgba(16,185,129,0.15)'],
+                        borderColor: ['#4f46e5', '#10b981'],
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        barThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, font: { size: 12 } },
+                            grid: { color: '#f3f4f6' }
+                        },
+                        x: {
+                            ticks: { font: { size: 13, weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // ── Conversion Ring border ──
+            var ring = document.getElementById('conversionRing');
+            if (ring) {
+                var pct = Math.min(convRate, 100);
+                var deg = (pct / 100) * 360;
+                ring.style.border = 'none';
+                ring.style.background = 'conic-gradient(#10b981 ' + deg + 'deg, #e5e7eb ' + deg + 'deg)';
+                ring.style.padding = '8px';
+                // inner circle
+                var inner = document.createElement('div');
+                inner.style.cssText = 'width:100%;height:100%;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+                inner.innerHTML = ring.innerHTML;
+                ring.innerHTML = '';
+                ring.appendChild(inner);
             }
         });
-
-    } else {
-        document.getElementById('pieChart').style.display = "none";
-        document.getElementById('noDataMessage').style.display = "block";
-    }
-
-    /* BAR CHART */
-
-    new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Views', 'Applications'],
-            datasets: [{
-                label: 'Count',
-                data: [viewCount, totalApplications],
-                backgroundColor: ['#0d6efd', '#198754']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
-
-});
-</script>
-
+    </script>
 </body>
 </html>

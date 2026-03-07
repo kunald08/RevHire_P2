@@ -1,236 +1,383 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(~{::body})}">
-
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-<title>Company Profile</title>
+    <title>RevHire — Company Profile</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        /* ── Cover Banner ── */
+        .company-cover {
+            height: 200px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+            border-radius: 0 0 28px 28px;
+            position: relative;
+        }
+        .company-cover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px;
+        }
+
+        /* ── Logo Avatar ── */
+        .company-logo-wrap {
+            position: relative;
+            display: inline-block;
+            margin-top: -55px;
+            z-index: 2;
+        }
+        .company-logo {
+            width: 110px;
+            height: 110px;
+            border-radius: 20px;
+            border: 5px solid #fff;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            overflow: hidden;
+        }
+
+        /* ── Cards ── */
+        .cp-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        .cp-card:hover {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+
+        /* ── Section Header ── */
+        .sec-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        .sec-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .sec-icon.info    { background: #eef2ff; color: #4f46e5; }
+        .sec-icon.about   { background: #faf5ff; color: #7c3aed; }
+        .sec-icon.stats   { background: #ecfdf5; color: #10b981; }
+
+        /* ── Info Rows ── */
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f9fafb;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .info-row .info-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 2px;
+        }
+        .info-row .info-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1f2937;
+            word-break: break-word;
+        }
+
+        .icon-industry { background: #eef2ff; color: #4f46e5; }
+        .icon-size     { background: #ecfdf5; color: #10b981; }
+        .icon-location { background: #fef3c7; color: #f59e0b; }
+        .icon-website  { background: #e0f2fe; color: #0ea5e9; }
+
+        /* ── Stat Cards ── */
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-radius: 14px;
+            border: 1px solid #f3f4f6;
+            transition: all 0.25s ease;
+        }
+        .stat-card:hover {
+            border-color: #4f46e5;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(79,70,229,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.35rem;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+        }
+
+        /* ── Edit Button ── */
+        .edit-btn {
+            border-radius: 12px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79,70,229,0.35);
+            color: #fff;
+        }
+
+        /* ── Quick Actions ── */
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.25rem;
+            border-radius: 14px;
+            border: 1px solid #f3f4f6;
+            text-decoration: none;
+            color: #374151;
+            transition: all 0.25s ease;
+            background: #fff;
+        }
+        .quick-action:hover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            color: #4f46e5;
+            transform: translateX(4px);
+        }
+        .quick-action .qa-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .about-text {
+            color: #374151;
+            line-height: 1.85;
+            font-size: 0.95rem;
+            white-space: pre-line;
+        }
+
+        .website-link {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .website-link:hover {
+            text-decoration: underline;
+            color: #4338ca;
+        }
+    </style>
 </head>
-
 <body>
-
-<style>
-
-body{
-background:#eef2ff;
-}
-
-/* HEADER */
-
-.page-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:25px;
-}
-
-/* PROFILE CARD */
-
-.profile-card{
-background:white;
-border-radius:12px;
-box-shadow:0 8px 20px rgba(0,0,0,0.08);
-padding:32px;
-}
-
-/* COMPANY NAME */
-
-.company-title{
-font-size:26px;
-font-weight:700;
-color:#111827;
-margin-bottom:25px;
-}
-
-/* INFO BLOCK */
-
-.info-item{
-margin-bottom:22px;
-border-bottom:1px solid #f1f5f9;
-padding-bottom:14px;
-}
-
-/* LABEL */
-
-.info-label{
-font-size:13px;
-font-weight:600;
-color:#6366f1;
-display:flex;
-align-items:center;
-gap:6px;
-text-transform:uppercase;
-letter-spacing:0.5px;
-}
-
-/* VALUE */
-
-.info-value{
-font-size:16px;
-font-weight:500;
-color:#1f2937;
-margin-top:4px;
-line-height:1.5;
-
-/* fixes long text overflow */
-word-break:break-word;
-overflow-wrap:anywhere;
-}
-
-/* ICON COLORS */
-
-.icon-industry{ color:#4f46e5; }
-.icon-size{ color:#10b981; }
-.icon-location{ color:#f59e0b; }
-.icon-website{ color:#0ea5e9; }
-.icon-description{ color:#7c3aed; }
-
-/* WEBSITE */
-
-.website-link{
-text-decoration:none;
-color:#2563eb;
-font-weight:500;
-word-break:break-all;
-}
-
-.website-link:hover{
-text-decoration:underline;
-}
-
-/* CARD HOVER */
-
-.profile-card:hover{
-box-shadow:0 12px 28px rgba(0,0,0,0.12);
-transition:0.2s;
-}
-
-</style>
-
-
-<div class="container mt-4" style="max-width:900px;">
-
-<!-- SUCCESS MESSAGE -->
-<div th:if="${success}" 
-     class="alert alert-success alert-dismissible fade show">
-    <span th:text="${success}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-
-
-<!-- HEADER -->
-<div class="page-header">
-
-<div class="d-flex align-items-center gap-3">
-
-<a th:href="@{/jobs/my}" class="btn btn-outline-secondary btn-sm">
-<i class="bi bi-arrow-left"></i> Back
-</a>
-
-<h2 class="fw-bold mb-0">
-<i class="bi bi-building text-primary me-2"></i>
-Company Profile
-</h2>
-
-</div>
-
-<a th:href="@{/employers/profile/edit}"
-   class="btn btn-primary">
-<i class="bi bi-pencil"></i> Edit Profile
-</a>
-
-</div>
-
-
-<!-- PROFILE CARD -->
-
-<div class="profile-card">
-
-<div class="company-title"
-     th:text="${employer.companyName}">
-</div>
-
-
-<div class="row">
-
-<div class="col-md-6 info-item">
-
-<div class="info-label icon-industry">
-<i class="bi bi-briefcase"></i> Industry
-</div>
-
-<div class="info-value"
-     th:text="${employer.industry}">
-</div>
-
-</div>
-
-
-<div class="col-md-6 info-item">
-
-<div class="info-label icon-size">
-<i class="bi bi-people"></i> Company Size
-</div>
-
-<div class="info-value"
-     th:text="${employer.companySize}">
-</div>
-
-</div>
-
-</div>
-
-
-<div class="row">
-
-<div class="col-md-6 info-item">
-
-<div class="info-label icon-location">
-<i class="bi bi-geo-alt"></i> Location
-</div>
-
-<div class="info-value"
-     th:text="${employer.location}">
-</div>
-
-</div>
-
-
-<div class="col-md-6 info-item">
-
-<div class="info-label icon-website">
-<i class="bi bi-globe"></i> Website
-</div>
-
-<div class="info-value">
-
-<a class="website-link"
-   th:href="${employer.website}"
-   th:text="${employer.website}"
-   target="_blank">
-</a>
-
-</div>
-
-</div>
-
-</div>
-
-
-<div class="info-item">
-
-<div class="info-label icon-description">
-<i class="bi bi-card-text"></i> Description
-</div>
-
-<div class="info-value"
-     th:text="${employer.description}">
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- ── Cover ── -->
+    <div class="company-cover"></div>
+
+    <div class="container" style="max-width: 1100px;">
+
+        <!-- Success Alert -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show mt-3" role="alert"
+             style="border-radius:12px;border:none;background:#ecfdf5;color:#065f46;">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row g-4 mt-0">
+
+            <!-- ── LEFT SIDEBAR ── -->
+            <div class="col-lg-4">
+
+                <!-- Identity Card -->
+                <div class="cp-card p-4 text-center mb-4">
+                    <div class="company-logo-wrap">
+                        <div class="company-logo">
+                            <span th:text="${employer.companyName != null ? employer.companyName.substring(0,1).toUpperCase() : 'C'}"></span>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold mt-3 mb-1" th:text="${employer.companyName}">Company Name</h4>
+                    <p class="text-muted mb-3" th:text="${employer.industry}">Industry</p>
+
+                    <!-- Edit button (owner only) -->
+                    <div th:unless="${isPublic}">
+                        <a th:href="@{/employers/profile/edit}" class="btn edit-btn w-100 mb-2">
+                            <i class="bi bi-pencil-square me-1"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Info -->
+                <div class="cp-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon info"><i class="bi bi-info-circle"></i></div>
+                        <h5 class="fw-bold mb-0">Company Info</h5>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-icon icon-industry"><i class="bi bi-briefcase"></i></div>
+                        <div>
+                            <div class="info-label">Industry</div>
+                            <div class="info-value" th:text="${employer.industry ?: 'Not specified'}">Tech</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-icon icon-size"><i class="bi bi-people"></i></div>
+                        <div>
+                            <div class="info-label">Company Size</div>
+                            <div class="info-value" th:text="${employer.companySize ?: 'Not specified'}">50-100</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-icon icon-location"><i class="bi bi-geo-alt"></i></div>
+                        <div>
+                            <div class="info-label">Headquarters</div>
+                            <div class="info-value" th:text="${employer.location ?: 'Not specified'}">Hyderabad</div>
+                        </div>
+                    </div>
+
+                    <div class="info-row" th:if="${employer.website != null and !employer.website.isEmpty()}">
+                        <div class="info-icon icon-website"><i class="bi bi-globe"></i></div>
+                        <div>
+                            <div class="info-label">Website</div>
+                            <div class="info-value">
+                                <a class="website-link" th:href="${employer.website}" th:text="${employer.website}" target="_blank" rel="noopener"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions (owner only) -->
+                <div class="cp-card p-4" th:unless="${isPublic}">
+                    <h6 class="fw-bold text-muted mb-3">Quick Actions</h6>
+
+                    <a th:href="@{/jobs/create}" class="quick-action mb-2">
+                        <div class="qa-icon" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-plus-circle"></i></div>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.9rem;">Post New Job</div>
+                            <div style="font-size:0.78rem;color:#9ca3af;">Create a new job listing</div>
+                        </div>
+                    </a>
+
+                    <a th:href="@{/jobs/my}" class="quick-action mb-2">
+                        <div class="qa-icon" style="background:#ecfdf5;color:#10b981;"><i class="bi bi-list-task"></i></div>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.9rem;">My Job Postings</div>
+                            <div style="font-size:0.78rem;color:#9ca3af;">Manage your listings</div>
+                        </div>
+                    </a>
+
+                    <a th:href="@{/employer/dashboard}" class="quick-action">
+                        <div class="qa-icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-speedometer2"></i></div>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.9rem;">Dashboard</div>
+                            <div style="font-size:0.78rem;color:#9ca3af;">Analytics &amp; applicants</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ── RIGHT CONTENT ── -->
+            <div class="col-lg-8">
+
+                <!-- Stats Row (owner only) -->
+                <div class="row g-3 mb-4" th:unless="${isPublic}">
+                    <div class="col-4">
+                        <div class="cp-card stat-card">
+                            <div class="stat-number text-primary" th:text="${employer.totalJobs}">0</div>
+                            <div class="stat-label">Total Jobs</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="cp-card stat-card">
+                            <div class="stat-number text-success" th:text="${employer.activeJobs}">0</div>
+                            <div class="stat-label">Active Jobs</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="cp-card stat-card">
+                            <div class="stat-number" style="color:#f59e0b;" th:text="${employer.totalJobs - employer.activeJobs}">0</div>
+                            <div class="stat-label">Closed / Filled</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- About Section -->
+                <div class="cp-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon about"><i class="bi bi-card-text"></i></div>
+                        <h5 class="fw-bold mb-0">About the Company</h5>
+                    </div>
+
+                    <div th:if="${employer.description != null and !employer.description.isEmpty()}">
+                        <p class="about-text" th:text="${employer.description}">Company description here.</p>
+                    </div>
+                    <div th:unless="${employer.description != null and !employer.description.isEmpty()}"
+                         class="text-center py-4" style="border:2px dashed #e5e7eb;border-radius:14px;background:#fafbfc;">
+                        <i class="bi bi-card-text text-muted" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
+                        <span class="text-muted">No company description added yet.</span>
+                    </div>
+                </div>
+
+                <!-- Member Since -->
+                <div class="cp-card p-4" th:if="${employer.createdAt != null}" th:unless="${isPublic}">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="sec-icon stats"><i class="bi bi-calendar-check"></i></div>
+                        <div>
+                            <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#9ca3af;">Member Since</div>
+                            <div class="fw-semibold" th:text="${#temporals.format(employer.createdAt, 'MMMM yyyy')}">March 2026</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="height:3rem;"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>
