@@ -1,5 +1,7 @@
 package com.revhire.profile.service;
 
+import com.revhire.application.entity.Application;
+import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.exception.BadRequestException;
 import com.revhire.exception.FileStorageException;
 import com.revhire.exception.ResourceNotFoundException;
@@ -33,6 +35,7 @@ public class ResumeServiceImpl implements ResumeService {
 
     private final ResumeRepository resumeRepository;
     private final ProfileService profileService;
+    private final ApplicationRepository applicationRepository;
 
     @Override
     public List<Resume> getResumesByEmail(String email) {
@@ -134,6 +137,13 @@ public class ResumeServiceImpl implements ResumeService {
         if (!resume.getProfile().getId().equals(profile.getId())) {
             throw new BadRequestException("You are not authorized to delete this resume");
         }
+
+        // Nullify resume reference in any applications that use this resume
+        List<Application> applications = applicationRepository.findByResumeId(resumeId);
+        for (Application app : applications) {
+            app.setResume(null);
+        }
+        applicationRepository.saveAll(applications);
 
         resumeRepository.delete(resume);
         logger.info("Resume ID: {} deleted successfully for user: {}", resumeId, email);
