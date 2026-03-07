@@ -14,4 +14,8 @@ public interface AuthService {
     void sendForgotPasswordLink(String email);
     void resetPassword(String token, String newPassword);
     
+    void resendRegistrationOtp(String email);
+    
+    long getRemainingSeconds(String email);
+    
 }

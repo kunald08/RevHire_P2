@@ -59,7 +59,7 @@ public class SecurityConfig {
                      */
                     .requestMatchers("/jobs/{id:\\d+}/").permitAll()   
                     .requestMatchers("/employers/{id:\\d+}/").permitAll()  
-                    .requestMatchers("/auth/forgot-password", "/auth/reset-password").permitAll()
+                    .requestMatchers("/auth/forgot-password", "/auth/reset-password","/auth/resend-otp").permitAll()
                     
                     // 2. AUTHENTICATION & STATIC ASSETS
                     .requestMatchers("/auth/login", "/auth/register/**","/auth/verify",  "/login").permitAll()

@@ -47,7 +47,10 @@
                             <input type="text" th:field="*{phone}" class="form-control" placeholder="+91..." required>
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100 btn-lg shadow-sm">Register as Employer</button>
+						<button type="submit" class="btn btn-success w-100 btn-lg shadow-sm" id="regBtn">
+						    <span id="btnText">Register as Employer</span>
+						    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+						</button>
                     </form>
                     
                     <p class="text-center mt-4 mb-0 text-muted">

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/auth")
@@ -64,8 +65,11 @@ public class AuthController {
     @GetMapping("/verify")
     public String showVerifyPage(@RequestParam String email, Model model) {
         model.addAttribute("email", email);
-        // 300 seconds = 5 minutes
-        model.addAttribute("secondsRemaining", 300); 
+        
+        // Fetch actual time from service
+        long remaining = authService.getRemainingSeconds(email);
+        model.addAttribute("secondsRemaining", remaining); 
+        
         return "auth/verify-otp";
     }
     
@@ -164,15 +168,29 @@ public class AuthController {
     }
 
     // 2. Process the Request and send Email
+//    @PostMapping("/forgot-password")
+//    public String processForgotPassword(@RequestParam String email, Model model) {
+//        try {
+//            authService.sendForgotPasswordLink(email);
+//            return "redirect:/auth/login?info=Check your email for the password reset link!";
+//        } catch (RuntimeException e) {
+//            model.addAttribute("error", e.getMessage());
+//            return "redirect:/auth/login?info=If an account exists for " + email + ", a reset link has been sent.";
+//        }
+//    }
+    
     @PostMapping("/forgot-password")
-    public String processForgotPassword(@RequestParam String email, Model model) {
+    public String processForgotPassword(@RequestParam String email) {
         try {
+            // The service should ideally handle the "not found" case silently
             authService.sendForgotPasswordLink(email);
-            return "redirect:/auth/login?info=Check your email for the password reset link!";
-        } catch (RuntimeException e) {
-            model.addAttribute("error", e.getMessage());
-            return "auth/forgot-password-request";
+        } catch (Exception e) {
+            // Log the error internally for debugging, but don't expose it to the UI
+            // logger.error("Forgot password attempt failed for: " + email);
         }
+
+        // Always return the same message regardless of whether the email exists
+        return "redirect:/auth/login?info=If an account exists for " + email + ", a reset link has been sent.";
     }
 
     // 3. Show the actual New Password Form (from the Email link)
@@ -201,5 +219,23 @@ public class AuthController {
             model.addAttribute("token", token);
             return "auth/reset-password";
         }
+    }
+    
+    @PostMapping("/resend-otp")
+    public String resendOtp(@RequestParam String email, RedirectAttributes ra) {
+        try {
+            authService.resendRegistrationOtp(email);
+            ra.addAttribute("email", email);
+            ra.addFlashAttribute("resendSuccess", "true");
+        } catch (Exception e) {
+            System.err.println("Resend Error: " + e.getMessage());
+            ra.addAttribute("email", email);
+            // DO NOT let the user get stuck. If session is lost, send them back to register.
+            if(e.getMessage().contains("expired")) {
+                ra.addFlashAttribute("errorMessage", "Session expired. Please register again.");
+                return "redirect:/auth/register";
+            }
+        }
+        return "redirect:/auth/verify";
     }
 }

@@ -21,3 +21,23 @@ function setupPasswordToggle(buttonId, inputId, iconId) {
 document.addEventListener('DOMContentLoaded', function() {
     setupPasswordToggle('togglePassword', 'passwordInput', 'eyeIcon');
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const registrationForm = document.querySelector('form[th\\:action*="/auth/register"]');
+    const regBtn = document.getElementById('regBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', function() {
+            // 1. Disable the button to prevent double submission
+            regBtn.disabled = true;
+
+            // 2. Switch text to "Sending..." and show spinner
+            btnText.innerText = "Sending Verification Code...";
+            btnSpinner.classList.remove('d-none');
+            
+            // The form will now proceed to submit to the backend
+        });
+    }
+});

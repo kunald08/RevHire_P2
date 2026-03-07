@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">RevHire Authentication</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f7f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                    
+                    <tr>
+                        <td align="center" style="background-color: #0d6efd; padding: 40px 0;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px;">RevHire</h1>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 40px 50px;">
+                            <h2 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 20px;" th:text="${title}">Action Required</h2>
+                            
+                            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                                Hello, <br><br>
+                                <span th:text="${message}">We received a request regarding your account access.</span>
+                            </p>
+
+                            <div th:if="${otp != null}" style="text-align: center; background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 30px; margin-bottom: 30px;">
+                                <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: 600;">Verification Code</p>
+                                <span style="font-size: 42px; font-weight: 800; color: #0d6efd; letter-spacing: 6px; font-family: 'Courier New', Courier, monospace;" th:text="${otp}">000000</span>
+                                <p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">This code is valid for <strong>5 minutes</strong>. Do not share this with anyone.</p>
+                            </div>
+
+                            <div th:if="${actionUrl != null}" style="text-align: center; margin: 40px 0;">
+                                <a th:href="${actionUrl}" 
+                                   style="background-color: #0d6efd; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; display: inline-block; transition: background-color 0.3s ease;">
+                                    <span th:text="${actionText}">Confirm Action</span>
+                                </a>
+                                <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">If the button above doesn't work, copy and paste this link into your browser:<br>
+                                <span style="color: #0d6efd;" th:text="${actionUrl}"></span></p>
+                            </div>
+
+                            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 30px 0;">
+                            
+                            <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
+                                <strong>Why did I receive this?</strong><br>
+                                This is an automated message triggered by a request on RevHire. If you did not make this request, your account is still safe, but you may want to review your security settings.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="background-color: #f8fafc; padding: 30px; border-top: 1px solid #f1f5f9;">
+                            <p style="margin: 0; color: #64748b; font-size: 13px;">
+                                &copy; 2026 <strong>RevHire</strong> Job Portal.<br>
+                                Chennai, Tamil Nadu, India.
+                            </p>
+                            <p style="margin-top: 10px; color: #cbd5e1; font-size: 11px;">
+                                Sent to: <span th:text="${email}">user@example.com</span>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -21,7 +21,8 @@
                         </span>
                     </div>
                     
-                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                    <div th:if="${error}" class="alert alert-danger py-2 small" th:text="${error}"></div>
+                    <div th:if="${param.resendSuccess}" class="alert alert-success py-2 small">New code sent! Please check your inbox.</div>
 
                     <form th:action="@{/auth/verify}" method="post" id="otpForm">
                         <input type="hidden" name="email" th:value="${email}" />
@@ -32,52 +33,103 @@
                         <button type="submit" id="verifyBtn" class="btn btn-primary w-100 btn-lg">Verify & Register</button>
                     </form>
                     
-                    <div id="resendSection" class="mt-3 d-none">
-                        <p class="small text-muted">Didn't get the code? <a th:href="@{/auth/register}" class="text-decoration-none">Try registering again</a></p>
+					<div id="resendSection" class="mt-4 d-none">
+					    <p class="small text-muted mb-2">Didn't get the code or it expired?</p>
+					    <button type="button" onclick="handleResend()" id="resendBtn" class="btn btn-outline-secondary btn-sm">
+					        <i class="bi bi-arrow-clockwise"></i> Resend Verification Code
+					    </button>
+					    <div id="ajaxSuccess" class="alert alert-success py-2 small mt-2 d-none">New code sent!</div>
+					</div>
+
+                    <div class="mt-4 p-3 bg-light border rounded text-start">
+                        <p class="small text-muted mb-0">
+                            <i class="bi bi-info-circle text-primary"></i> 
+                            <strong>Note:</strong> If you don't receive a code within 2 minutes, check your <strong>spam folder</strong>. 
+                            If you already have an account, check your email for a <strong>login reminder</strong>.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+	<div th:replace="~{fragments/footer :: footer}"></div>
+	   <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+	<script th:src="@{/js/auth/auth.js}"></script>
+<script th:inline="javascript">
+    // 1. Initialize timeLeft safely
+	let timeLeft = /*[[${secondsRemaining != null ? secondsRemaining : 0}]]*/ 0;
+	const email = /*[[${email}]]*/ "default@example.com";
+    
+    const timerElement = document.getElementById('timer');
+    const timerBadge = document.getElementById('timer-badge');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const otpInput = document.getElementById('otpInput');
+    const resendSection = document.getElementById('resendSection');
 
-    <script th:inline="javascript">
-        // 1. Get initial time from controller (300 seconds = 5 mins)
-        let timeLeft = /*[[${secondsRemaining != null ? secondsRemaining : 300}]]*/ 300;
-        const timerElement = document.getElementById('timer');
-        const timerBadge = document.getElementById('timer-badge');
-        const verifyBtn = document.getElementById('verifyBtn');
-        const otpInput = document.getElementById('otpInput');
-        const resendSection = document.getElementById('resendSection');
+    function updateTimerDisplay() {
+        if (timeLeft <= 0) {
+            timerElement.innerHTML = "EXPIRED";
+            timerBadge.classList.replace('bg-warning', 'bg-danger');
+            timerBadge.classList.add('text-white');
+            
+            verifyBtn.disabled = true;
+            otpInput.disabled = true;
+            resendSection.classList.remove('d-none'); // Show resend button
+            return false;
+        }
 
-        const countdown = setInterval(function() {
-            let minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        timerElement.innerHTML = 
+            (minutes < 10 ? '0' + minutes : minutes) + ":" + 
+            (seconds < 10 ? '0' + seconds : seconds);
 
-            // Formatting MM:SS
-            minutes = minutes < 10 ? '0' + minutes : minutes;
-            seconds = seconds < 10 ? '0' + seconds : seconds;
+        if (timeLeft <= 60) {
+            timerBadge.classList.replace('bg-warning', 'bg-danger');
+            timerBadge.classList.add('text-white');
+        }
+        return true;
+    }
 
-            timerElement.innerHTML = minutes + ":" + seconds;
+    updateTimerDisplay();
 
-            // Change badge color to red when less than 1 minute remains
-            if (timeLeft <= 60) {
-                timerBadge.classList.replace('bg-warning', 'bg-danger');
-                timerBadge.classList.add('text-white');
-            }
-
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                timerElement.innerHTML = "EXPIRED";
-                
-                // Disable form to prevent invalid submissions
-                verifyBtn.disabled = true;
-                otpInput.disabled = true;
-                
-                // Show resend/restart option
-                resendSection.classList.remove('d-none');
-            }
+    const countdown = setInterval(function() {
+        if (timeLeft > 0) {
             timeLeft -= 1;
-        }, 1000);
-    </script>
+            updateTimerDisplay();
+        } else {
+            clearInterval(countdown);
+        }
+    }, 1000);
+
+    function handleResend() {
+        const resendBtn = document.getElementById('resendBtn');
+        resendBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+        resendBtn.disabled = true;
+
+        // Note: Using the standard POST endpoint you already have
+        fetch('/auth/resend-otp?email=' + encodeURIComponent(email), {
+            method: 'POST',
+            headers: {
+                // Include CSRF token if Spring Security CSRF is enabled
+                'X-Requested-With': 'XMLHttpRequest' 
+            }
+        })
+        .then(response => {
+            // We wait for the server to confirm it's done before reloading
+            if (response.redirected || response.ok) {
+                window.location.href = '/auth/verify?email=' + encodeURIComponent(email) + '&resendSuccess=true';
+            } else {
+                alert("Session might be expired. Redirecting to registration.");
+                window.location.href = '/auth/register';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            resendBtn.disabled = false;
+            resendBtn.innerHTML = 'Resend Verification Code';
+        });
+    }
+</script>
 </body>
 </html>
