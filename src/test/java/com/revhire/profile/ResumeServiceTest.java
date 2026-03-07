@@ -224,4 +224,46 @@ public class ResumeServiceTest {
 
         resumeService.downloadResume(1L);
     }
+
+    // ==================== Delete ====================
+
+    @Test
+    public void testDeleteResume_Success() {
+        Resume resume = Resume.builder()
+                .id(1L)
+                .profile(testProfile)
+                .fileName("resume.pdf")
+                .fileData(new byte[1024])
+                .build();
+
+        when(profileService.getOrCreateProfile("kunal@test.com")).thenReturn(testProfile);
+        when(resumeRepository.findById(1L)).thenReturn(Optional.of(resume));
+
+        resumeService.deleteResume("kunal@test.com", 1L);
+
+        verify(resumeRepository, times(1)).delete(resume);
+    }
+
+    @Test(expected = ResourceNotFoundException.class)
+    public void testDeleteResume_NotFound() {
+        when(profileService.getOrCreateProfile("kunal@test.com")).thenReturn(testProfile);
+        when(resumeRepository.findById(999L)).thenReturn(Optional.empty());
+
+        resumeService.deleteResume("kunal@test.com", 999L);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testDeleteResume_NotOwner() {
+        JobSeekerProfile otherProfile = JobSeekerProfile.builder().id(2L).build();
+        Resume resume = Resume.builder()
+                .id(1L)
+                .profile(otherProfile)
+                .fileName("resume.pdf")
+                .build();
+
+        when(profileService.getOrCreateProfile("kunal@test.com")).thenReturn(testProfile);
+        when(resumeRepository.findById(1L)).thenReturn(Optional.of(resume));
+
+        resumeService.deleteResume("kunal@test.com", 1L);
+    }
 }

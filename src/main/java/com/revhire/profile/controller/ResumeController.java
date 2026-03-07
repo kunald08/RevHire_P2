@@ -128,4 +128,23 @@ public class ResumeController {
                 .contentLength(resume.getFileSize())
                 .body(resume.getFileData());
     }
+
+    /**
+     * Delete a resume file by ID.
+     */
+    @PostMapping("/resume/delete/{id}")
+    public String deleteResume(Authentication authentication,
+                               @PathVariable Long id,
+                               RedirectAttributes redirectAttributes) {
+        String email = authentication.getName();
+        logger.info("Deleting resume file ID: {} for user: {}", id, email);
+
+        try {
+            resumeService.deleteResume(email, id);
+            redirectAttributes.addFlashAttribute("success", "Resume deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/resume/upload";
+    }
 }
