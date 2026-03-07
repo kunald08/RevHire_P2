@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Details - RevHire</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .nav-buttons {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar}"></div>
+    
+    <!-- QUICK NAVIGATION BUTTONS - YOUR MODULE -->
+    <div class="container mt-3 nav-buttons" sec:authorize="hasRole('SEEKER')">
+        <div class="row">
+            <div class="col-12">
+                <div class="btn-group w-100 shadow-sm" role="group">
+                    <a href="/jobs/search" class="btn btn-outline-primary">
+                        <i class="bi bi-search"></i> Search Jobs
+                    </a>
+                    <a href="/applications" class="btn btn-primary">
+                        <i class="bi bi-briefcase"></i> My Applications
+                    </a>
+                    <a href="/favorites" class="btn btn-outline-danger">
+                        <i class="bi bi-heart-fill"></i> My Favorites
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-file-text"></i> Application Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <h3 th:text="${application.jobTitle}">Software Engineer</h3>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong><i class="bi bi-building"></i> Company:</strong> 
+                                    <span th:text="${application.companyName}">Tech Corp</span>
+                                </p>
+                                <p><strong><i class="bi bi-calendar"></i> Applied On:</strong> 
+                                    <span th:text="${application.formattedAppliedDate}">Jan 15, 2024</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong><i class="bi bi-tag"></i> Status:</strong> 
+                                    <span class="badge" th:class="${application.statusBadgeClass}" th:text="${application.status}">Applied</span>
+                                </p>
+                                <p><strong><i class="bi bi-clock"></i> Last Updated:</strong> 
+                                    <span th:text="${application.updatedAt != null ? #temporals.format(application.updatedAt, 'MMM dd, yyyy') : 'N/A'}">Jan 16, 2024</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4 mt-4">
+                            <h5><i class="bi bi-file-text"></i> Cover Letter</h5>
+                            <div class="p-3 bg-light rounded" th:if="${application.coverLetter != null and !application.coverLetter.isEmpty()}">
+                                <p th:text="${application.coverLetter}" style="white-space: pre-line;"></p>
+                            </div>
+                            <div class="p-3 bg-light rounded text-muted" th:unless="${application.coverLetter != null and !application.coverLetter.isEmpty()}">
+                                <em>No cover letter provided</em>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5><i class="bi bi-file-pdf"></i> Resume</h5>
+                            <div class="p-3 bg-light rounded" th:if="${application.resumeFileName != null}">
+                                <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                <span th:text="${application.resumeFileName}">resume.pdf</span>
+                                <a href="#" class="btn btn-sm btn-outline-primary ms-3">
+                                    <i class="bi bi-download"></i> Download
+                                </a>
+                            </div>
+                            <div class="p-3 bg-light rounded text-muted" th:unless="${application.resumeFileName != null}">
+                                <em>No resume uploaded</em>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4" th:if="${application.employerComment != null and !application.employerComment.isEmpty()}">
+                            <h5><i class="bi bi-chat"></i> Employer Feedback</h5>
+                            <div class="p-3 bg-info bg-opacity-10 rounded">
+                                <p th:text="${application.employerComment}" style="white-space: pre-line;"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-gear"></i> Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <a th:href="@{/jobs/{id}(id=${application.jobId})}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="bi bi-briefcase"></i> View Job
+                        </a>
+                        
+                        <!-- Withdraw form with proper POST method -->
+                        <form th:if="${canWithdraw}" 
+                              th:action="@{/applications/{id}/withdraw(id=${application.id})}" 
+                              method="post"
+                              onsubmit="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');"
+                              class="w-100 mb-2">
+                            <input type="hidden" name="reason" value="Withdrawn by user">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-arrow-return-left"></i> Withdraw Application
+                            </button>
+                        </form>
+                        
+                        <a th:href="@{/applications}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-left"></i> Back to Applications
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Status Timeline Card -->
+                <div class="card mt-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Application Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <strong>Applied</strong>
+                                <br>
+                                <small class="text-muted" th:text="${application.formattedAppliedDate}">Jan 15, 2024</small>
+                            </li>
+                            <li class="mb-3" th:if="${application.status == 'UNDER_REVIEW' or application.status == 'SHORTLISTED' or application.status == 'REJECTED'}">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <strong>Under Review</strong>
+                                <br>
+                                <small class="text-muted">Application is being reviewed</small>
+                            </li>
+                            <li class="mb-3" th:if="${application.status == 'SHORTLISTED'}">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <strong>Shortlisted</strong>
+                                <br>
+                                <small class="text-muted">You've been shortlisted!</small>
+                            </li>
+                            <li class="mb-3" th:if="${application.status == 'REJECTED'}">
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                                <strong>Rejected</strong>
+                                <br>
+                                <small class="text-muted">Application not selected</small>
+                            </li>
+                            <li class="mb-3" th:if="${application.status == 'WITHDRAWN'}">
+                                <i class="bi bi-arrow-return-left-fill text-warning"></i>
+                                <strong>Withdrawn</strong>
+                                <br>
+                                <small class="text-muted">You withdrew this application</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success/Error Message Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="messageToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong class="me-auto">RevHire</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show toast message if exists
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMsg = urlParams.get('success');
+            const errorMsg = urlParams.get('error');
+            
+            if (successMsg) {
+                showMessage(successMsg, 'success');
+            } else if (errorMsg) {
+                showMessage(errorMsg, 'danger');
+            }
+        }
+        
+        function showMessage(message, type) {
+            const toastEl = document.getElementById('messageToast');
+            const toastBody = document.getElementById('toastMessage');
+            const toastHeader = toastEl.querySelector('.toast-header i');
+            
+            if (type === 'success') {
+                toastHeader.className = 'bi bi-check-circle-fill text-success me-2';
+            } else {
+                toastHeader.className = 'bi bi-exclamation-triangle-fill text-danger me-2';
+            }
+            
+            toastBody.textContent = message;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
+</body>
+</html>

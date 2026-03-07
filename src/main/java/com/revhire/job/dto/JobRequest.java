@@ -5,7 +5,7 @@ import com.revhire.job.validation.ValidSalaryRange;
 import com.revhire.job.validation.ValidExperienceRange;
 import jakarta.validation.constraints.*;
 import lombok.Data;
-
+import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -45,6 +45,7 @@ public class JobRequest {
 
     @NotNull(message = "Deadline is required")
     @Future(message = "Deadline must be in the future")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate deadline;
 
     @NotNull(message = "Number of openings is required")
