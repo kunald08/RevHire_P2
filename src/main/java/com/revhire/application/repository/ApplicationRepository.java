@@ -26,4 +26,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     long countByJobIdAndStatus(Long jobId, ApplicationStatus status);
     // Find by job and seeker
     Optional<Application> findByJobIdAndSeekerId(Long jobId, Long seekerId);
+
+    // Find all applications that reference a specific resume
+    List<Application> findByResumeId(Long resumeId);
 }
