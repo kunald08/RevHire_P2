@@ -39,33 +39,38 @@
 				        You have been logged out.
 				    </div>
 				
-				    <form th:action="@{/login}" method="post">
-				        <div class="mb-3">
-				            <label class="form-label">Email Address</label>
-				            <input type="email" name="username" class="form-control" placeholder="name@example.com" required autofocus>
-				        </div>
-						<div class="mb-2">
-						    <label class="form-label">Password</label>
-						    <div class="input-group">
-						        <input type="password" name="password" id="passwordInput" 
-						               class="form-control border-end-0" 
-						               placeholder="Enter password" required>
-						        <span class="input-group-text bg-white border-start-0" id="togglePassword" style="cursor: pointer;">
-						            <i class="bi bi-eye text-muted" id="toggleIcon"></i>
-						        </span>
-						    </div>
-						</div>
-				        
-				        <div class="d-flex justify-content-between align-items-center mb-4">
-				            <div class="form-check">
-				                <input type="checkbox" class="form-check-input" id="rememberMe">
-				                <label class="form-check-label small" for="rememberMe">Remember me</label>
-				            </div>
-				            <a th:href="@{/auth/forgot-password}" class="small text-decoration-none">Forgot Password?</a>
-				        </div>
-				
-				        <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm">Login</button>
-				    </form>
+				    <form th:action="@{/login}" method="post" id="passwordLoginForm">
+					    <div class="mb-3">
+					        <label class="form-label">Email Address</label>
+					        <input type="email" name="username" class="form-control" placeholder="name@example.com" required autofocus>
+					    </div>
+					    
+					    <div id="passwordFieldSection">
+					        <div class="mb-2">
+					            <label class="form-label">Password</label>
+					            <div class="input-group">
+					                <input type="password" name="password" id="passwordInput" class="form-control border-end-0" placeholder="Enter password">
+					                <span class="input-group-text bg-white border-start-0" id="togglePassword" style="cursor: pointer;">
+					                    <i class="bi bi-eye text-muted" id="toggleIcon"></i>
+					                </span>
+					            </div>
+					        </div>
+					        <div class="text-end mb-3">
+					            <a href="javascript:void(0)" onclick="toggleLoginMethod('otp')" class="small text-decoration-none">Login with OTP instead?</a>
+					        </div>
+					    </div>
+					
+					    <div id="otpLinkSection" style="display: none;">
+					        <div class="text-center mb-4">
+					            <button type="button" onclick="requestLoginOtp()" class="btn btn-outline-primary w-100">
+					                <i class="bi bi-envelope-paper me-2"></i>Send Login OTP to Email
+					            </button>
+					            <a href="javascript:void(0)" onclick="toggleLoginMethod('password')" class="small text-decoration-none d-block mt-2">Back to Password</a>
+					        </div>
+					    </div>
+					
+					    <button type="submit" id="submitBtn" class="btn btn-primary w-100 btn-lg shadow-sm">Login</button>
+					</form>
 				    
 				    <hr class="my-4">
 				    
@@ -95,6 +100,33 @@
 	                });
 	            }
 	        });
+			
+			function toggleLoginMethod(method) {
+			    const pwSection = document.getElementById('passwordFieldSection');
+			    const otpSection = document.getElementById('otpLinkSection');
+			    const pwInput = document.getElementById('passwordInput');
+			    const submitBtn = document.getElementById('submitBtn');
+
+			    if (method === 'otp') {
+			        pwSection.style.display = 'none';
+			        otpSection.style.display = 'block';
+			        submitBtn.style.display = 'none'; // Hide submit because user must click "Send OTP" first
+			        pwInput.required = false;
+			    } else {
+			        pwSection.style.display = 'block';
+			        otpSection.style.display = 'none';
+			        submitBtn.style.display = 'block';
+			        pwInput.required = true;
+			    }
+			}
+
+			async function requestLoginOtp() {
+			    const email = document.querySelector('input[name="username"]').value;
+			    if(!email) { alert("Please enter your email first."); return; }
+
+			    // Redirect to a controller endpoint that sends login OTP
+			    window.location.href = `/auth/login/otp-request?email=${encodeURIComponent(email)}`;
+			}
 	    </script>
 </body>
 </html>

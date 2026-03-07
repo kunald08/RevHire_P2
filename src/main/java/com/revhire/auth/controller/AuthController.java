@@ -65,17 +65,23 @@ public class AuthController {
     @GetMapping("/verify")
     public String showVerifyPage(@RequestParam String email, Model model) {
         model.addAttribute("email", email);
+        model.addAttribute("isLogin", false); // ADDED: Required for dynamic HTML
         
-        // Fetch actual time from service
-        long remaining = authService.getRemainingSeconds(email);
-        model.addAttribute("secondsRemaining", remaining); 
-        
-        // NEW: Fetch and add the current resend count
-        // This will return 0, 1, 2, or 3 based on your otpStore
-        int count = authService.getResendCount(email);
-        model.addAttribute("resendCount", count);
+        model.addAttribute("secondsRemaining", authService.getRemainingSeconds(email)); 
+        model.addAttribute("resendCount", authService.getResendCount(email));
         
         return "auth/verify-otp";
+    }
+    
+    @GetMapping("/verify-login")
+    public String showLoginVerifyPage(@RequestParam String email, Model model) {
+        model.addAttribute("email", email);
+        model.addAttribute("isLogin", true); // ADDED: Required for dynamic HTML
+        
+        model.addAttribute("secondsRemaining", authService.getRemainingSeconds(email)); 
+        model.addAttribute("resendCount", authService.getResendCount(email));
+        
+        return "auth/verify-otp"; 
     }
     
     @PostMapping("/verify")
@@ -90,6 +96,22 @@ public class AuthController {
         }
     }
     
+    
+    @PostMapping("/verify-login")
+    public String verifyLogin(@RequestParam String email, @RequestParam String otp, HttpServletRequest request, Model model) {
+        try {
+            authService.verifyLoginOtp(email, otp);
+            authService.authenticateUserManually(email, request);
+            return "redirect:/"; // Success!
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("email", email);
+            model.addAttribute("isLogin", true);
+            model.addAttribute("resendCount", authService.getResendCount(email));
+            model.addAttribute("secondsRemaining", authService.getRemainingSeconds(email));
+            return "auth/verify-otp";
+        }
+    }
     /**
      * Handles 403 Access Denied errors (e.g., Seeker trying to access Employer pages)
      * Matches the .accessDeniedPage("/auth/denied") in SecurityConfig
@@ -172,17 +194,6 @@ public class AuthController {
         return "auth/forgot-password-request";
     }
 
-    // 2. Process the Request and send Email
-//    @PostMapping("/forgot-password")
-//    public String processForgotPassword(@RequestParam String email, Model model) {
-//        try {
-//            authService.sendForgotPasswordLink(email);
-//            return "redirect:/auth/login?info=Check your email for the password reset link!";
-//        } catch (RuntimeException e) {
-//            model.addAttribute("error", e.getMessage());
-//            return "redirect:/auth/login?info=If an account exists for " + email + ", a reset link has been sent.";
-//        }
-//    }
     
     @PostMapping("/forgot-password")
     public String processForgotPassword(@RequestParam String email) {
@@ -227,20 +238,44 @@ public class AuthController {
     }
     
     @PostMapping("/resend-otp")
-    public String resendOtp(@RequestParam String email, RedirectAttributes ra) {
+    public String resendOtp(@RequestParam String email, 
+                            @RequestParam(defaultValue = "register") String type, 
+                            RedirectAttributes ra) {
         try {
-            authService.resendRegistrationOtp(email);
+            if ("login".equals(type)) {
+                authService.resendLoginOtp(email);
+            } else {
+                authService.resendRegistrationOtp(email);
+            }
             ra.addAttribute("email", email);
             ra.addFlashAttribute("resendSuccess", "true");
         } catch (Exception e) {
-            System.err.println("Resend Error: " + e.getMessage());
-            ra.addAttribute("email", email);
-            // DO NOT let the user get stuck. If session is lost, send them back to register.
-            if(e.getMessage().contains("expired")) {
-                ra.addFlashAttribute("errorMessage", "Session expired. Please register again.");
-                return "redirect:/auth/register";
+            String msg = e.getMessage();
+            // Check if the message contains our "Remaining" info
+            if (msg != null && msg.contains("SENT_REMAINING")) {
+                ra.addFlashAttribute("resendSuccess", "true");
+            } else {
+                ra.addFlashAttribute("error", msg);
             }
+            ra.addAttribute("email", email);
         }
-        return "redirect:/auth/verify";
+        
+        return "login".equals(type) ? "redirect:/auth/verify-login" : "redirect:/auth/verify";
     }
+    
+    
+    @GetMapping("/login/otp-request")
+    public String requestLoginOtp(@RequestParam String email, RedirectAttributes ra) {
+        System.out.println("DEBUG: Entering requestLoginOtp for: " + email);
+        try {
+            authService.sendLoginOtp(email); 
+            System.out.println("DEBUG: OTP sent successfully, redirecting...");
+            return "redirect:/auth/verify-login?email=" + email;
+        } catch (Exception e) {
+            System.out.println("DEBUG: Error occurred: " + e.getMessage());
+            ra.addFlashAttribute("error", "Could not send OTP. Please try again.");
+            return "redirect:/auth/login";
+        }
+    }
+
 }

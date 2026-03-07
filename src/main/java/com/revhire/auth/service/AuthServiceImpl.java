@@ -6,6 +6,7 @@ import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.Role;
 
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
@@ -240,5 +241,96 @@ public class AuthServiceImpl implements AuthService {
         if (password == null || !password.matches(pattern)) {
             throw new RuntimeException("Password too weak.");
         }
+    }
+    
+    @Override
+    public void sendLoginOtp(String email) {
+        // 1. Ensure user exists
+        if (!userRepository.existsByEmail(email)) {
+            throw new RuntimeException("User not found");
+        }
+
+        // 2. Generate and store OTP (Reusable logic from your register method)
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
+        otpStore.put(email, new OtpData(otp, expiryTime, 0, false));
+
+        // 3. Send Email
+        sendHtmlEmail(email, "RevHire - Login OTP", "Your Login Code", 
+            "Use the code below to sign in to your account.", otp, null, null);
+    }
+    
+    @Override
+    @Transactional
+    public void resendLoginOtp(String email) {
+        // 1. Check if user exists (Crucial for Login)
+        if (!userRepository.existsByEmail(email)) {
+            throw new RuntimeException("USER_NOT_FOUND");
+        }
+
+        OtpData oldData = otpStore.get(email);
+        
+        // 2. Check Resend Limit
+        if (oldData != null && oldData.resendCount >= 3) {
+            throw new RuntimeException("LIMIT_REACHED");
+        }
+
+        int nextCount = (oldData != null) ? oldData.resendCount + 1 : 1;
+        String newOtp = String.format("%06d", new Random().nextInt(999999));
+        long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
+
+        // 3. Store and Send (Login specific)
+        otpStore.put(email, new OtpData(newOtp, expiryTime, nextCount, false));
+        
+        sendHtmlEmail(email, "RevHire - Your Login Code", "New Login OTP", 
+            "Here is your requested login verification code.", newOtp, null, null);
+        
+        int remaining = 3 - nextCount;
+        throw new RuntimeException("SENT_REMAINING:" + remaining);
+    }
+    
+    @Override
+    public void verifyLoginOtp(String email, String userOtp) {
+        OtpData data = otpStore.get(email);
+
+        if (data == null) {
+            throw new RuntimeException("No login session found.");
+        }
+
+        if (System.currentTimeMillis() > data.expiryTime) {
+            otpStore.remove(email);
+            throw new RuntimeException("OTP has expired.");
+        }
+
+        if (!data.otp.equals(userOtp)) {
+            throw new RuntimeException("Invalid OTP!");
+        }
+
+        otpStore.remove(email); // Success, clear the OTP
+    }
+
+    @Override
+    public void authenticateUserManually(String email, HttpServletRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Create UserDetails for Spring Security
+        org.springframework.security.core.userdetails.UserDetails userDetails = 
+            org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
+                .password(user.getPassword())
+                .authorities(user.getRole().name())
+                .build();
+
+        // Create Authentication Token
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth = 
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+
+        // Link authentication to the current request session
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+        
+        // Persist the session so the user stays logged in while browsing
+        request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", 
+            org.springframework.security.core.context.SecurityContextHolder.getContext());
     }
 }

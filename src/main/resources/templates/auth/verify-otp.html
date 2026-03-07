@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Verify Email | RevHire</title>
+    <title>Verify OTP | RevHire</title>
     <th:block th:replace="~{fragments/layout :: head}"></th:block>
     <style>
         .btn-danger:disabled {
@@ -20,8 +20,13 @@
         <div class="row justify-content-center">
             <div class="col-md-5">
                 <div class="card border-0 shadow-sm p-4 text-center">
-                    <i class="bi bi-envelope-check text-primary display-4"></i>
-                    <h2 class="fw-bold mt-3">Check your email</h2>
+                    <i class="bi bi-shield-lock text-primary display-4"></i>
+                    
+                    <h2 class="fw-bold mt-3" 
+                        th:text="${isLogin ? 'Login Verification' : 'Check your email'}">
+                        Check your email
+                    </h2>
+                    
                     <p class="text-muted">We sent a 6-digit code to <br><strong th:text="${email}"></strong></p>
                     
                     <div class="mb-3">
@@ -32,25 +37,33 @@
                     </div>
                     
                     <div th:if="${error}" class="alert alert-danger py-2 small" th:text="${error}"></div>
-                    <div th:if="${param.resendSuccess}" class="alert alert-success py-2 small">New code sent! Please check your inbox.</div>
+                    <div th:if="${resendSuccess}" class="alert alert-success py-2 small">New code sent! Please check your inbox.</div>
 
-                    <form th:action="@{/auth/verify}" method="post" id="otpForm">
+                    <form th:action="${isLogin ? '/auth/verify-login' : '/auth/verify'}" method="post" id="otpForm">
                         <input type="hidden" name="email" th:value="${email}" />
                         <div class="mb-4">
                             <input type="text" name="otp" id="otpInput" class="form-control form-control-lg text-center fw-bold" 
                                    placeholder="000000" maxlength="6" required autofocus autocomplete="one-time-code">
                         </div>
-                        <button type="submit" id="verifyBtn" class="btn btn-primary w-100 btn-lg">Verify & Register</button>
+                        
+                        <button type="submit" id="verifyBtn" class="btn btn-primary w-100 btn-lg">
+                            <span th:text="${isLogin ? 'Verify & Login' : 'Verify & Register'}">Verify</span>
+                        </button>
                     </form>
                     
-                    <div id="resendSection" class="mt-4 d-none">
+                    <div id="resendSection" class="mt-4">
                         <p class="small text-muted mb-2">Didn't get the code or it expired?</p>
-                        <button type="button" onclick="handleResend()" id="resendBtn" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-clockwise"></i> Resend Verification Code
-                        </button>
+                        
+                        <form th:action="@{/auth/resend-otp}" method="post" id="resendForm" class="d-inline">
+                            <input type="hidden" name="email" th:value="${email}">
+                            <input type="hidden" name="type" th:value="${isLogin ? 'login' : 'register'}">
+                            <button type="submit" id="resendBtn" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-clockwise"></i> Resend Verification Code
+                            </button>
+                        </form>
                         
                         <div id="attemptDisplay" class="text-muted small mt-2">
-                            <span id="attemptsLeft" class="fw-bold" th:text="${3 - resendCount}">3</span> attempts remaining
+                            <span id="attemptsLeft" class="fw-bold" th:text="${3 - (resendCount != null ? resendCount : 0)}">3</span> attempts remaining
                         </div>
                     </div>
 
@@ -61,8 +74,8 @@
                         </p>
                         <ul class="small text-muted ps-3 mb-0">
                             <li>Check your <strong>spam/junk folder</strong>.</li>
-                            <li>
-                                <strong>Already have an account?</strong> If this email is already registered, we won't send a new OTP. Instead, check your inbox for a <strong>login reminder</strong>.
+                            <li th:if="${!isLogin}">
+                                <strong>Already have an account?</strong> Login instead of registering.
                             </li>
                             <li>You have a maximum of <strong>3 resend attempts</strong>.</li>
                         </ul>
@@ -76,74 +89,29 @@
     <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
     
     <script th:inline="javascript">
-        const secondsRemaining = /*[[${secondsRemaining != null ? secondsRemaining : 0}]]*/ 0;
-        const email = /*[[${email}]]*/ "default@example.com";
-        const currentResendCount = /*[[${resendCount != null ? resendCount : 0}]]*/ 0;
-        
+        // Using thymeleaf-native null-safety check
+        const secondsRemaining = [[${secondsRemaining != null ? secondsRemaining : 0}]];
         const expiryTimestamp = Date.now() + (secondsRemaining * 1000);
-        const timerElement = document.getElementById('timer');
-        const timerBadge = document.getElementById('timer-badge');
-        const verifyBtn = document.getElementById('verifyBtn');
-        const otpInput = document.getElementById('otpInput');
-        const resendSection = document.getElementById('resendSection');
-
-        function updateTimerDisplay() {
-            const currentTime = Date.now();
-            const distance = expiryTimestamp - currentTime;
+        
+        function updateTimer() {
+            const distance = expiryTimestamp - Date.now();
             const timeLeft = Math.ceil(distance / 1000);
+            const timerElement = document.getElementById('timer');
 
             if (timeLeft <= 0) {
                 timerElement.innerHTML = "EXPIRED";
-                timerBadge.classList.replace('bg-warning', 'bg-danger');
-                timerBadge.classList.add('text-white');
-                verifyBtn.disabled = true;
-                otpInput.disabled = true;
-                resendSection.classList.remove('d-none');
-                return false;
+                document.getElementById('verifyBtn').disabled = true;
+                document.getElementById('otpInput').disabled = true;
+                return;
             }
 
             let minutes = Math.floor(timeLeft / 60);
             let seconds = timeLeft % 60;
-            timerElement.innerHTML = (minutes < 10 ? '0' + minutes : minutes) + ":" + (seconds < 10 ? '0' + seconds : seconds);
-            return true;
+            timerElement.innerHTML = `${minutes < 10 ? '0'+minutes : minutes}:${seconds < 10 ? '0'+seconds : seconds}`;
         }
 
-        updateTimerDisplay();
-        const countdown = setInterval(() => { if (!updateTimerDisplay()) clearInterval(countdown); }, 1000);
-
-        function handleResend() {
-            const resendBtn = document.getElementById('resendBtn');
-            const attemptsLeftSpan = document.getElementById('attemptsLeft');
-            
-            resendBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
-            resendBtn.disabled = true;
-
-            fetch('/auth/resend-otp?email=' + encodeURIComponent(email), {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(async response => {
-                if (response.ok || response.redirected) {
-                    window.location.href = '/auth/verify?email=' + encodeURIComponent(email) + '&resendSuccess=true';
-                    return;
-                }
-
-                const errorMessage = await response.text(); 
-                if (errorMessage.includes("LIMIT_REACHED")) {
-                    if (attemptsLeftSpan) attemptsLeftSpan.innerText = "0";
-                    resendBtn.classList.replace('btn-outline-secondary', 'btn-danger');
-                    resendBtn.innerHTML = '<i class="bi bi-exclamation-octagon"></i> Limit Reached';
-                    
-                    setTimeout(() => { window.location.href = '/auth/register?error=limit_reached'; }, 3000);
-                } else {
-                    window.location.href = '/auth/register';
-                }
-            })
-            .catch(() => {
-                resendBtn.disabled = false;
-                resendBtn.innerHTML = 'Try Again';
-            });
-        }
+        setInterval(updateTimer, 1000);
+        updateTimer();
     </script>
 </body>
 </html>

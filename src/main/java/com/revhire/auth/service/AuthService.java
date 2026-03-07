@@ -2,6 +2,8 @@ package com.revhire.auth.service;
 
 import com.revhire.auth.dto.RegisterRequest;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 /**
  * Interface defining authentication operations.
  * Member A (Aswathy) will implement these.
@@ -19,4 +21,9 @@ public interface AuthService {
     long getRemainingSeconds(String email);
     int getResendCount(String email);
     
+    void sendLoginOtp(String email);
+    void resendLoginOtp(String email); 
+    
+    void verifyLoginOtp(String email, String otp);
+    void authenticateUserManually(String email, HttpServletRequest request);
 }
