@@ -45,27 +45,33 @@
 					        <input type="email" name="username" class="form-control" placeholder="name@example.com" required autofocus>
 					    </div>
 					    
-					    <div id="passwordFieldSection">
-					        <div class="mb-2">
-					            <label class="form-label">Password</label>
-					            <div class="input-group">
-					                <input type="password" name="password" id="passwordInput" class="form-control border-end-0" placeholder="Enter password">
-					                <span class="input-group-text bg-white border-start-0" id="togglePassword" style="cursor: pointer;">
-					                    <i class="bi bi-eye text-muted" id="toggleIcon"></i>
-					                </span>
-					            </div>
-					        </div>
-					        <div class="text-end mb-3">
-					            <a href="javascript:void(0)" onclick="toggleLoginMethod('otp')" class="small text-decoration-none">Login with OTP instead?</a>
-					        </div>
-					    </div>
-					
+						<div id="passwordFieldSection">
+						    <div class="mb-3">
+						        <label class="form-label">Password</label>
+						        <div class="input-group">
+						            <input type="password" name="password" id="passwordInput" class="form-control border-end-0" placeholder="Enter password">
+						            <span class="input-group-text bg-white border-start-0" id="togglePassword" style="cursor: pointer;">
+						                <i class="bi bi-eye text-muted" id="toggleIcon"></i>
+						            </span>
+						        </div>
+						        
+						        <div class="mt-2 d-flex justify-content-between">
+						            <a th:href="@{/auth/forgot-password}" class="text-decoration-none text-muted" style="font-size: 0.8rem;">
+						                Forgot password?
+						            </a>
+						            <a href="javascript:void(0)" onclick="toggleLoginMethod('otp')" class="text-decoration-none text-muted" style="font-size: 0.8rem;">
+						                Login with OTP instead?
+						            </a>
+						        </div>
+						    </div>
+						</div>
+						
 					    <div id="otpLinkSection" style="display: none;">
 					        <div class="text-center mb-4">
 					            <button type="button" onclick="requestLoginOtp()" class="btn btn-outline-primary w-100">
 					                <i class="bi bi-envelope-paper me-2"></i>Send Login OTP to Email
 					            </button>
-					            <a href="javascript:void(0)" onclick="toggleLoginMethod('password')" class="small text-decoration-none d-block mt-2">Back to Password</a>
+					            <a href="javascript:void(0)" onclick="toggleLoginMethod('password')" class="small text-decoration-none d-block mt-2">Back to Login with password</a>
 					        </div>
 					    </div>
 					

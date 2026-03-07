@@ -90,7 +90,7 @@
     
     <script th:inline="javascript">
         // Using thymeleaf-native null-safety check
-        const secondsRemaining = [[${secondsRemaining != null ? secondsRemaining : 0}]];
+        const secondsRemaining = /*[[${secondsRemaining != null ? secondsRemaining : 0}]]*/ 0;
         const expiryTimestamp = Date.now() + (secondsRemaining * 1000);
         
         function updateTimer() {
