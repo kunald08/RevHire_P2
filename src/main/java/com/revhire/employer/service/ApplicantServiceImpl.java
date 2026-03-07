@@ -5,6 +5,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +24,9 @@ import com.revhire.employer.repository.EmployerRepository;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
 import com.revhire.profile.entity.JobSeekerProfile;
+import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ProfileRepository;
+import com.revhire.profile.repository.ResumeRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +41,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final ProfileRepository profileRepository;
     private final ApplicantNoteRepository applicantNoteRepository; 
     private final EmployerRepository employerRepository;
+    private final ResumeRepository resumeRepository;
     
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
@@ -123,33 +130,41 @@ public class ApplicantServiceImpl implements ApplicantService {
 //    }
     
     @Override
-    public ApplicantProfileDTO getApplicantProfile(Long appId) {
-        Application application = applicationRepository.findById(appId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
-        
-        Long seekerId = application.getSeeker().getId();
-        
-        // Use .map and .orElse for a safe lookup
-        ApplicantProfileDTO dto = profileRepository.findByUserId(seekerId)
-                .map(profile -> ApplicantProfileDTO.builder()
-                    .headline(profile.getHeadline())
-                    .summary(profile.getSummary())
-                    .profilePicture(profile.getProfilePictureUrl())
-                    .build())
-                .orElse(ApplicantProfileDTO.builder() 
-                    .headline("No profile headline available")
-                    .summary("No summary provided.")
-                    .profilePicture("/images/default-avatar.png")
-                    .build());
-
-        // Populate the rest of the fields
-        dto.setApplicationId(application.getId());
-        dto.setApplicantName(application.getSeeker().getName());
-        dto.setSeekerId(seekerId);
-        dto.setCoverLetter(application.getCoverLetter());
-        
-        return dto;
-    }
+	public ApplicantProfileDTO getApplicantProfile(Long appId) {
+	    Application application = applicationRepository.findById(appId)
+	            .orElseThrow(() -> new RuntimeException("Application not found"));
+	    
+	    Long seekerId = application.getSeeker().getId();
+	    
+	    // 1. Fetch DTO
+	    ApplicantProfileDTO dto = profileRepository.findByUserId(seekerId)
+	            .map(profile -> ApplicantProfileDTO.builder()
+	                    .headline(profile.getHeadline())
+	                    .summary(profile.getSummary())
+	                    .profilePicture(profile.getProfilePictureUrl())
+	                    .build())
+	            .orElse(ApplicantProfileDTO.builder() 
+	                    .headline("No profile headline available")
+	                    .summary("No summary provided.")
+	                    .profilePicture("/images/default-avatar.png")
+	                    .build());
+	
+	    dto.setApplicationId(application.getId());
+	    dto.setApplicantName(application.getSeeker().getName());
+	    dto.setSeekerId(seekerId);
+	    dto.setCoverLetter(application.getCoverLetter());
+	    
+	    // Assuming your Application entity has a getResume() method:
+	    if (application.getResume() != null && application.getResume().getFileData() != null && application.getResume().getFileData().length > 0) {
+	        dto.setResumeId(application.getResume().getId());
+	        dto.setHasFile(true); // File is present
+	    } else {
+	        dto.setResumeId(null);
+	        dto.setHasFile(false); // No file or empty data
+	    }
+	    
+	    return dto;
+	}
 
     // ========================================================
     // CORRECTED NOTE METHODS
@@ -264,5 +279,31 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .map(ApplicantNote::getNote) // Replace getNote() with your actual getter
                 .filter(n -> !n.isEmpty())
                 .orElse("No notes yet");
+    }
+    
+    @Override
+    public ResponseEntity<?> downloadApplicantResume(Long resumeId) {
+        // 1. Fetch via your existing ResumeService
+        Resume resume = resumeRepository.findById(resumeId)
+                .filter(r -> r.getFileData() != null && r.getFileData().length > 0)
+                .orElse(null);
+
+        // 2. Handle the "missing file" case gracefully
+        if (resume == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body("Resume not found or no file uploaded.");
+        }
+
+        // 3. Prepare the download
+        String contentType = "PDF".equals(resume.getFileType())
+                ? MediaType.APPLICATION_PDF_VALUE
+                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + 
+                        (resume.getFileName() != null ? resume.getFileName() : "resume.pdf") + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(resume.getFileData().length)
+                .body(resume.getFileData());
     }
 }

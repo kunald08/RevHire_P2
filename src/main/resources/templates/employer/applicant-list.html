@@ -56,9 +56,10 @@
 			            <td th:text="${#temporals.format(app.appliedDate, 'dd MMM yyyy')}"></td>
 			            <td th:if="${!isReviewMode}"th:text="${app.employerComment}"></td>
 			            
-			            <td 		<span th:text="${app.reviewerNote}" 
-						                     th:classappend="${app.reviewerNote == 'No notes yet'} ? 'text-muted fst-italic' : ''">
-						            </span>
+			            <td >		
+							 <span th:text="${app.reviewerNote}" 
+						           th:classappend="${app.reviewerNote == 'No notes yet'} ? 'text-muted fst-italic' : ''">
+						       </span>
 			            </td>
 			            
 			            <td>
@@ -143,7 +144,9 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(res => res.text())
         .then(data => { alert(data); location.reload(); });
     });
+	
 });
+
 </script>
 </body>
 </html>

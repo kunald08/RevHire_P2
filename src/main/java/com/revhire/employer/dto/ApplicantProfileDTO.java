@@ -30,5 +30,6 @@ public class ApplicantProfileDTO {
     private String employerComment;
 
     private LocalDateTime appliedAt;
+    private boolean hasFile;
 
 }

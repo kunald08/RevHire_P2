@@ -51,19 +51,14 @@
 		<div class="section-card">
 		    <h5 class="fw-bold"><i class="bi bi-chat-dots me-2"></i>Reviewer Notes</h5>
 		    
-		    <form th:action="@{/employer/notes/save}" method="post" id="noteForm">
-		        <input type="hidden" name="appId" th:value="${applicant.applicationId}" />
-		        
-		        <input type="hidden" name="noteId" th:value="${existingNote != null ? existingNote.id : ''}" />
-		        
-		        <textarea name="note" class="form-control mb-2" rows="3" 
-		                  th:text="${existingNote != null ? existingNote.note : ''}" 
-		                  placeholder="Write your note here..."></textarea>
-		                  
-		        <button type="submit" class="btn btn-primary">
-		            <i class="bi bi-save me-1"></i> Save Note
-		        </button>
-		    </form>
+		    <textarea id="noteTextArea" class="form-control mb-2" rows="3" 
+		              th:text="${existingNote != null ? existingNote.note : ''}" 
+		              placeholder="Write your note here..."></textarea>
+		              
+		    <button type="button" class="btn btn-primary" 
+		            th:onclick="'saveNote(' + ${applicant.applicationId} + ')'">
+		        <i class="bi bi-save me-1"></i> Save Note
+		    </button>
 		</div>
 		
         <div class="profile-header">
@@ -86,14 +81,21 @@
 		        </div>
 		
 		        <div class="col-lg-4 col-md-12 text-center text-lg-end mt-4 mt-lg-0">
-		            <div class="d-grid d-md-block">
-		                <a th:href="@{/resume/download/{id}(id=${applicant.resumeId})}" class="btn btn-outline-dark mb-2 me-md-2">
-		                    <i class="bi bi-download"></i> Resume
-		                </a>
-		                <button class="btn btn-info mb-2 text-white" data-bs-toggle="modal" data-bs-target="#coverLetterModal">
-		                    <i class="bi bi-file-earmark-text"></i> View Cover Letter
-		                </button>
-		            </div>
+					<div class="d-grid d-md-block">
+					    <a th:if="${applicant.resumeId != null && applicant.hasFile}" 
+					       th:href="@{/resume/download/{id}(id=${applicant.resumeId})}" 
+					       target="_blank" 
+					       class="btn btn-outline-dark">
+					       <i class="bi bi-download"></i> Download Resume
+					    </a>
+
+					    <button th:if="${applicant.resumeId == null || !applicant.hasFile}" 
+					            type="button" 
+					            class="btn btn-outline-secondary" 
+					            disabled>
+					        No Resume Available
+					    </button>
+					</div>
 		
 		            <div class="d-flex gap-2 mt-2 justify-content-center justify-content-lg-end">
 		                <button type="button" class="btn btn-success flex-grow-1 flex-md-grow-0" 
@@ -209,6 +211,29 @@
     <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 
     <script th:inline="javascript">
+			function saveNote(appId) {
+			    const noteContent = document.getElementById('noteTextArea').value;
+
+			    // Change the URL and the data names to match your Controller
+			    fetch(`/employer/notes/save`, {
+			        method: "POST",
+			        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			        // Use 'appId' and 'note' to match the Controller's @RequestParam names
+			        body: new URLSearchParams({ 
+			            "appId": appId, 
+			            "note": noteContent 
+			        })
+			    })
+			    .then(response => {
+			        if (response.ok) {
+			            alert("Note successfully added!");
+			            window.location.reload(); 
+			        } else {
+			            alert("Failed to save note. Please check server logs.");
+			        }
+			    })
+			    .catch(error => console.error('Error:', error));
+			}
         function openActionModal(action, appId) {
             // Set hidden form values
             document.getElementById('modalAppId').value = appId;

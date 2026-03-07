@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 
 public interface ApplicantService {
     
@@ -41,4 +42,5 @@ public interface ApplicantService {
     long getPendingApplicantCount(Long jobId);
  // Add to ApplicantService.java
     List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses);
+    ResponseEntity<?> downloadApplicantResume(Long resumeId);
 }

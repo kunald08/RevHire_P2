@@ -6,7 +6,9 @@ import com.revhire.employer.dto.ApplicationNoteDTO;
 import com.revhire.employer.service.ApplicantService;
 import com.revhire.job.entity.Job;
 import com.revhire.profile.dto.ProfileResponse;
+import com.revhire.profile.entity.Resume;
 import com.revhire.profile.service.ProfileService;
+import com.revhire.profile.service.ResumeService;
 import com.revhire.employer.dto.BulkActionDTO;
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +19,8 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +33,7 @@ public class ApplicantController {
 
     private final ApplicantService applicantService;
     private final ProfileService profileService;
+    private final ResumeService resumeService;
 
     // =====================================================
     // 1️⃣ Employer Jobs List (Already Working)
@@ -291,5 +296,24 @@ public class ApplicantController {
         return "employer/applicant-list"; 
     }
     
-   
+    @GetMapping("/resume/download/{id}")
+    public ResponseEntity<?> downloadResume(@PathVariable Long id) {
+        Resume resume = resumeService.downloadResume(id);
+
+        if (resume == null || resume.getFileData() == null) {
+            // Return a plain message with a 404 status
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body("Resume file not found.");
+        }
+
+        String contentType = "PDF".equals(resume.getFileType())
+                ? MediaType.APPLICATION_PDF_VALUE
+                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + 
+                        (resume.getFileName() != null ? resume.getFileName() : "resume.pdf") + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(resume.getFileData()); // Returning byte[]
+    }
 }
