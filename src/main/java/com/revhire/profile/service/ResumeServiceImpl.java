@@ -120,4 +120,22 @@ public class ResumeServiceImpl implements ResumeService {
 
         return resume;
     }
+
+    @Override
+    @Transactional
+    public void deleteResume(String email, Long resumeId) {
+        logger.info("Deleting resume ID: {} for user: {}", resumeId, email);
+        JobSeekerProfile profile = profileService.getOrCreateProfile(email);
+
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", resumeId));
+
+        // Ensure the resume belongs to the current user
+        if (!resume.getProfile().getId().equals(profile.getId())) {
+            throw new BadRequestException("You are not authorized to delete this resume");
+        }
+
+        resumeRepository.delete(resume);
+        logger.info("Resume ID: {} deleted successfully for user: {}", resumeId, email);
+    }
 }

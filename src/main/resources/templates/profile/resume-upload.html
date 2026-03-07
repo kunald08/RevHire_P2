@@ -318,10 +318,18 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <a th:href="@{/resume/download/{id}(id=${resume.id})}"
-                                       class="btn btn-sm btn-outline-success download-btn">
-                                        <i class="bi bi-download me-1"></i>Get
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a th:href="@{/resume/download/{id}(id=${resume.id})}"
+                                           class="btn btn-sm btn-outline-success download-btn">
+                                            <i class="bi bi-download me-1"></i>Get
+                                        </a>
+                                        <form th:action="@{/resume/delete/{id}(id=${resume.id})}" method="post"
+                                              onsubmit="return confirm('Are you sure you want to delete this resume?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger download-btn">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>

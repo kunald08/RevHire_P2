@@ -34,4 +34,9 @@ public interface ResumeService {
      * Download a resume file by its ID.
      */
     Resume downloadResume(Long resumeId);
+
+    /**
+     * Delete a resume by its ID (only if it belongs to the given user).
+     */
+    void deleteResume(String email, Long resumeId);
 }
