@@ -88,4 +88,8 @@ public interface ProfileService {
      * Remove the current profile photo.
      */
     void removeProfilePhoto(String email);
+    /**
+     * Calculate experience years for applicant.
+     */
+    int getExperienceInYears(Long profileId);
 }

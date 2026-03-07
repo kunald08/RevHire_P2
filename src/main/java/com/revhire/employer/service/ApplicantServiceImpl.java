@@ -27,6 +27,7 @@ import com.revhire.profile.entity.JobSeekerProfile;
 import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ProfileRepository;
 import com.revhire.profile.repository.ResumeRepository;
+import com.revhire.profile.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +43,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final ApplicantNoteRepository applicantNoteRepository; 
     private final EmployerRepository employerRepository;
     private final ResumeRepository resumeRepository;
+    private final ProfileService profileService;
     
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
@@ -328,10 +330,14 @@ public class ApplicantServiceImpl implements ApplicantService {
                 }
              // Inside your getFilteredApplicants method filter block:
                 if (minExp != null) {
-                    // Assuming profile.getExperience() returns an Integer or double
-                    // Ensure you handle cases where experience might be null in the profile
-                    Integer candidateExp = profile.getTotalExperience(); // Adjust this to match your actual field name
-                    if (candidateExp == null || candidateExp < minExp) {
+                    // 1. Get the profile's ID
+                    Long profileId = profile.getId(); 
+                    
+                    // 2. Use the ProfileService to calculate experience from the DB
+                    int totalExperienceYears = profileService.getExperienceInYears(profileId);
+                    
+                    // 3. Compare with minExp
+                    if (totalExperienceYears < minExp) {
                         return false;
                     }
                 }
