@@ -1,6 +1,7 @@
 package com.revhire.employer.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -188,19 +189,28 @@ public class ApplicantServiceImpl implements ApplicantService {
         Application app = applicationRepository.findById(appId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         
-        // 2. Fetch Employer (You need to implement this findByEmail in your EmployerRepository)
+        // 2. Fetch Employer
         Employer employer = employerRepository.findByUserEmail(employerEmail)
                 .orElseThrow(() -> new RuntimeException("Employer profile not found"));
         
-        // 3. Build Note with BOTH Application and Employer
-        ApplicantNote note = ApplicantNote.builder()
-                .application(app)
-                .employer(employer) // <--- THIS WAS MISSING
-                .note(noteText)
-                .build();
+        // 3. Find existing note for this application (Change your repo to return Optional)
+        Optional<ApplicantNote> existingNote = applicantNoteRepository.findByApplicationId(appId);
+        
+        ApplicantNote note;
+        if (existingNote.isPresent()) {
+            // UPDATE existing record
+            note = existingNote.get();
+            note.setNote(noteText); // Update content
+        } else {
+            // CREATE new record
+            note = ApplicantNote.builder()
+                    .application(app)
+                    .employer(employer)
+                    .note(noteText)
+                    .build();
+        }
         
         applicantNoteRepository.save(note);
-        applicantNoteRepository.flush(); 
     }
 
     @Override
@@ -318,70 +328,72 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .contentLength(resume.getFileData().length)
                 .body(resume.getFileData());
     }
-    @Override
-    public List<ApplicantRowDTO> getFilteredApplicants(Long jobId, String status,String name, Integer minExp, 
-                                                       String edu, String cert, String skills) {
-        
-        // 1. Fetch all applications for the job
-        List<Application> apps = applicationRepository.findByJobId(jobId);
+	@Override
+	public List<ApplicantRowDTO> getFilteredApplicants(Long jobId, String status, String name, Integer minExp,
+	                                                    String edu, String cert, String skills) {
+	
+	    // 1. Fetch all applications for the job
+	    List<Application> apps = applicationRepository.findByJobId(jobId);
+	
+	    return apps.stream()
+	            .filter(app -> {
+	                // DEFENSIVE NULL CHECK: Skip if seeker is null
+	                if (app.getSeeker() == null) return false;
+	
+	                // Filter by Status
+	                if (status != null && !status.isEmpty() && !app.getStatus().name().equalsIgnoreCase(status)) {
+	                    return false;
+	                }
+	
+	                // Filter by Name
+	                if (name != null && !name.isEmpty()) {
+	                    String seekerName = app.getSeeker().getName();
+	                    if (seekerName == null || !seekerName.toLowerCase().contains(name.toLowerCase())) {
+	                        return false;
+	                    }
+	                }
+	
+	                // Fetch Profile Safely
+	                JobSeekerProfile profile = profileRepository.findByUserId(app.getSeeker().getId()).orElse(null);
+	                if (profile == null) return false;
+	
+	                // Filter by Education (Partial match)
+	                if (edu != null && !edu.isEmpty() && profile.getEducations() != null) {
+	                    boolean hasEdu = profile.getEducations().stream()
+	                            .anyMatch(e -> e.getDegree() != null && e.getDegree().toLowerCase().contains(edu.toLowerCase()));
+	                    if (!hasEdu) return false;
+	                }
+	
+	                // Filter by Certification
+	                if (cert != null && !cert.isEmpty() && profile.getCertifications() != null) {
+	                    boolean hasCert = profile.getCertifications().stream()
+	                            .anyMatch(c -> c.getName() != null && c.getName().toLowerCase().contains(cert.toLowerCase()));
+	                    if (!hasCert) return false;
+	                }
+	
+	                // Filter by Experience
+	                if (minExp != null) {
+	                    int totalExperienceYears = profileService.getExperienceInYears(profile.getId());
+	                    if (totalExperienceYears < minExp) return false;
+	                }
+	
+	                // Filter by Skills
+	                if (skills != null && !skills.isEmpty() && profile.getSkills() != null) {
+	                    String[] requiredSkills = skills.split(",");
+	                    for (String s : requiredSkills) {
+	                        boolean hasSkill = profile.getSkills().stream()
+	                                .anyMatch(sk -> sk.getName() != null && sk.getName().toLowerCase().contains(s.trim().toLowerCase()));
+	                        if (!hasSkill) return false;
+	                    }
+	                }
+	
+	                return true;
+	            })
+	            .map(this::mapToDTO) // Using your mapping logic
+	            .collect(Collectors.toList());
+	}
 
-        return apps.stream()
-            .filter(app -> {
-                // Filter by Status
-                if (status != null && !status.isEmpty() && !app.getStatus().name().equalsIgnoreCase(status)) {
-                    return false;
-                }
-                if (name != null && !name.isEmpty()) {
-                    String nameLower = name.toLowerCase();
-                    if (app.getSeeker().getName() == null || !app.getSeeker().getName().toLowerCase().contains(nameLower)) {
-                        return false;
-                    }
-                }
-                Long seekerId = app.getSeeker().getId();
-                JobSeekerProfile profile = profileRepository.findByUserId(seekerId).orElse(null);
-                if (profile == null) return false;
 
-                // Filter by Education (Partial match)
-                if (edu != null && !edu.isEmpty()) {
-                    boolean hasEdu = profile.getEducations().stream()
-                            .anyMatch(e -> e.getDegree().toLowerCase().contains(edu.toLowerCase()));
-                    if (!hasEdu) return false;
-                }
-
-                // Filter by Certification (Partial match)
-                if (cert != null && !cert.isEmpty()) {
-                    boolean hasCert = profile.getCertifications().stream()
-                            .anyMatch(c -> c.getName().toLowerCase().contains(cert.toLowerCase()));
-                    if (!hasCert) return false;
-                }
-             // Inside your getFilteredApplicants method filter block:
-                if (minExp != null) {
-                    // 1. Get the profile's ID
-                    Long profileId = profile.getId(); 
-                    
-                    // 2. Use the ProfileService to calculate experience from the DB
-                    int totalExperienceYears = profileService.getExperienceInYears(profileId);
-                    
-                    // 3. Compare with minExp
-                    if (totalExperienceYears < minExp) {
-                        return false;
-                    }
-                }
-                // Filter by Skills (Must contain all comma-separated skills)
-                if (skills != null && !skills.isEmpty()) {
-                    String[] requiredSkills = skills.split(",");
-                    for (String s : requiredSkills) {
-                        boolean hasSkill = profile.getSkills().stream()
-                                .anyMatch(sk -> sk.getName().toLowerCase().contains(s.trim().toLowerCase()));
-                        if (!hasSkill) return false;
-                    }
-                }
-
-                return true;
-            })
-            .map(this::mapToDTO) // Reuse your existing mapping logic
-            .collect(Collectors.toList());
-    }
     @Override
     public Resume getLatestResumeByProfileId(Long profileId) {
         return resumeRepository.findTopByProfileIdOrderByCreatedAtDesc(profileId)

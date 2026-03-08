@@ -208,16 +208,25 @@
             </div>
 
             <!-- Reviewer Notes -->
-            <div class="dashboard-card-section">
+			<div class="dashboard-card-section">
                 <div class="section-title"><i class="bi bi-journal-text"></i>Reviewer Notes</div>
                 <textarea id="noteTextArea" class="form-control mb-2" rows="4"
                           th:text="${existingNote != null ? existingNote.note : ''}"
                           placeholder="Write your private note about this candidate..."
                           style="font-size:0.88rem;border-radius:10px;"></textarea>
+                
                 <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 w-100"
                         th:onclick="'saveNote(' + ${applicant.applicationId} + ')'">
                     <i class="bi bi-save me-1"></i>Save Note
                 </button>
+
+                <div id="noteToast" class="toast align-items-center text-white bg-success border-0 mt-2 w-100" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body" style="font-size: 0.85rem;">
+                            <i class="bi bi-check-circle me-2"></i> Note saved successfully!
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Application Info -->
@@ -286,8 +295,12 @@
     </div>
 
     <script th:inline="javascript">
-        function saveNote(appId) {
+		function saveNote(appId) {
             const noteContent = document.getElementById('noteTextArea').value;
+            const btn = event.target.closest('button');
+            const toastEl = document.getElementById('noteToast');
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+
             fetch(`/employer/notes/${appId}/addnote`, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -295,18 +308,19 @@
             })
             .then(response => {
                 if (response.ok) {
-                    const btn = event.target.closest('button');
+                    // Show the toast
+                    toast.show();
+                    
+                    // Optional: Visual feedback on button
                     const orig = btn.innerHTML;
                     btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Saved!';
-                    btn.classList.replace('btn-primary', 'btn-success');
-                    setTimeout(() => { btn.innerHTML = orig; btn.classList.replace('btn-success', 'btn-primary'); }, 2000);
+                    setTimeout(() => { btn.innerHTML = orig; }, 2000);
                 } else {
                     alert("Failed to save note. Please try again.");
                 }
             })
             .catch(error => console.error('Error:', error));
         }
-
         function openActionModal(action, appId) {
             document.getElementById('modalAppId').value = appId;
             document.getElementById('modalAction').value = action;
