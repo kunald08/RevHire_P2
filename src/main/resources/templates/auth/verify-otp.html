@@ -8,8 +8,10 @@
             cursor: not-allowed;
             filter: grayscale(0.5);
         }
-        #attemptDisplay {
-            transition: all 0.3s ease;
+        #resendBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -22,11 +24,7 @@
                 <div class="card border-0 shadow-sm p-4 text-center">
                     <i class="bi bi-shield-lock text-primary display-4"></i>
                     
-                    <h2 class="fw-bold mt-3" 
-                        th:text="${isLogin ? 'Login Verification' : 'Check your email'}">
-                        Check your email
-                    </h2>
-                    
+                    <h2 class="fw-bold mt-3" th:text="${isLogin ? 'Login Verification' : 'Check your email'}">Check your email</h2>
                     <p class="text-muted">We sent a 6-digit code to <br><strong th:text="${email}"></strong></p>
                     
                     <div class="mb-3">
@@ -43,9 +41,8 @@
                         <input type="hidden" name="email" th:value="${email}" />
                         <div class="mb-4">
                             <input type="text" name="otp" id="otpInput" class="form-control form-control-lg text-center fw-bold" 
-                                   placeholder="000000" maxlength="6" required autofocus autocomplete="one-time-code">
+                                   placeholder="000000" maxlength="6" required autofocus>
                         </div>
-                        
                         <button type="submit" id="verifyBtn" class="btn btn-primary w-100 btn-lg">
                             <span th:text="${isLogin ? 'Verify & Login' : 'Verify & Register'}">Verify</span>
                         </button>
@@ -57,7 +54,7 @@
                         <form th:action="@{/auth/resend-otp}" method="post" id="resendForm" class="d-inline">
                             <input type="hidden" name="email" th:value="${email}">
                             <input type="hidden" name="type" th:value="${isLogin ? 'login' : 'register'}">
-                            <button type="submit" id="resendBtn" class="btn btn-outline-secondary btn-sm">
+                            <button type="submit" id="resendBtn" class="btn btn-outline-secondary btn-sm" disabled>
                                 <i class="bi bi-arrow-clockwise"></i> Resend Verification Code
                             </button>
                         </form>
@@ -65,20 +62,6 @@
                         <div id="attemptDisplay" class="text-muted small mt-2">
                             <span id="attemptsLeft" class="fw-bold" th:text="${3 - (resendCount != null ? resendCount : 0)}">3</span> attempts remaining
                         </div>
-                    </div>
-
-                    <div class="mt-4 p-3 bg-light border rounded text-start">
-                        <p class="small text-muted mb-2">
-                            <i class="bi bi-info-circle text-primary"></i> 
-                            <strong>Troubleshooting:</strong>
-                        </p>
-                        <ul class="small text-muted ps-3 mb-0">
-                            <li>Check your <strong>spam/junk folder</strong>.</li>
-                            <li th:if="${!isLogin}">
-                                <strong>Already have an account?</strong> Login instead of registering.
-                            </li>
-                            <li>You have a maximum of <strong>3 resend attempts</strong>.</li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -89,28 +72,60 @@
     <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
     
     <script th:inline="javascript">
-        // Using thymeleaf-native null-safety check
         const secondsRemaining = /*[[${secondsRemaining != null ? secondsRemaining : 0}]]*/ 0;
         const expiryTimestamp = Date.now() + (secondsRemaining * 1000);
         
+        const resendBtn = document.getElementById('resendBtn');
+        const resendForm = document.getElementById('resendForm');
+        const timerElement = document.getElementById('timer');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const otpInput = document.getElementById('otpInput');
+
+        // FLAG: Prevent timer from re-enabling button if we are currently "Processing" a click
+        let isProcessing = false;
+
         function updateTimer() {
-            const distance = expiryTimestamp - Date.now();
+            if (isProcessing) return; // Don't update text if spinner is showing
+
+            const now = Date.now();
+            const distance = expiryTimestamp - now;
             const timeLeft = Math.ceil(distance / 1000);
-            const timerElement = document.getElementById('timer');
 
             if (timeLeft <= 0) {
                 timerElement.innerHTML = "EXPIRED";
-                document.getElementById('verifyBtn').disabled = true;
-                document.getElementById('otpInput').disabled = true;
+                timerElement.parentElement.classList.replace('bg-warning', 'bg-danger');
+                timerElement.parentElement.classList.add('text-white');
+                
+                verifyBtn.disabled = true;
+                otpInput.disabled = true;
+                
+                // ACTIVATE RESEND: Only active when counter hits 0
+                resendBtn.disabled = false;
+                resendBtn.innerHTML = `<i class="bi bi-arrow-clockwise"></i> Resend Verification Code`;
                 return;
             }
 
+            // Update Countdown Text
             let minutes = Math.floor(timeLeft / 60);
             let seconds = timeLeft % 60;
-            timerElement.innerHTML = `${minutes < 10 ? '0'+minutes : minutes}:${seconds < 10 ? '0'+seconds : seconds}`;
+            timerElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            // KEEP DISABLED: Button stays disabled while timer > 0
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = `<i class="bi bi-lock-fill"></i> Resend available in ${timerElement.innerHTML}`;
         }
 
-        setInterval(updateTimer, 1000);
+        // Handle the Spinner on Form Submit
+        resendForm.addEventListener('submit', function() {
+            isProcessing = true;
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = `
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Sending Email...
+            `;
+        });
+
+        const timerInterval = setInterval(updateTimer, 1000);
         updateTimer();
     </script>
 </body>
