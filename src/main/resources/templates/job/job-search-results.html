@@ -123,22 +123,27 @@
                                     <span class="badge bg-primary" th:text="${job.jobType}">FULL_TIME</span>
                                 </div>
                                 
+                                <!-- Company Name (if available) -->
+                                <p class="text-muted mb-2" th:if="${job.companyName}">
+                                    <i class="bi bi-building"></i> <span th:text="${job.companyName}">Company Name</span>
+                                </p>
+                                
                                 <!-- Job Details Grid -->
                                 <div class="row mt-3">
                                     <div class="col-md-3 col-6 mb-2">
                                         <small class="text-muted d-block">Location</small>
-                                        <span><i class="bi bi-geo-alt"></i> <span th:text="${job.location}">New York</span></span>
+                                        <span><i class="bi bi-geo-alt"></i> <span th:text="${job.location ?: 'Not specified'}">New York</span></span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
                                         <small class="text-muted d-block">Salary</small>
                                         <span><i class="bi bi-currency-dollar"></i> 
-                                            <span th:text="${job.salaryMin} + ' - ' + ${job.salaryMax}">$70k - $90k</span>
+                                            <span th:text="${job.salaryMin != null ? job.salaryMin : '0'} + ' - ' + ${job.salaryMax != null ? job.salaryMax : '0'}">$70k - $90k</span>
                                         </span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
                                         <small class="text-muted d-block">Experience</small>
                                         <span><i class="bi bi-briefcase"></i> 
-                                            <span th:text="${job.experienceMin} + ' - ' + ${job.experienceMax} + ' yrs'">3-5 years</span>
+                                            <span th:text="${job.experienceMin != null ? job.experienceMin : '0'} + ' - ' + ${job.experienceMax != null ? job.experienceMax : '0'} + ' yrs'">3-5 years</span>
                                         </span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
@@ -164,11 +169,6 @@
                                 <!-- Action Buttons - Using isSeeker from controller -->
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="action-buttons">
-                                        <!-- View Details Link -->
-                                        <a th:href="@{/jobs/{id}(id=${job.id})}" class="btn btn-outline-secondary btn-sm">
-                                            <i class="bi bi-eye"></i> Details
-                                        </a>
-                                        
                                         <!-- For SEEKERS - Show Apply and Favorite buttons -->
                                         <th:block th:if="${isSeeker}">
                                             <a th:href="@{/applications/apply/{id}(id=${job.id})}" 
