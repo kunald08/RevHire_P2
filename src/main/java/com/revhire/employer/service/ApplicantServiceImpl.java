@@ -399,4 +399,10 @@ public class ApplicantServiceImpl implements ApplicantService {
         return resumeRepository.findTopByProfileIdOrderByCreatedAtDesc(profileId)
                 .orElse(null);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<JobSeekerProfile> findProfileByUserId(Long userId) {
+        // This directly calls your existing injected profileRepository
+        return profileRepository.findByUserId(userId);
+    }
 }
