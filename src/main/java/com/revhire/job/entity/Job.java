@@ -103,4 +103,8 @@ public class Job {
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<Application> applications = new ArrayList<>();
+
+    /** Transient field populated by service layer — avoids N+1 lazy-load. */
+    @Transient
+    private Long applicationCount;
 }

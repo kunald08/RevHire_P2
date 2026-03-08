@@ -4,6 +4,7 @@ import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.employer.dto.ApplicationNoteDTO;
 import com.revhire.employer.service.ApplicantService;
+import com.revhire.employer.service.EmployerService;
 import com.revhire.job.entity.Job;
 import com.revhire.profile.dto.ProfileResponse;
 import com.revhire.profile.entity.Resume;
@@ -34,6 +35,21 @@ public class ApplicantController {
     private final ApplicantService applicantService;
     private final ProfileService profileService;
     private final ResumeService resumeService;
+    private final EmployerService employerService;
+
+    /**
+     * Populates companyName for the employer sidebar on all views.
+     * Uses a fast single-column query instead of loading the full employer profile.
+     */
+    @ModelAttribute
+    public void addCommonAttributes(Authentication authentication, Model model) {
+        if (authentication != null) {
+            String name = employerService.getCompanyName(authentication.getName());
+            if (name != null) {
+                model.addAttribute("companyName", name);
+            }
+        }
+    }
 
     // =====================================================
     // 1️⃣ Employer Jobs List (Already Working)
@@ -59,6 +75,7 @@ public class ApplicantController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("size", size);
         model.addAttribute("isReviewMode", false);
+        model.addAttribute("activeMenu", "applicants");
        
         return "employer/employer-jobs-list";
     }
@@ -83,6 +100,7 @@ public class ApplicantController {
                 applicantService.getApplicantCount(jobId));
         model.addAttribute("jobId", jobId);
         model.addAttribute("isReviewMode", false);
+        model.addAttribute("activeMenu", "applicants");
 
         return "employer/applicant-list";
     }
@@ -121,6 +139,7 @@ public class ApplicantController {
         model.addAttribute("profile", profile);
         model.addAttribute("existingNote", applicantService.getNoteForApplication(appId));
         model.addAttribute("resume", latestResume); // Now accessible in Thymeleaf as ${resume}
+        model.addAttribute("activeMenu", "applicants");
         
         return "employer/applicant-profile";
     }
@@ -188,6 +207,7 @@ public class ApplicantController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("size", size);
         model.addAttribute("isReviewMode", true);
+        model.addAttribute("activeMenu", "review");
 
         return "employer/employer-jobs-list"; 
     }
@@ -204,6 +224,7 @@ public class ApplicantController {
         model.addAttribute("jobTitle", applicantService.getJobTitle(id));
         model.addAttribute("jobId", id);
         model.addAttribute("isReviewMode", true); // Used in HTML to show/hide certain UI elements
+        model.addAttribute("activeMenu", "review");
         
         return "employer/applicant-list"; 
     }
@@ -225,7 +246,28 @@ public class ApplicantController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + 
                         (resume.getFileName() != null ? resume.getFileName() : "resume.pdf") + "\"")
                 .contentType(MediaType.parseMediaType(contentType))
-                .body(resume.getFileData()); // Returning byte[]
+                .body(resume.getFileData());
+    }
+
+    @GetMapping("/resume/view/{id}")
+    public ResponseEntity<?> viewResume(@PathVariable Long id) {
+        Resume resume = resumeService.downloadResume(id);
+
+        if (resume == null || resume.getFileData() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body("Resume file not found.");
+        }
+
+        String contentType = "PDF".equals(resume.getFileType())
+                ? MediaType.APPLICATION_PDF_VALUE
+                : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + 
+                        (resume.getFileName() != null ? resume.getFileName() : "resume.pdf") + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(resume.getFileData().length)
+                .body(resume.getFileData());
     }
     @GetMapping("/jobs/{jobId}/applicants/filter")
     public String filterApplicants(
@@ -253,7 +295,8 @@ public class ApplicantController {
         model.addAttribute("applicants", filteredApplicants);
         model.addAttribute("jobTitle", applicantService.getJobTitle(jobId));
         model.addAttribute("jobId", jobId);
-        model.addAttribute("isReviewMode", false); 
+        model.addAttribute("isReviewMode", false);
+        model.addAttribute("activeMenu", "applicants");
 
         return "employer/applicant-list"; 
     }

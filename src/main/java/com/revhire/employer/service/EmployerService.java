@@ -19,4 +19,7 @@ public interface EmployerService {
 
     /** Check whether a profile already exists for the given email. */
     boolean hasProfile(String email);
+
+    /** Fast lookup — returns only the company name (single-column query). */
+    String getCompanyName(String email);
 }

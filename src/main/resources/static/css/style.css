@@ -68,3 +68,911 @@ footer a:hover {
         font-size: 2rem;
     }
 }
+
+/* ==========================================
+   EMPLOYER PORTAL — Sidebar + Dashboard
+   ========================================== */
+
+/* ── Employer Layout Wrapper ── */
+.employer-wrapper {
+    display: flex;
+    min-height: calc(100vh - 120px);
+}
+
+/* ── Sidebar ── */
+.employer-sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.sidebar-inner {
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    border-color: #f3f4f6 !important;
+}
+
+.company-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af;
+    padding: 1rem 1.25rem 0.4rem;
+    list-style: none;
+}
+
+.sidebar-link {
+    color: #4b5563;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.6rem 1.25rem !important;
+    border-radius: 0;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+    color: #4f46e5;
+    background: #f5f3ff;
+    border-left-color: #c4b5fd;
+}
+
+.sidebar-link.active {
+    color: #4f46e5;
+    background: #eef2ff;
+    border-left-color: #4f46e5;
+    font-weight: 600;
+}
+
+.sidebar-link .badge {
+    font-size: 0.7rem;
+}
+
+/* ── Main Content Area ── */
+.employer-main {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    background: #f8f9fb;
+    min-width: 0;
+}
+
+/* ── Welcome Banner ── */
+.employer-welcome-banner {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+    color: #fff;
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
+}
+
+.employer-welcome-banner h2 {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.employer-welcome-banner p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 0.95rem;
+}
+
+/* ── Stat Cards ── */
+.employer-stat-card {
+    border: none;
+    border-radius: 14px;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.stat-icon.bg-blue   { background: #eef2ff; color: #4f46e5; }
+.stat-icon.bg-green  { background: #ecfdf5; color: #10b981; }
+.stat-icon.bg-purple { background: #f5f3ff; color: #7c3aed; }
+.stat-icon.bg-amber  { background: #fef3c7; color: #f59e0b; }
+
+/* ── Quick Action Cards ── */
+.quick-action-card {
+    text-align: center;
+    text-decoration: none;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    transition: all 0.25s ease;
+}
+
+.quick-action-card:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.12);
+}
+
+.quick-action-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ── Dashboard Sections ── */
+.dashboard-card-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.section-title i {
+    margin-right: 0.5rem;
+    color: #4f46e5;
+}
+
+/* ── Employer Table ── */
+.employer-table {
+    font-size: 0.9rem;
+}
+
+.employer-table thead {
+    background: #f8f9fb;
+}
+
+.employer-table thead th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 0.85rem 0.75rem;
+}
+
+.employer-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.employer-table tbody tr:hover {
+    background: #f5f3ff;
+}
+
+.employer-table td {
+    padding: 0.85rem 0.75rem;
+    vertical-align: middle;
+}
+
+/* ── Status Badges ── */
+.badge-status-active {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+}
+
+.badge-status-closed {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fcd34d;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+}
+
+.badge-status-draft {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+}
+
+.badge-status-expired {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* ── Mobile Responsive ── */
+@media (max-width: 992px) {
+    .employer-wrapper {
+        flex-direction: column;
+    }
+    
+    .employer-sidebar {
+        width: 100%;
+        min-width: unset;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .sidebar-inner {
+        position: static;
+        height: auto;
+        overflow: visible;
+    }
+    
+    .sidebar-nav {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    
+    .sidebar-nav .nav {
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        width: max-content;
+    }
+    
+    .sidebar-nav .nav-item {
+        white-space: nowrap;
+    }
+    
+    .sidebar-section-title {
+        display: none;
+    }
+    
+    .sidebar-link {
+        border-left: none !important;
+        border-bottom: 3px solid transparent;
+        padding: 0.5rem 1rem !important;
+        font-size: 0.8rem;
+    }
+    
+    .sidebar-link.active {
+        border-bottom-color: #4f46e5;
+        border-left-color: transparent;
+    }
+    
+    .sidebar-header {
+        display: none;
+    }
+    
+    .employer-main {
+        padding: 1rem;
+    }
+    
+    .employer-welcome-banner {
+        padding: 1.25rem 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .employer-main {
+        padding: 0.75rem;
+    }
+    
+    .quick-action-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+}
+
+/* ==========================================
+   EMPLOYER PORTAL STYLES
+   ========================================== */
+
+/* Wrapper: sidebar + content side by side */
+.employer-wrapper {
+    display: flex;
+    min-height: calc(100vh - 120px);
+}
+
+/* Sidebar */
+.employer-sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: #f8f9fb;
+    border-right: 1px solid #e2e8f0;
+    padding: 0;
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+}
+
+.sidebar-inner {
+    padding: 0 0 1rem 0;
+}
+
+.sidebar-header {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.company-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sidebar-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 1.2px;
+    padding: 1rem 1.25rem 0.25rem;
+    list-style: none;
+}
+
+.sidebar-link {
+    color: #475569 !important;
+    font-size: 0.875rem;
+    padding: 0.5rem 1.25rem !important;
+    border-radius: 0;
+    display: flex !important;
+    align-items: center;
+    transition: all 0.15s ease;
+}
+
+.sidebar-link:hover {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.sidebar-link.active {
+    background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%) !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.sidebar-link .badge {
+    margin-left: auto;
+}
+
+/* Main Content Area (beside sidebar) */
+.employer-main {
+    flex: 1;
+    padding: 2rem;
+    background: #f1f5f9;
+    overflow-y: auto;
+}
+
+/* Dashboard Welcome Banner */
+.employer-welcome-banner {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.employer-welcome-banner::before {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+}
+
+.employer-welcome-banner::after {
+    content: '';
+    position: absolute;
+    right: 60px;
+    bottom: -30px;
+    width: 120px;
+    height: 120px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+
+.employer-welcome-banner h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.employer-welcome-banner p {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+/* Stat Cards */
+.employer-stat-card {
+    border: none !important;
+    border-radius: 14px !important;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.employer-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1) !important;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-icon.bg-blue { background: #dbeafe; color: #2563eb; }
+.stat-icon.bg-green { background: #dcfce7; color: #16a34a; }
+.stat-icon.bg-purple { background: #ede9fe; color: #7c3aed; }
+.stat-icon.bg-amber { background: #fef3c7; color: #d97706; }
+.stat-icon.bg-rose { background: #ffe4e6; color: #e11d48; }
+.stat-icon.bg-cyan { background: #cffafe; color: #0891b2; }
+
+/* Quick Action Cards */
+.quick-action-card {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    text-decoration: none !important;
+    color: inherit !important;
+    transition: all 0.2s ease;
+    text-align: center;
+    padding: 1.5rem 1rem !important;
+}
+
+.quick-action-card:hover {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 4px 15px rgba(79,70,229,0.15) !important;
+    transform: translateY(-2px);
+}
+
+.quick-action-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 0.75rem;
+}
+
+/* Recent Jobs Table */
+.employer-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.employer-table th {
+    background: #f8fafc;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.employer-table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+/* Status Badges (employer-specific) */
+.badge-status-active {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    font-weight: 500;
+}
+
+.badge-status-closed {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    font-weight: 500;
+}
+
+.badge-status-draft {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-weight: 500;
+}
+
+.badge-status-expired {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    font-weight: 500;
+}
+
+/* Dashboard Cards Container */
+.dashboard-card-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-card-section .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-card-section .section-title i {
+    color: #4f46e5;
+    margin-right: 0.5rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 991px) {
+    .employer-wrapper {
+        flex-direction: column;
+    }
+    .employer-sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        position: relative;
+        top: 0;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .sidebar-nav {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    .sidebar-nav.show {
+        max-height: 500px;
+    }
+    .employer-main {
+        padding: 1rem;
+    }
+    .employer-welcome-banner {
+        padding: 1.5rem;
+    }
+}
+
+/* ==========================================
+   NOTIFICATIONS PAGE
+   ========================================== */
+
+.notif-page {
+    background: #f8f9fb;
+    min-height: calc(100vh - 120px);
+}
+
+.notif-header-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.notif-stat-chip {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.notif-empty-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Notification Card ── */
+.notif-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.notif-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    border-color: #d1d5db;
+}
+
+.notif-card.notif-unread {
+    border-left: 4px solid #4f46e5;
+    background: #fafbff;
+}
+
+.notif-type-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.notif-type-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+}
+
+.notif-action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    transition: all 0.15s ease;
+}
+
+.notif-action-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.notif-delete-btn:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+@media (max-width: 576px) {
+    .notif-card {
+        padding: 0.85rem 1rem;
+    }
+    .notif-type-icon {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        font-size: 1rem;
+    }
+    .notif-action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ── Notification Dropdown (navbar) ── */
+.notif-dropdown {
+    animation: notifSlideDown 0.2s ease;
+}
+
+@keyframes notifSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.notif-dropdown-item:hover {
+    background: #f8f9fb;
+    color: inherit;
+}
+
+.notif-dropdown-item.notif-dropdown-unread {
+    background: #fafbff;
+    border-left: 3px solid #4f46e5;
+}
+
+.notif-dropdown-icon {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.notif-dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    border-radius: 50%;
+    background: #4f46e5;
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+
+/* ── Notification Filter Tabs ── */
+.notif-tabs {
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0;
+}
+
+.notif-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s ease;
+    border-radius: 6px 6px 0 0;
+}
+
+.notif-tab:hover {
+    color: #4f46e5;
+    background: #f8f9fb;
+}
+
+.notif-tab.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+    font-weight: 600;
+}
+
+.notif-tab-badge {
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.notif-tab.active .notif-tab-badge {
+    background: #dbeafe;
+    color: #4f46e5;
+}
+
+/* ── Clickable notification content ── */
+.notif-content-link {
+    color: inherit;
+}
+
+.notif-content-link:hover p {
+    color: #4f46e5 !important;
+}
+
+/* ==========================================
+   APPLICANT COMPONENTS
+   ========================================== */
+
+/* ── Small Avatar (table rows) ── */
+.applicant-avatar-sm {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+}
+
+/* ── Large Avatar (profile page) ── */
+.applicant-avatar-lg {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    overflow: hidden;
+}
+
+.applicant-avatar-lg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ── Skill Tags ── */
+.skill-tag {
+    background: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+    font-weight: 500;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.8rem;
+}
+
+/* ── Pagination Overrides ── */
+.pagination .page-link {
+    color: #4f46e5;
+    border-color: #e5e7eb;
+    font-size: 0.85rem;
+}
+
+.pagination .page-item.active .page-link {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+

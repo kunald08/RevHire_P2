@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import com.revhire.profile.repository.ResumeRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +48,9 @@ public class ApplicationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ResumeRepository resumeRepository;
 
     @InjectMocks
     private ApplicationServiceImpl applicationService;
@@ -119,8 +123,9 @@ public class ApplicationServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Application> mockPage = new PageImpl<>(Arrays.asList(testApplication));
         
-        when(userRepository.existsById(1L)).thenReturn(true);
         when(applicationRepository.findBySeekerId(1L, pageable)).thenReturn(mockPage);
+        when(jobRepository.findById(1L)).thenReturn(Optional.of(testJob));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testSeeker));
 
         Page<ApplicationResponse> result = applicationService.getMyApplications(1L, pageable);
 
@@ -131,6 +136,8 @@ public class ApplicationServiceTest {
     @Test
     public void testGetApplicationDetails() {
         when(applicationRepository.findById(1L)).thenReturn(Optional.of(testApplication));
+        when(jobRepository.findById(1L)).thenReturn(Optional.of(testJob));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testSeeker));
 
         ApplicationResponse response = applicationService.getApplicationDetails(1L, 1L);
 

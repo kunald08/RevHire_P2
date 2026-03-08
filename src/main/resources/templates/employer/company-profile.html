@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/employer-layout :: employer-layout(~{::section})}">
 <head>
     <title>RevHire — Company Profile</title>
-    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+</head>
+<body>
+<section>
     <style>
         /* ── Cover Banner ── */
         .company-cover {
@@ -208,14 +211,11 @@
             color: #4338ca;
         }
     </style>
-</head>
-<body>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <!-- ── Cover ── -->
     <div class="company-cover"></div>
 
-    <div class="container" style="max-width: 1100px;">
+    <div style="max-width: 1100px; margin: 0 auto;">
 
         <!-- Success Alert -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show mt-3" role="alert"
@@ -375,9 +375,6 @@
             </div>
         </div>
     </div>
-
-    <div style="height:3rem;"></div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</section>
 </body>
 </html>

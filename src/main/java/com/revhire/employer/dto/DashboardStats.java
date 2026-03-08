@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DashboardStats {
 
+    private String companyName;
     private long totalJobs;
     private long activeJobs;
     private long totalApplications;

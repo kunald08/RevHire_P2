@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/employer-layout :: employer-layout(~{::section})}">
 <head>
     <title th:text="${isEdit ? 'RevHire — Edit Company Profile' : 'RevHire — Create Company Profile'}">RevHire — Company Profile</title>
-    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+</head>
+<body>
+<section>
     <style>
         /* ── Cover ── */
         .form-cover {
@@ -128,14 +131,11 @@
             margin-top: 0.25rem;
         }
     </style>
-</head>
-<body>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <!-- Cover -->
     <div class="form-cover"></div>
 
-    <div class="container" style="max-width: 820px;">
+    <div style="max-width: 820px; margin: 0 auto;">
 
         <!-- Error Alert -->
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3"
@@ -293,10 +293,6 @@
         </div>
     </div>
 
-    <div style="height:3rem;"></div>
-    <div th:replace="~{fragments/footer :: footer}"></div>
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-
     <!-- Initialise char counter on page load -->
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
@@ -307,5 +303,6 @@
             }
         });
     </script>
+</section>
 </body>
 </html>

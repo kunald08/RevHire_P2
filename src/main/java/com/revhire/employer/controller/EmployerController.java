@@ -1,6 +1,7 @@
 package com.revhire.employer.controller;
 
 import com.revhire.employer.dto.EmployerRequest;
+import com.revhire.employer.dto.EmployerResponse;
 import com.revhire.employer.service.EmployerService;
 import com.revhire.job.service.JobService;
 
@@ -29,6 +30,20 @@ public class EmployerController {
     private final EmployerService employerService;
     private final JobService jobService;
 
+    /**
+     * Populates companyName for the employer sidebar on all views served by this controller.
+     * Uses a fast single-column query instead of loading the full employer profile.
+     */
+    @ModelAttribute
+    public void addCommonAttributes(Authentication authentication, Model model) {
+        if (authentication != null) {
+            String name = employerService.getCompanyName(authentication.getName());
+            if (name != null) {
+                model.addAttribute("companyName", name);
+            }
+        }
+    }
+
     // ────────────────────────────────────────────
     // VIEW COMPANY PROFILE
     // ────────────────────────────────────────────
@@ -41,6 +56,7 @@ public class EmployerController {
 
         try {
             model.addAttribute("employer", employerService.getEmployerByEmail(email));
+            model.addAttribute("activeMenu", "profile");
             return "employer/company-profile";
         } catch (Exception e) {
             logger.info("No employer profile exists yet — redirecting to create form");
@@ -65,6 +81,7 @@ public class EmployerController {
             model.addAttribute("isEdit", false);
         }
 
+        model.addAttribute("activeMenu", "editprofile");
         return "employer/company-edit";
     }
 
@@ -77,6 +94,7 @@ public class EmployerController {
 
         model.addAttribute("employerRequest", new EmployerRequest());
         model.addAttribute("isEdit", false);
+        model.addAttribute("activeMenu", "editprofile");
         return "employer/company-edit";
     }
 
@@ -93,6 +111,7 @@ public class EmployerController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("isEdit", employerService.hasProfile(authentication.getName()));
+            model.addAttribute("activeMenu", "editprofile");
             return "employer/company-edit";
         }
 
@@ -113,6 +132,7 @@ public class EmployerController {
         logger.info("Public view of employer profile — ID: {}", id);
         model.addAttribute("employer", employerService.getEmployerById(id));
         model.addAttribute("isPublic", true);
-        return "employer/company-profile";
+        model.addAttribute("activeMenu", "profile");
+        return "employer/company-profile-public";
     }
 }

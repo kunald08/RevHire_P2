@@ -43,6 +43,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .countByJobEmployerIdAndStatusIn(employerId, pendingStatuses);
 
         return new DashboardStats(
+                employer.getCompanyName(),
                 boomingJobs,
                 activeJobs,
                 totalApplications,

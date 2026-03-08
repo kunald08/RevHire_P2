@@ -228,6 +228,130 @@ public class JobServiceImpl implements JobService {
                 .toList();
     }
 
+    @Override
+    public Page<JobResponse> getEmployerJobs(String email, int page, String keyword, String status) {
+
+        Employer employer = getEmployerForEmail(email);
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by("createdAt").descending());
+
+        JobStatus statusEnum = null;
+        if (status != null && !status.isBlank()) {
+            try { statusEnum = JobStatus.valueOf(status.toUpperCase()); }
+            catch (IllegalArgumentException ignored) { /* invalid status → no filter */ }
+        }
+
+        Page<Job> jobsPage = jobRepository.findByEmployerFiltered(
+                employer,
+                keyword != null && keyword.isBlank() ? null : keyword,
+                statusEnum,
+                pageable);
+
+        return jobsPage.map(this::mapToResponse);
+    }
+
+    // ══════════════════════════════════════════════
+    //  DRAFT + DUPLICATE
+    // ══════════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public JobResponse createDraftJob(JobRequest request, String email) {
+
+        logger.info("Saving draft job — employer: {}", email);
+
+        Employer employer = getEmployerForEmail(email);
+
+        Job job = Job.builder()
+                .employer(employer)
+                .title(request.getTitle() != null ? request.getTitle().trim() : "Untitled Draft")
+                .description(request.getDescription() != null ? request.getDescription().trim() : "")
+                .requiredSkills(request.getRequiredSkills())
+                .experienceMin(request.getExperienceMin())
+                .experienceMax(request.getExperienceMax())
+                .educationReq(request.getEducationReq())
+                .location(request.getLocation() != null ? request.getLocation().trim() : "")
+                .salaryMin(request.getSalaryMin())
+                .salaryMax(request.getSalaryMax())
+                .jobType(request.getJobType())
+                .deadline(request.getDeadline())
+                .numOpenings(request.getNumOpenings() != null ? request.getNumOpenings() : 1)
+                .status(JobStatus.DRAFT)
+                .viewCount(0L)
+                .build();
+
+        Job saved = jobRepository.save(job);
+        logger.info("Draft saved — ID: {}, title: {}", saved.getId(), saved.getTitle());
+
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void publishDraft(Long id, String email) {
+
+        Job job = getJobIfOwner(id, email);
+
+        if (job.getStatus() != JobStatus.DRAFT) {
+            throw new BadRequestException("Only draft jobs can be published.");
+        }
+
+        // Validate before publishing
+        if (job.getTitle() == null || job.getTitle().isBlank()) {
+            throw new BadRequestException("Job title is required before publishing.");
+        }
+        if (job.getDeadline() == null || !job.getDeadline().isAfter(LocalDate.now())) {
+            throw new BadRequestException("A future deadline is required before publishing.");
+        }
+
+        job.setStatus(JobStatus.ACTIVE);
+        jobRepository.save(job);
+        logger.info("Draft published — Job ID: {}", id);
+    }
+
+    @Override
+    @Transactional
+    public JobResponse duplicateJob(Long id, String email) {
+
+        Job source = getJobIfOwner(id, email);
+
+        Job copy = Job.builder()
+                .employer(source.getEmployer())
+                .title(source.getTitle() + " (Copy)")
+                .description(source.getDescription())
+                .requiredSkills(source.getRequiredSkills())
+                .experienceMin(source.getExperienceMin())
+                .experienceMax(source.getExperienceMax())
+                .educationReq(source.getEducationReq())
+                .location(source.getLocation())
+                .salaryMin(source.getSalaryMin())
+                .salaryMax(source.getSalaryMax())
+                .jobType(source.getJobType())
+                .deadline(source.getDeadline())
+                .numOpenings(source.getNumOpenings())
+                .status(JobStatus.DRAFT)
+                .viewCount(0L)
+                .build();
+
+        Job saved = jobRepository.save(copy);
+        logger.info("Job duplicated — source: {}, new: {}", id, saved.getId());
+
+        return mapToResponse(saved);
+    }
+
+    // ══════════════════════════════════════════════
+    //  AUTO-EXPIRY
+    // ══════════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public int closeExpiredJobs() {
+        int count = jobRepository.closeExpiredJobs(LocalDate.now());
+        if (count > 0) {
+            logger.info("Auto-closed {} expired job(s)", count);
+        }
+        return count;
+    }
+
     // ══════════════════════════════════════════════
     //  STATISTICS
     // ══════════════════════════════════════════════
@@ -255,6 +379,8 @@ public class JobServiceImpl implements JobService {
                 .withdrawnCount(withdrawn)
                 .jobStatus(job.getStatus().name())
                 .viewCount(job.getViewCount() != null ? job.getViewCount() : 0L)
+                .numOpenings(job.getNumOpenings())
+                .deadline(job.getDeadline())
                 .build();
     }
 

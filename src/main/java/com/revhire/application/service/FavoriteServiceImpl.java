@@ -87,6 +87,13 @@ public class FavoriteServiceImpl implements FavoriteService {
             .companyName(favorite.getJob().getEmployer().getCompanyName())
             .location(favorite.getJob().getLocation())
             .jobType(favorite.getJob().getJobType() != null ? favorite.getJob().getJobType().toString() : null)
+            .industry(favorite.getJob().getEmployer().getIndustry())
+            .salaryMin(favorite.getJob().getSalaryMin())
+            .salaryMax(favorite.getJob().getSalaryMax())
+            .experienceMin(favorite.getJob().getExperienceMin())
+            .experienceMax(favorite.getJob().getExperienceMax())
+            .requiredSkills(favorite.getJob().getRequiredSkills())
+            .deadline(favorite.getJob().getDeadline())
             .savedAt(favorite.getSavedAt())
             .build();
     }

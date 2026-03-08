@@ -1,5 +1,6 @@
 package com.revhire.job.controller;
 
+import com.revhire.employer.repository.EmployerRepository;
 import com.revhire.exception.BadRequestException;
 import com.revhire.job.dto.JobRequest;
 import com.revhire.job.dto.JobResponse;
@@ -30,6 +31,7 @@ public class JobController {
     private static final Logger logger = LogManager.getLogger(JobController.class);
 
     private final JobService jobService;
+    private final EmployerRepository employerRepository;
 
     // ────────────────────────────────────────────
     // CREATE JOB
@@ -62,21 +64,26 @@ public class JobController {
     }
 
     // ────────────────────────────────────────────
-    // MY JOBS (paginated)
+    // MY JOBS (paginated + filterable)
     // ────────────────────────────────────────────
 
     @GetMapping("/my")
     public String myJobs(@RequestParam(defaultValue = "0") int page,
+                         @RequestParam(required = false) String keyword,
+                         @RequestParam(required = false) String status,
                          Authentication authentication,
                          Model model) {
 
-        Page<JobResponse> jobsPage = jobService.getEmployerJobs(authentication.getName(), page);
+        Page<JobResponse> jobsPage = jobService.getEmployerJobs(
+                authentication.getName(), page, keyword, status);
 
         model.addAttribute("jobsPage", jobsPage);
         model.addAttribute("jobs", jobsPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", jobsPage.getTotalPages());
         model.addAttribute("totalJobs", jobsPage.getTotalElements());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", status);
 
         return "job/my-jobs";
     }
@@ -90,8 +97,24 @@ public class JobController {
                           Authentication authentication,
                           Model model) {
 
-        String email = authentication.getName();
-        model.addAttribute("job", jobService.getJobById(id, email));
+        // Handle both authenticated and anonymous (public) access
+        JobResponse job;
+        boolean isOwner = false;
+
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            String email = authentication.getName();
+            job = jobService.getJobById(id, email);
+            isOwner = employerRepository.findByUserEmail(email)
+                    .map(emp -> emp.getId().equals(job.getEmployerId()))
+                    .orElse(false);
+        } else {
+            job = jobService.getJobById(id);
+        }
+
+        model.addAttribute("job", job);
+        model.addAttribute("isOwner", isOwner);
+
         return "job/job-detail";
     }
 
@@ -207,6 +230,8 @@ public class JobController {
 
         JobStatsResponse stats = jobService.getJobStatistics(id, authentication.getName());
         model.addAttribute("stats", stats);
+        model.addAttribute("jobId", id);
+        model.addAttribute("jobTitle", stats.getJobTitle());
         return "job/job-stats";
     }
 
@@ -215,9 +240,75 @@ public class JobController {
     // ────────────────────────────────────────────
 
     @GetMapping("/active")
-    public String activeJobs(Authentication authentication, Model model) {
+    public String activeJobs(@RequestParam(defaultValue = "0") int page,
+                             @RequestParam(required = false) String keyword,
+                             Authentication authentication,
+                             Model model) {
 
-        model.addAttribute("jobs", jobService.getActiveJobsByEmployer(authentication.getName()));
+        Page<JobResponse> jobsPage = jobService.getEmployerJobs(
+                authentication.getName(), page, keyword, "ACTIVE");
+
+        model.addAttribute("jobsPage", jobsPage);
+        model.addAttribute("jobs", jobsPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", jobsPage.getTotalPages());
+        model.addAttribute("totalJobs", jobsPage.getTotalElements());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("statusFilter", "ACTIVE");
+
         return "job/my-jobs";
+    }
+
+    // ────────────────────────────────────────────
+    // SAVE AS DRAFT
+    // ────────────────────────────────────────────
+
+    @PostMapping("/draft")
+    public String saveDraft(@ModelAttribute("jobRequest") JobRequest request,
+                            Authentication authentication,
+                            RedirectAttributes redirectAttributes) {
+
+        try {
+            jobService.createDraftJob(request, authentication.getName());
+            redirectAttributes.addFlashAttribute("success", "Job saved as draft. You can publish it later.");
+            return "redirect:/jobs/my";
+        } catch (BadRequestException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/jobs/create";
+        }
+    }
+
+    // ────────────────────────────────────────────
+    // PUBLISH DRAFT
+    // ────────────────────────────────────────────
+
+    @PostMapping("/{id:\\d+}/publish")
+    public String publishDraft(@PathVariable Long id,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttributes) {
+
+        try {
+            jobService.publishDraft(id, authentication.getName());
+            redirectAttributes.addFlashAttribute("success", "Job is now live and accepting applications!");
+            return "redirect:/jobs/" + id;
+        } catch (BadRequestException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/jobs/" + id + "/edit";
+        }
+    }
+
+    // ────────────────────────────────────────────
+    // DUPLICATE JOB
+    // ────────────────────────────────────────────
+
+    @PostMapping("/{id:\\d+}/duplicate")
+    public String duplicateJob(@PathVariable Long id,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttributes) {
+
+        JobResponse copy = jobService.duplicateJob(id, authentication.getName());
+        redirectAttributes.addFlashAttribute("success",
+                "Job duplicated as draft — \"" + copy.getTitle() + "\". Edit and publish when ready.");
+        return "redirect:/jobs/" + copy.getId() + "/edit";
     }
 }

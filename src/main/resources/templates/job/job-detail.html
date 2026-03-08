@@ -411,10 +411,19 @@
         <div class="container d-flex flex-wrap gap-2 justify-content-between align-items-center" style="max-width:1100px;">
             <div class="d-flex flex-wrap gap-2">
                 <!-- Employer Actions -->
-                <div sec:authorize="hasRole('EMPLOYER')" th:if="${isOwner}">
+                <div sec:authorize="hasAuthority('EMPLOYER')" th:if="${isOwner}">
                     <a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="btn btn-action">
                         <i class="bi bi-pencil-square me-1"></i> Edit
                     </a>
+
+                    <!-- Publish button for DRAFT jobs -->
+                    <span th:if="${job.status.name() == 'DRAFT'}">
+                        <form th:action="@{/jobs/{id}/publish(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-action ms-1" style="border-color:#bbf7d0;color:#16a34a;font-weight:600;">
+                                <i class="bi bi-rocket-takeoff me-1"></i> Publish
+                            </button>
+                        </form>
+                    </span>
 
                     <!-- Lifecycle buttons based on status -->
                     <span th:if="${job.status.name() == 'ACTIVE'}">
@@ -438,10 +447,18 @@
                             </button>
                         </form>
                     </span>
+
+                    <!-- Duplicate button (always visible for owners) -->
+                    <form th:action="@{/jobs/{id}/duplicate(id=${job.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-action ms-1" style="border-color:#e5e7eb;color:#374151;"
+                                title="Duplicate this job as a new draft">
+                            <i class="bi bi-copy me-1"></i> Duplicate
+                        </button>
+                    </form>
                 </div>
 
                 <!-- Seeker apply -->
-                <div sec:authorize="hasRole('SEEKER')">
+                <div sec:authorize="hasAuthority('SEEKER')">
                     <a th:if="${job.status.name() == 'ACTIVE'}" th:href="@{/applications/apply/{id}(id=${job.id})}" class="btn btn-apply">
                         <i class="bi bi-send me-1"></i> Apply Now
                     </a>
@@ -451,7 +468,7 @@
                 </div>
             </div>
 
-            <a th:href="@{/jobs/my}" class="btn btn-action" sec:authorize="hasRole('EMPLOYER')">
+            <a th:href="@{/jobs/my}" class="btn btn-action" sec:authorize="hasAuthority('EMPLOYER')">
                 <i class="bi bi-arrow-left me-1"></i> Back to My Jobs
             </a>
         </div>

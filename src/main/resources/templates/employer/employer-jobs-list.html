@@ -1,91 +1,145 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(~{::body})}">
+      th:replace="~{fragments/employer-layout :: employer-layout(~{::section})}">
 <body>
-	<div class="container mt-4">
-	    <h2 class="fw-bold mb-4">
-	        <i class="bi me-2" th:classappend="${isReviewMode ? 'bi-clock-history text-warning' : 'bi-briefcase-fill text-primary'}"></i>
-	        <span th:text="${(isReviewMode != null && isReviewMode) ? 'Pending Reviews' : 'Job Management'}"></span>
-	    </h2>
+<section>
 
-	    <form method="get" 
-	          th:action="${(isReviewMode != null && isReviewMode) ? '/employer/jobs/review' : '/employer/jobs'}" 
-	          class="row mb-3 g-2">
-	        <div class="col-md-4">
-	            <input type="text" name="keyword" th:value="${keyword}" 
-	                   placeholder="🔍 Search by Job Title" class="form-control">
-	        </div>
-	        <div class="col-md-2">
-	            <button type="submit" class="btn btn-primary w-100">Search</button>
-	        </div>
-	    </form>
+    <!-- ─── Page Header ─── -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size:1.4rem;">
+                <i class="bi me-2"
+                   th:classappend="${isReviewMode ? 'bi-clipboard2-check text-warning' : 'bi-briefcase-fill text-primary'}"></i>
+                <span th:text="${(isReviewMode != null && isReviewMode) ? 'Pending Reviews' : 'Job Management'}"></span>
+            </h2>
+            <p class="text-muted mb-0" style="font-size:0.88rem;"
+               th:text="${(isReviewMode != null && isReviewMode) ? 'Jobs with applicants awaiting your decision' : 'Manage and track all your job postings'}"></p>
+        </div>
+        <a th:href="@{/jobs/create}" class="btn btn-primary btn-sm rounded-pill px-3"
+           th:if="${isReviewMode == null || !isReviewMode}">
+            <i class="bi bi-plus-circle me-1"></i>Post New Job
+        </a>
+    </div>
 
-	    <div class="card shadow-sm border-0">
-	        <div class="card-body p-0">
-	            <table class="table table-hover align-middle mb-0">
-	                <thead class="table-light">
-	                    <tr>
-	                        <th class="ps-4">Job Title</th>
-	                        <th>Status</th>
-	                        <th>Deadline</th>
-	                        <th>Total Applicants</th>
-	                        <th class="text-end pe-4">Action</th>
-	                    </tr>
-	                </thead>
-	                <tbody>
-	                    <tr th:if="${jobsPage.isEmpty()}">
-	                        <td colspan="5" class="text-center py-4 text-muted">No jobs found.</td>
-	                    </tr>
-	                    <tr th:each="job : ${jobsPage.content}">
-	                        <td class="ps-4" th:text="${job.title}"></td>
-	                        <td>
-	                            <span class="badge" 
-	                                  th:classappend="${job.status == 'ACTIVE' ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}" 
-	                                  th:text="${job.status}"></span>
-	                        </td>
-	                        <td th:text="${job.deadline != null ? #temporals.format(job.deadline, 'dd MMM yyyy') : 'N/A'}"></td>
-							<td>
-							    <span class="badge rounded-pill bg-primary" 
-							          th:text="${isReviewMode ? (pendingCounts[job.id] != null ? pendingCounts[job.id] : 0) : (job.applications != null ? job.applications.size() : 0)}">
-							        0
-							    </span>
-							</td>
-							<td class="text-end pe-4">
-							    <a th:href="${isReviewMode} 
-							        ? @{/employer/jobs/review/{id}/applicants(id=${job.id})} 
-							        : @{/employer/jobs/{id}/applicants(id=${job.id})}"
-							       class="btn btn-sm btn-outline-primary">
-							        <i class="bi bi-people"></i> 
-							        <span>Applicants</span>
-							    </a>
-							</td>
-	                    </tr>
-	                </tbody>
-	            </table>
-	        </div>
-	    </div>
-	    </div>
+    <!-- ─── Search Bar ─── -->
+    <div class="dashboard-card-section p-3 mb-3">
+        <form method="get"
+              th:action="${(isReviewMode != null && isReviewMode) ? '/employer/jobs/review' : '/employer/jobs'}"
+              class="d-flex gap-2 align-items-center">
+            <div class="input-group" style="max-width:380px;">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="keyword" th:value="${keyword}"
+                       placeholder="Search by job title..." class="form-control border-start-0">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">Search</button>
+        </form>
+    </div>
 
-		<div class="container mt-4" th:with="baseUrl=${(isReviewMode != null && isReviewMode) ? '/employer/jobs/review' : '/employer/jobs'}">
-		    
-		    <nav class="mt-4" th:if="${jobsPage.totalPages > 1}">
-		        <ul class="pagination justify-content-center">
-		            <li class="page-item" th:classappend="${jobsPage.first}? 'disabled'">
-		                <a class="page-link" th:href="@{__${baseUrl}__(page=${jobsPage.number-1}, keyword=${keyword}, size=${size})}">Previous</a>
-		            </li>
+    <!-- ─── Jobs Table ─── -->
+    <div class="dashboard-card-section p-0">
+        <div class="table-responsive">
+            <table class="table employer-table align-middle mb-0">
+                <thead>
+                <tr>
+                    <th class="ps-4">Job Title</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th class="text-center"
+                        th:text="${(isReviewMode != null && isReviewMode) ? 'Pending' : 'Applicants'}">Applicants</th>
+                    <th class="text-end pe-4">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${jobsPage.isEmpty()}">
+                        <td colspan="5" class="text-center py-5">
+                            <div class="mx-auto mb-3" style="width:56px;height:56px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-inbox" style="font-size:1.5rem;color:#94a3b8;"></i>
+                            </div>
+                            <p class="fw-semibold text-secondary mb-1">No jobs found</p>
+                            <small class="text-muted">Try a different search or create a new job posting.</small>
+                        </td>
+                    </tr>
+                    <tr th:each="job : ${jobsPage.content}">
+                        <td class="ps-4">
+                            <a th:href="@{/jobs/{id}(id=${job.id})}"
+                               th:text="${job.title}"
+                               class="fw-semibold text-decoration-none text-dark"></a>
+                            <div class="d-flex gap-2 mt-1">
+                                <small class="text-muted" th:if="${job.jobType}" th:text="${job.jobType}">Full-time</small>
+                                <small class="text-muted" th:if="${job.location}">
+                                    · <i class="bi bi-geo-alt-fill"></i> <span th:text="${job.location}"></span>
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:switch="${#strings.toString(job.status)}">
+                                <span th:case="'ACTIVE'" class="badge badge-status-active rounded-pill">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.45rem;"></i>Active
+                                </span>
+                                <span th:case="'CLOSED'" class="badge badge-status-closed rounded-pill">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.45rem;"></i>Closed
+                                </span>
+                                <span th:case="'DRAFT'" class="badge badge-status-draft rounded-pill">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.45rem;"></i>Draft
+                                </span>
+                                <span th:case="'EXPIRED'" class="badge badge-status-expired rounded-pill">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.45rem;"></i>Expired
+                                </span>
+                                <span th:case="*" class="badge bg-secondary rounded-pill" th:text="${job.status}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted"
+                                   th:text="${job.deadline != null ? #temporals.format(job.deadline, 'dd MMM yyyy') : '—'}"></small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2"
+                                  th:text="${isReviewMode ? (pendingCounts[job.id] != null ? pendingCounts[job.id] : 0) : (job.applications != null ? job.applications.size() : 0)}">
+                                0
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{/jobs/{id}(id=${job.id})}"
+                                   class="btn btn-outline-secondary rounded-start-pill" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="${isReviewMode}
+                                    ? @{/employer/jobs/review/{id}/applicants(id=${job.id})}
+                                    : @{/employer/jobs/{id}/applicants(id=${job.id})}"
+                                   class="btn btn-outline-primary rounded-end-pill" title="Applicants">
+                                    <i class="bi bi-people-fill me-1"></i>Applicants
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-		            <li class="page-item" th:each="i : ${#numbers.sequence(0, jobsPage.totalPages-1)}"
-		                th:classappend="${i == jobsPage.number}? 'active'">
-		                <a class="page-link" th:text="${i+1}" th:href="@{__${baseUrl}__(page=${i}, keyword=${keyword}, size=${size})}"></a>
-		            </li>
+    <!-- ─── Pagination ─── -->
+    <div class="mt-4" th:with="baseUrl=${(isReviewMode != null && isReviewMode) ? '/employer/jobs/review' : '/employer/jobs'}">
+        <nav th:if="${jobsPage.totalPages > 1}">
+            <ul class="pagination pagination-sm justify-content-center">
+                <li class="page-item" th:classappend="${jobsPage.first}? 'disabled'">
+                    <a class="page-link rounded-start-pill" th:href="@{__${baseUrl}__(page=${jobsPage.number-1}, keyword=${keyword}, size=${size})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, jobsPage.totalPages-1)}"
+                    th:classappend="${i == jobsPage.number}? 'active'">
+                    <a class="page-link" th:text="${i+1}" th:href="@{__${baseUrl}__(page=${i}, keyword=${keyword}, size=${size})}"></a>
+                </li>
+                <li class="page-item" th:classappend="${jobsPage.last}? 'disabled'">
+                    <a class="page-link rounded-end-pill" th:href="@{__${baseUrl}__(page=${jobsPage.number+1}, keyword=${keyword}, size=${size})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 
-		            <li class="page-item" th:classappend="${jobsPage.last}? 'disabled'">
-		                <a class="page-link" th:href="@{__${baseUrl}__(page=${jobsPage.number+1}, keyword=${keyword}, size=${size})}">Next</a>
-		            </li>
-		        </ul>
-		    </nav>
-		</div>
-</div>
+</section>
 </body>
-
 </html>

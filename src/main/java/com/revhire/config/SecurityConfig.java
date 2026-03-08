@@ -49,7 +49,9 @@ public class SecurityConfig {
 
                     // 4. EMPLOYER ONLY 
                     .requestMatchers("/employer/**", "/employers/profile/**").hasAuthority("EMPLOYER")
-                    .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my", "/jobs/{id}/stats", "/jobs/active").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/{id}/update", "/jobs/{id}/delete", "/jobs/{id}/close", "/jobs/{id}/reopen", "/jobs/{id}/fill").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/draft", "/jobs/{id}/publish", "/jobs/{id}/duplicate").hasAuthority("EMPLOYER")
                     .requestMatchers("/auth/me").authenticated()
                     
                     // 5. REQUIRE LOGIN FOR EVERYTHING ELSE (Notifications, /auth/me, etc.)

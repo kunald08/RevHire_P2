@@ -1,5 +1,6 @@
 package com.revhire.job.service;
 
+import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.JobStatus;
@@ -46,6 +47,9 @@ public class JobServiceTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private ApplicationRepository applicationRepository;
 
     // ── CREATE JOB SUCCESS ──
     @Test
@@ -356,6 +360,154 @@ public class JobServiceTest {
         Page<JobResponse> page = jobService.getEmployerJobs("emp@test.com", 0);
         assertNotNull(page);
         assertEquals(0, page.getTotalElements());
+    }
+
+    // ── SAVE AS DRAFT ──
+    @Test
+    public void createDraftJob_success() {
+
+        User user = new User();
+        user.setEmail("emp@test.com");
+        user.setRole(Role.EMPLOYER);
+
+        Employer employer = new Employer();
+        employer.setId(1L);
+        employer.setUser(user);
+        employer.setCompanyName("Test Corp");
+        employer.setIndustry("IT");
+        employer.setLocation("Hyderabad");
+
+        JobRequest request = validRequest();
+
+        Mockito.when(userRepository.findByEmail("emp@test.com"))
+                .thenReturn(Optional.of(user));
+
+        Mockito.when(employerRepository.findByUser(user))
+                .thenReturn(Optional.of(employer));
+
+        Mockito.when(jobRepository.save(Mockito.any(Job.class)))
+                .thenAnswer(i -> {
+                    Job j = i.getArgument(0);
+                    j.setId(50L);
+                    return j;
+                });
+
+        JobResponse response = jobService.createDraftJob(request, "emp@test.com");
+        assertNotNull(response);
+        assertEquals(JobStatus.DRAFT, response.getStatus());
+    }
+
+    // ── PUBLISH DRAFT ──
+    @Test
+    public void publishDraft_success() {
+
+        User user = new User();
+        user.setEmail("emp@test.com");
+        user.setRole(Role.EMPLOYER);
+
+        Employer employer = new Employer();
+        employer.setId(1L);
+        employer.setUser(user);
+
+        Job draftJob = new Job();
+        draftJob.setId(50L);
+        draftJob.setEmployer(employer);
+        draftJob.setStatus(JobStatus.DRAFT);
+        draftJob.setTitle("Draft Job");
+        draftJob.setDeadline(LocalDate.now().plusDays(10));
+
+        Mockito.when(userRepository.findByEmail("emp@test.com"))
+                .thenReturn(Optional.of(user));
+        Mockito.when(employerRepository.findByUser(user))
+                .thenReturn(Optional.of(employer));
+        Mockito.when(jobRepository.findById(50L))
+                .thenReturn(Optional.of(draftJob));
+        Mockito.when(jobRepository.save(Mockito.any(Job.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        jobService.publishDraft(50L, "emp@test.com");
+        assertEquals(JobStatus.ACTIVE, draftJob.getStatus());
+    }
+
+    // ── PUBLISH NON-DRAFT → BLOCKED ──
+    @Test(expected = BadRequestException.class)
+    public void publishDraft_nonDraft() {
+
+        User user = new User();
+        user.setEmail("emp@test.com");
+        user.setRole(Role.EMPLOYER);
+
+        Employer employer = new Employer();
+        employer.setId(1L);
+        employer.setUser(user);
+
+        Job activeJob = new Job();
+        activeJob.setId(1L);
+        activeJob.setEmployer(employer);
+        activeJob.setStatus(JobStatus.ACTIVE);
+
+        Mockito.when(userRepository.findByEmail("emp@test.com"))
+                .thenReturn(Optional.of(user));
+        Mockito.when(employerRepository.findByUser(user))
+                .thenReturn(Optional.of(employer));
+        Mockito.when(jobRepository.findById(1L))
+                .thenReturn(Optional.of(activeJob));
+
+        jobService.publishDraft(1L, "emp@test.com");
+    }
+
+    // ── DUPLICATE JOB ──
+    @Test
+    public void duplicateJob_success() {
+
+        User user = new User();
+        user.setEmail("emp@test.com");
+        user.setRole(Role.EMPLOYER);
+
+        Employer employer = new Employer();
+        employer.setId(1L);
+        employer.setUser(user);
+        employer.setCompanyName("Test Corp");
+        employer.setIndustry("IT");
+        employer.setLocation("Hyderabad");
+
+        Job source = new Job();
+        source.setId(1L);
+        source.setEmployer(employer);
+        source.setTitle("Original Job");
+        source.setDescription("Description");
+        source.setStatus(JobStatus.ACTIVE);
+        source.setLocation("Hyderabad");
+        source.setJobType(JobType.FULL_TIME);
+
+        Mockito.when(userRepository.findByEmail("emp@test.com"))
+                .thenReturn(Optional.of(user));
+        Mockito.when(employerRepository.findByUser(user))
+                .thenReturn(Optional.of(employer));
+        Mockito.when(jobRepository.findById(1L))
+                .thenReturn(Optional.of(source));
+        Mockito.when(jobRepository.save(Mockito.any(Job.class)))
+                .thenAnswer(i -> {
+                    Job j = i.getArgument(0);
+                    j.setId(99L);
+                    return j;
+                });
+
+        JobResponse copy = jobService.duplicateJob(1L, "emp@test.com");
+        assertNotNull(copy);
+        assertTrue(copy.getTitle().contains("(Copy)"));
+        assertEquals(JobStatus.DRAFT, copy.getStatus());
+    }
+
+    // ── AUTO-EXPIRY ──
+    @Test
+    public void closeExpiredJobs_success() {
+
+        Mockito.when(jobRepository.closeExpiredJobs(Mockito.any(LocalDate.class)))
+                .thenReturn(3);
+
+        int closed = jobService.closeExpiredJobs();
+        assertEquals(3, closed);
     }
 
     // ── HELPER ──

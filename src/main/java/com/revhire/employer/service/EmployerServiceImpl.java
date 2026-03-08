@@ -101,6 +101,11 @@ public class EmployerServiceImpl implements EmployerService {
         return employerRepository.findByUserEmail(email).isPresent();
     }
 
+    @Override
+    public String getCompanyName(String email) {
+        return employerRepository.findCompanyNameByUserEmail(email).orElse(null);
+    }
+
     // ────────────────────────────────────────────
     // PRIVATE HELPERS
     // ────────────────────────────────────────────

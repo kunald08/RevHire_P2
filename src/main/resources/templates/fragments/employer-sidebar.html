@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!-- Employer Sidebar — include with: th:replace="~{fragments/employer-sidebar :: sidebar}" -->
+<aside th:fragment="sidebar" class="employer-sidebar">
+    <div class="sidebar-inner">
+
+        <!-- Company Info Header -->
+        <div class="sidebar-header text-center py-3 border-bottom">
+            <div class="company-avatar mx-auto mb-2">
+                <i class="bi bi-building" style="font-size: 2rem; color: #4f46e5;"></i>
+            </div>
+            <h6 class="mb-0 fw-semibold" th:text="${companyName != null ? companyName : 'My Company'}">Company</h6>
+            <small class="text-muted">Employer Portal</small>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar-nav mt-3">
+            <ul class="nav flex-column">
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/employer/dashboard}"
+                       th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    </a>
+                </li>
+
+                <li class="sidebar-section-title">JOB MANAGEMENT</li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/jobs/my}"
+                       th:classappend="${activeMenu == 'myjobs'} ? 'active' : ''">
+                        <i class="bi bi-list-task me-2"></i>My Jobs
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/jobs/active}"
+                       th:classappend="${activeMenu == 'active'} ? 'active' : ''">
+                        <i class="bi bi-check-circle me-2"></i>Active Jobs
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/jobs/create}"
+                       th:classappend="${activeMenu == 'create'} ? 'active' : ''">
+                        <i class="bi bi-plus-circle me-2"></i>Post New Job
+                    </a>
+                </li>
+
+                <li class="sidebar-section-title">APPLICANTS</li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/employer/jobs}"
+                       th:classappend="${activeMenu == 'applicants'} ? 'active' : ''">
+                        <i class="bi bi-people me-2"></i>All Applicants
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/employer/jobs/review}"
+                       th:classappend="${activeMenu == 'review'} ? 'active' : ''">
+                        <i class="bi bi-clock-history me-2"></i>Pending Reviews
+                        <span class="badge bg-warning text-dark float-end"
+                              th:if="${stats != null && stats.pendingReviews > 0}"
+                              th:text="${stats.pendingReviews}">0</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-section-title">COMPANY</li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/notifications}"
+                       th:classappend="${activeMenu == 'notifications'} ? 'active' : ''">
+                        <i class="bi bi-bell me-2"></i>Notifications
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/employers/profile}"
+                       th:classappend="${activeMenu == 'profile'} ? 'active' : ''">
+                        <i class="bi bi-building me-2"></i>Company Profile
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link sidebar-link"
+                       th:href="@{/employers/profile/edit}"
+                       th:classappend="${activeMenu == 'editprofile'} ? 'active' : ''">
+                        <i class="bi bi-pencil-square me-2"></i>Edit Profile
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
+</aside>
+
+</body>
+</html>

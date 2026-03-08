@@ -179,7 +179,7 @@
                 </div>
             </div>
 
-            <form th:action="@{/jobs/create}" th:object="${jobRequest}" method="post" novalidate>
+            <form th:action="@{/jobs}" th:object="${jobRequest}" method="post" novalidate>
 
                 <!-- ── Step 1: Basic Info ── -->
                 <div class="form-section">
@@ -330,6 +330,9 @@
                 <div class="d-flex flex-wrap gap-3 pt-2">
                     <button type="submit" class="btn btn-submit">
                         <i class="bi bi-rocket-takeoff me-1"></i> Post Job
+                    </button>
+                    <button type="submit" formaction="/jobs/draft" formnovalidate class="btn btn-cancel" style="border-color:#6b7280;color:#374151;">
+                        <i class="bi bi-file-earmark me-1"></i> Save as Draft
                     </button>
                     <a th:href="@{/jobs/my}" class="btn btn-cancel">
                         <i class="bi bi-x-lg me-1"></i> Cancel

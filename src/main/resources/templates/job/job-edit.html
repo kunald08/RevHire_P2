@@ -176,7 +176,7 @@
                 </div>
             </div>
 
-            <form th:action="@{/jobs/{id}/edit(id=${jobId})}" th:object="${jobRequest}" method="post" novalidate>
+            <form th:action="@{/jobs/{id}/update(id=${jobId})}" th:object="${jobRequest}" method="post" novalidate>
 
                 <!-- ── Step 1: Basic Info ── -->
                 <div class="form-section">

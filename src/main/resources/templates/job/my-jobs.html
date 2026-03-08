@@ -217,7 +217,7 @@
 
         <!-- Header Card -->
         <div class="header-card p-4 mb-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
                 <div>
                     <h4 class="fw-bold mb-1"><i class="bi bi-briefcase me-2" style="color:#4f46e5;"></i>My Job Postings</h4>
                     <p class="text-muted mb-0" style="font-size:0.9rem;">
@@ -229,6 +229,33 @@
                     <i class="bi bi-plus-circle me-1"></i> Post New Job
                 </a>
             </div>
+
+            <!-- Search & Filter Bar -->
+            <form th:action="@{/jobs/my}" method="get" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <input type="text" name="keyword" class="form-control" th:value="${keyword}"
+                           placeholder="Search jobs by title..." style="border-radius:10px;border:2px solid #e5e7eb;padding:0.55rem 1rem;font-size:0.9rem;">
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select" style="border-radius:10px;border:2px solid #e5e7eb;padding:0.55rem 1rem;font-size:0.9rem;">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE" th:selected="${statusFilter == 'ACTIVE'}">Active</option>
+                        <option value="CLOSED" th:selected="${statusFilter == 'CLOSED'}">Closed</option>
+                        <option value="FILLED" th:selected="${statusFilter == 'FILLED'}">Filled</option>
+                        <option value="DRAFT"  th:selected="${statusFilter == 'DRAFT'}">Draft</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn w-100" style="border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;padding:0.55rem;">
+                        <i class="bi bi-search me-1"></i> Filter
+                    </button>
+                </div>
+                <div class="col-md-2" th:if="${keyword != null || statusFilter != null}">
+                    <a th:href="@{/jobs/my}" class="btn btn-outline-secondary w-100" style="border-radius:10px;padding:0.55rem;font-weight:600;">
+                        <i class="bi bi-x-lg me-1"></i> Clear
+                    </a>
+                </div>
+            </form>
         </div>
 
         <!-- Job List -->
@@ -279,9 +306,39 @@
                         <a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-pencil me-1"></i> Edit
                         </a>
-                        <a th:href="@{/jobs/{id}/stats(id=${job.id})}" class="btn btn-sm btn-outline-info">
+                        <a th:if="${job.status.name() != 'DRAFT'}" th:href="@{/jobs/{id}/stats(id=${job.id})}" class="btn btn-sm btn-outline-info">
                             <i class="bi bi-bar-chart me-1"></i> Stats
                         </a>
+                        <!-- Publish button for drafts -->
+                        <form th:if="${job.status.name() == 'DRAFT'}" th:action="@{/jobs/{id}/publish(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="bi bi-rocket-takeoff me-1"></i> Publish
+                            </button>
+                        </form>
+                        <!-- Close (for ACTIVE jobs) -->
+                        <form th:if="${job.status.name() == 'ACTIVE'}" th:action="@{/jobs/{id}/close(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Close this job? No new applications will be accepted.')">
+                                <i class="bi bi-x-circle me-1"></i> Close
+                            </button>
+                        </form>
+                        <!-- Mark Filled (for ACTIVE jobs) -->
+                        <form th:if="${job.status.name() == 'ACTIVE'}" th:action="@{/jobs/{id}/fill(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Mark this job as filled?')">
+                                <i class="bi bi-person-check me-1"></i> Filled
+                            </button>
+                        </form>
+                        <!-- Reopen (for CLOSED / EXPIRED jobs) -->
+                        <form th:if="${job.status.name() == 'CLOSED' or job.status.name() == 'EXPIRED'}" th:action="@{/jobs/{id}/reopen(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Reopen this job listing?')">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Reopen
+                            </button>
+                        </form>
+                        <!-- Duplicate button -->
+                        <form th:action="@{/jobs/{id}/duplicate(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-dark" title="Duplicate this job as a new draft">
+                                <i class="bi bi-copy me-1"></i> Duplicate
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -290,16 +347,16 @@
             <nav th:if="${totalPages > 1}" class="mt-4 d-flex justify-content-center">
                 <ul class="pagination custom-pagination">
                     <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
-                        <a class="page-link" th:href="@{/jobs/my(page=${currentPage - 1})}">
+                        <a class="page-link" th:href="@{/jobs/my(page=${currentPage - 1}, keyword=${keyword}, status=${statusFilter})}">
                             <i class="bi bi-chevron-left"></i>
                         </a>
                     </li>
                     <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" class="page-item"
                         th:classappend="${i == currentPage ? 'active' : ''}">
-                        <a class="page-link" th:href="@{/jobs/my(page=${i})}" th:text="${i + 1}">1</a>
+                        <a class="page-link" th:href="@{/jobs/my(page=${i}, keyword=${keyword}, status=${statusFilter})}" th:text="${i + 1}">1</a>
                     </li>
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
-                        <a class="page-link" th:href="@{/jobs/my(page=${currentPage + 1})}">
+                        <a class="page-link" th:href="@{/jobs/my(page=${currentPage + 1}, keyword=${keyword}, status=${statusFilter})}">
                             <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>

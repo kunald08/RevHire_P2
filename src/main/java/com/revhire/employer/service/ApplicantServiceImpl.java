@@ -23,6 +23,8 @@ import com.revhire.employer.repository.ApplicantRepository;
 import com.revhire.employer.repository.EmployerRepository;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
+import com.revhire.common.enums.NotificationType;
+import com.revhire.notification.service.NotificationService;
 import com.revhire.profile.entity.JobSeekerProfile;
 import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ProfileRepository;
@@ -30,11 +32,15 @@ import com.revhire.profile.repository.ResumeRepository;
 import com.revhire.profile.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class ApplicantServiceImpl implements ApplicantService {
+
+    private static final Logger logger = LogManager.getLogger(ApplicantServiceImpl.class);
 
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
@@ -44,6 +50,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final EmployerRepository employerRepository;
     private final ResumeRepository resumeRepository;
     private final ProfileService profileService;
+    private final NotificationService notificationService;
     
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
@@ -106,10 +113,29 @@ public class ApplicantServiceImpl implements ApplicantService {
                 app.setStatus(ApplicationStatus.SHORTLISTED);
             } else if ("REJECT".equalsIgnoreCase(action)) {
                 app.setStatus(ApplicationStatus.REJECTED);
+            } else if ("UNDER_REVIEW".equalsIgnoreCase(action)) {
+                app.setStatus(ApplicationStatus.UNDER_REVIEW);
             }
             app.setEmployerComment(comment);
         }
         applicationRepository.saveAll(applications);
+
+        // Send notifications to seekers
+        for (Application app : applications) {
+            try {
+                String jobTitle = app.getJob().getTitle();
+                String statusLabel = "SHORTLIST".equalsIgnoreCase(action) ? "shortlisted" 
+                    : "UNDER_REVIEW".equalsIgnoreCase(action) ? "moved to Under Review" 
+                    : "rejected";
+                String message = "Your application for \"" + jobTitle + "\" has been " + statusLabel + ".";
+                String link = "/applications/" + app.getId();
+                notificationService.createNotification(
+                        app.getSeeker(), message, NotificationType.APPLICATION_UPDATE, link);
+            } catch (Exception e) {
+                // Don't fail the whole operation if notification fails
+                logger.error("Failed to send notification for application {}", app.getId(), e);
+            }
+        }
     }
     
     @Override
