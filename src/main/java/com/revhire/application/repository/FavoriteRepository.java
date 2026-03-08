@@ -35,4 +35,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     @Modifying
     @Transactional
     void deleteBySeekerIdAndJobId(Long seekerId, Long jobId);
+      
+    @Modifying
+    @Query("DELETE FROM Favorite f WHERE f.job.id = :jobId")
+    void deleteByJobId(Long jobId);
 }

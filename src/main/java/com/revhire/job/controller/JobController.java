@@ -180,8 +180,12 @@ public class JobController {
                             Authentication authentication,
                             RedirectAttributes redirectAttributes) {
 
-        jobService.deleteJob(id, authentication.getName());
-        redirectAttributes.addFlashAttribute("success", "Job posting deleted.");
+    	try {
+    	    jobService.deleteJob(id, authentication.getName());
+    	    redirectAttributes.addFlashAttribute("success", "Job deleted.");
+    	} catch (BadRequestException e) {
+    	    redirectAttributes.addFlashAttribute("error", e.getMessage());
+    	}
         return "redirect:/jobs/my";
     }
 

@@ -1,6 +1,7 @@
 package com.revhire.job.service;
 
 import com.revhire.application.repository.ApplicationRepository;
+import com.revhire.application.repository.FavoriteRepository;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.ApplicationStatus;
@@ -45,6 +46,7 @@ public class JobServiceImpl implements JobService {
     private final EmployerRepository employerRepository;
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
+    private final FavoriteRepository favoriteRepository;
 
     // ══════════════════════════════════════════════
     //  CREATE
@@ -130,6 +132,15 @@ public class JobServiceImpl implements JobService {
         if (job.getStatus() == JobStatus.FILLED) {
             throw new BadRequestException("Cannot delete a filled job posting.");
         }
+        
+        long applications = applicationRepository.countByJobId(id);
+        if (applications > 0) {
+            throw new BadRequestException("Cannot delete a job with applications.");
+        }
+
+        // remove favorites first
+        favoriteRepository.deleteByJobId(id);
+
 
         jobRepository.delete(job);
         logger.info("Job deleted — ID: {}", id);
