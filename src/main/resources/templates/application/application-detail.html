@@ -10,6 +10,7 @@
         .nav-buttons {
             margin-bottom: 20px;
         }
+<<<<<<< HEAD
         .status-badge {
             font-size: 0.9rem;
             padding: 0.5rem 1rem;
@@ -20,27 +21,64 @@
         .timeline-icon {
             width: 30px;
             text-align: center;
+=======
+        .nav-btn {
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 500;
+        }
+        .status-badge {
+            font-size: 1rem;
+            padding: 8px 15px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+        .timeline-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1.2rem;
+        }
+        .timeline-content {
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        .resume-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #0d6efd;
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
         }
     </style>
 </head>
 <body>
     <div th:replace="~{fragments/navbar}"></div>
     
+<<<<<<< HEAD
     <!-- QUICK NAVIGATION BUTTONS -->
+=======
+    <!-- Quick Navigation Buttons -->
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
     <div class="container mt-3 nav-buttons" sec:authorize="hasRole('SEEKER')">
-        <div class="row">
-            <div class="col-12">
-                <div class="btn-group w-100 shadow-sm" role="group">
-                    <a href="/jobs/search" class="btn btn-outline-primary">
-                        <i class="bi bi-search"></i> Search Jobs
-                    </a>
-                    <a href="/applications" class="btn btn-primary">
-                        <i class="bi bi-briefcase"></i> My Applications
-                    </a>
-                    <a href="/favorites" class="btn btn-outline-danger">
-                        <i class="bi bi-heart-fill"></i> My Favorites
-                    </a>
-                </div>
+        <div class="row g-2">
+            <div class="col-md-4">
+                <a href="/jobs/search" class="btn btn-outline-primary w-100 nav-btn">
+                    <i class="bi bi-search"></i> Search Jobs
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="/applications" class="btn btn-primary w-100 nav-btn">
+                    <i class="bi bi-briefcase"></i> My Applications
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="/favorites" class="btn btn-outline-danger w-100 nav-btn">
+                    <i class="bi bi-heart-fill"></i> My Favorites
+                </a>
             </div>
         </div>
     </div>
@@ -69,19 +107,35 @@
         </div>
         
         <div class="row">
+            <!-- Main Content - Application Details -->
             <div class="col-md-8">
+<<<<<<< HEAD
                 <!-- Main Application Details -->
                 <div class="card detail-card">
                     <div class="card-header bg-primary text-white">
+=======
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                         <h4 class="mb-0"><i class="bi bi-file-text"></i> Application Details</h4>
+                        <span class="badge bg-light text-dark status-badge" th:text="${application.status}">APPLIED</span>
                     </div>
                     <div class="card-body">
-                        <h3 th:text="${application.jobTitle}">Software Engineer</h3>
+                        <!-- Job Title -->
+                        <h3 class="mb-3" th:text="${application.jobTitle}">Software Engineer</h3>
+                        
+                        <!-- Company Name -->
+                        <div class="mb-4">
+                            <i class="bi bi-building text-primary"></i>
+                            <span class="fw-bold" th:text="${application.companyName}">Tech Corp</span>
+                        </div>
                         
                         <hr>
                         
-                        <div class="row">
+                        <!-- Application Info Row -->
+                        <div class="row mb-4">
                             <div class="col-md-6">
+<<<<<<< HEAD
                                 <p><strong><i class="bi bi-building"></i> Company:</strong> 
                                     <span th:text="${application.companyName ?: 'Not specified'}">Tech Corp</span>
                                 </p>
@@ -100,21 +154,34 @@
                                     <span class="badge status-badge" th:class="${application.statusBadgeClass}" th:text="${application.status}">Applied</span>
                                 </p>
                                 <p><strong><i class="bi bi-clock"></i> Last Updated:</strong> 
+=======
+                                <p class="mb-2">
+                                    <i class="bi bi-calendar text-info"></i>
+                                    <strong>Applied On:</strong> 
+                                    <span th:text="${application.formattedAppliedDate}">Jan 15, 2024</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-clock text-warning"></i>
+                                    <strong>Last Updated:</strong> 
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                                     <span th:text="${application.updatedAt != null ? #temporals.format(application.updatedAt, 'MMM dd, yyyy') : 'N/A'}">Jan 16, 2024</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <i class="bi bi-person-circle text-success"></i>
+                                    <strong>Applicant:</strong> 
+                                    <span th:text="${application.seekerName}">John Doe</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-envelope text-danger"></i>
+                                    <strong>Email:</strong> 
+                                    <span th:text="${application.seekerEmail}">john@example.com</span>
                                 </p>
                             </div>
                         </div>
                         
-                        <div class="mb-4 mt-4">
-                            <h5><i class="bi bi-file-text"></i> Cover Letter</h5>
-                            <div class="p-3 bg-light rounded" th:if="${application.coverLetter != null and !application.coverLetter.isEmpty()}">
-                                <p th:text="${application.coverLetter}" style="white-space: pre-line;"></p>
-                            </div>
-                            <div class="p-3 bg-light rounded text-muted" th:unless="${application.coverLetter != null and !application.coverLetter.isEmpty()}">
-                                <em>No cover letter provided</em>
-                            </div>
-                        </div>
-                        
+<<<<<<< HEAD
                         <!-- ========== FIXED RESUME SECTION ========== -->
                         <div class="mb-4">
                             <h5><i class="bi bi-file-pdf"></i> Resume</h5>
@@ -148,27 +215,77 @@
                                         <em>No resume uploaded</em>
                                     </div>
                                 </div>
+=======
+                        <!-- Cover Letter Section -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-file-text text-primary"></i> Cover Letter
+                            </h5>
+                            <div class="p-4 bg-light rounded" th:if="${application.coverLetter != null and !application.coverLetter.isEmpty()}">
+                                <p th:text="${application.coverLetter}" style="white-space: pre-line;" class="mb-0"></p>
+                            </div>
+                            <div class="p-4 bg-light rounded text-muted" th:unless="${application.coverLetter != null and !application.coverLetter.isEmpty()}">
+                                <em class="text-center d-block">No cover letter provided</em>
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                             </div>
                         </div>
                         <!-- ========== END FIXED RESUME SECTION ========== -->
                         
+                        <!-- Resume Section - FIXED to show resume properly -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-file-pdf text-danger"></i> Resume
+                            </h5>
+                            <div class="resume-card" th:if="${application.resumeFileName != null and !application.resumeFileName.isEmpty()}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 2rem;"></i>
+                                        <span class="fw-bold ms-2" th:text="${application.resumeFileName}">resume.pdf</span>
+                                    </div>
+                                    <div>
+                                        <a href="#" class="btn btn-outline-primary btn-sm me-2">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <a href="#" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 bg-light rounded text-muted" th:unless="${application.resumeFileName != null and !application.resumeFileName.isEmpty()}">
+                                <em class="text-center d-block">
+                                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                                    No resume uploaded
+                                </em>
+                            </div>
+                        </div>
+                        
+                        <!-- Employer Feedback -->
                         <div class="mb-4" th:if="${application.employerComment != null and !application.employerComment.isEmpty()}">
-                            <h5><i class="bi bi-chat"></i> Employer Feedback</h5>
-                            <div class="p-3 bg-info bg-opacity-10 rounded">
-                                <p th:text="${application.employerComment}" style="white-space: pre-line;"></p>
+                            <h5 class="mb-3">
+                                <i class="bi bi-chat text-info"></i> Employer Feedback
+                            </h5>
+                            <div class="p-4 bg-info bg-opacity-10 rounded">
+                                <p th:text="${application.employerComment}" style="white-space: pre-line;" class="mb-0"></p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             
+            <!-- Sidebar - Actions and Timeline -->
             <div class="col-md-4">
                 <!-- Actions Card -->
+<<<<<<< HEAD
                 <div class="card detail-card">
+=======
+                <div class="card shadow-sm mb-4">
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                     <div class="card-header bg-light">
                         <h5 class="mb-0"><i class="bi bi-gear"></i> Actions</h5>
                     </div>
                     <div class="card-body">
+<<<<<<< HEAD
                         <!-- View Job Button -->
                         <a th:href="@{/jobs/{id}(id=${application.jobId})}" class="btn btn-outline-primary w-100 mb-2">
                             <i class="bi bi-briefcase"></i> View Job
@@ -197,15 +314,42 @@
                         <a th:href="@{/applications}" class="btn btn-outline-secondary w-100">
                             <i class="bi bi-arrow-left"></i> Back to Applications
                         </a>
+=======
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/jobs/{id}(id=${application.jobId})}" class="btn btn-outline-primary">
+                                <i class="bi bi-briefcase"></i> View Job
+                            </a>
+                            
+                            <!-- Withdraw button - only if withdrawable -->
+                            <form th:if="${canWithdraw}" 
+                                  th:action="@{/applications/{id}/withdraw(id=${application.id})}" 
+                                  method="post"
+                                  onsubmit="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');">
+                                <input type="hidden" name="reason" th:value="'Withdrawn application for ' + ${application.jobTitle}">
+                                <button type="submit" class="btn btn-warning w-100 mt-2">
+                                    <i class="bi bi-arrow-return-left"></i> Withdraw Application
+                                </button>
+                            </form>
+                            
+                            <a th:href="@{/applications}" class="btn btn-outline-secondary mt-2">
+                                <i class="bi bi-arrow-left"></i> Back to Applications
+                            </a>
+                        </div>
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                     </div>
                 </div>
                 
                 <!-- Status Timeline Card -->
+<<<<<<< HEAD
                 <div class="card mt-3 detail-card">
+=======
+                <div class="card shadow-sm">
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                     <div class="card-header bg-light">
                         <h5 class="mb-0"><i class="bi bi-clock-history"></i> Application Timeline</h5>
                     </div>
                     <div class="card-body">
+<<<<<<< HEAD
                         <ul class="list-unstyled">
                             <li class="mb-3 d-flex">
                                 <div class="timeline-icon">
@@ -258,6 +402,68 @@
                                 </div>
                             </li>
                         </ul>
+=======
+                        <div class="timeline">
+                            <!-- Applied -->
+                            <div class="timeline-item">
+                                <div class="timeline-icon text-success">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Applied</h6>
+                                    <small class="text-muted" th:text="${application.formattedAppliedDate}">Jan 15, 2024</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Under Review -->
+                            <div class="timeline-item" th:if="${application.status == 'UNDER_REVIEW' or application.status == 'SHORTLISTED' or application.status == 'REJECTED'}">
+                                <div class="timeline-icon" th:classappend="${application.status == 'UNDER_REVIEW'} ? 'text-info' : 
+                                                                               (${application.status == 'SHORTLISTED'} ? 'text-success' : 'text-danger')">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Under Review</h6>
+                                    <small class="text-muted">Application is being reviewed</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Shortlisted -->
+                            <div class="timeline-item" th:if="${application.status == 'SHORTLISTED'}">
+                                <div class="timeline-icon text-success">
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Shortlisted</h6>
+                                    <small class="text-muted">You've been shortlisted!</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Rejected -->
+                            <div class="timeline-item" th:if="${application.status == 'REJECTED'}">
+                                <div class="timeline-icon text-danger">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Rejected</h6>
+                                    <small class="text-muted">Application not selected</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Withdrawn -->
+                            <div class="timeline-item" th:if="${application.status == 'WITHDRAWN'}">
+                                <div class="timeline-icon text-warning">
+                                    <i class="bi bi-arrow-return-left-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Withdrawn</h6>
+                                    <small class="text-muted">You withdrew this application</small>
+                                    <p th:if="${application.withdrawReason != null}" class="mt-2 mb-0 p-2 bg-light rounded small">
+                                        <strong>Reason:</strong> <span th:text="${application.withdrawReason}">Found another job</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
                     </div>
                 </div>
                 
@@ -274,5 +480,38 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
+=======
+    <script>
+        // Show toast message if exists
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMsg = urlParams.get('successMessage');
+            const errorMsg = urlParams.get('errorMessage');
+            
+            if (successMsg) {
+                showMessage(successMsg, 'success');
+            } else if (errorMsg) {
+                showMessage(errorMsg, 'danger');
+            }
+        }
+        
+        function showMessage(message, type) {
+            const toastEl = document.getElementById('messageToast');
+            const toastBody = document.getElementById('toastMessage');
+            const toastHeader = toastEl.querySelector('.toast-header i');
+            
+            if (type === 'success') {
+                toastHeader.className = 'bi bi-check-circle-fill text-success me-2';
+            } else {
+                toastHeader.className = 'bi bi-exclamation-triangle-fill text-danger me-2';
+            }
+            
+            toastBody.textContent = message;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
+>>>>>>> e9dea4cdf4811d86ada2ff9c035e5327b75e26f5
 </body>
 </html>
