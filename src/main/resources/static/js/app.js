@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Fetch and display unread notification count in navbar badge
     fetchUnreadCount();
 
+    // Poll for new notifications every 30 seconds
+    setInterval(fetchUnreadCount, 30000);
+
 });
 
 /**
