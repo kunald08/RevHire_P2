@@ -57,12 +57,11 @@ public class Application {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    /**
-     * Check if application can be withdrawn
-     */
+
     public boolean canWithdraw() {
         return status != ApplicationStatus.WITHDRAWN && 
                status != ApplicationStatus.SHORTLISTED && 
                status != ApplicationStatus.REJECTED;
+
     }
 }

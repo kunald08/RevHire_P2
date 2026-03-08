@@ -43,44 +43,34 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // Keep disabled for now to allow POST requests
             .authorizeHttpRequests(auth -> auth
-                    // 1. PUBLIC PAGES & GLOBAL ERROR HANDLING
-                    .requestMatchers("/").permitAll()                                  
-                    .requestMatchers("/error", "/auth/denied").permitAll()             // CRITICAL: Allows 404/403 pages to be seen
+            		// 1. PUBLIC PAGES
+                    .requestMatchers("/").permitAll()                                      
+                    .requestMatchers("/error", "/auth/denied").permitAll()
                     .requestMatchers("/jobs/search/**", "/jobs/search/results").permitAll() 
-                    
-
-                    /* * NOTE: The Regex {id:[0-9]+} is used here to enforce strict input validation 
-                     * at the security layer (preventing non-numeric IDs from reaching the service).
-                     *
-                     * SIDE EFFECT: This strict matching changes the timing of Entity loading. 
-                     * If you experience 'ClassCastException' in Thymeleaf when comparing Enums, 
-                     * ensure the template uses String-based comparison (#strings.toString()) 
-                     * to handle Hibernate Proxies correctly.
-                     */
                     .requestMatchers("/jobs/{id:\\d+}/").permitAll()   
                     .requestMatchers("/employers/{id:\\d+}/").permitAll()  
-                    .requestMatchers("/auth/forgot-password", "/auth/reset-password","/auth/resend-otp", "/auth/verify-login/**", "/auth/login/otp-request/**").permitAll()
+                    .requestMatchers("/auth/forgot-password", "/auth/reset-password", "/auth/resend-otp", "/auth/verify-login/**", "/auth/login/otp-request/**").permitAll()
                     
                     // 2. AUTHENTICATION & STATIC ASSETS
-                    .requestMatchers("/auth/login", "/auth/register/**","/auth/verify",  "/login").permitAll()
+                    .requestMatchers("/auth/login", "/auth/register/**", "/auth/verify", "/login").permitAll()
                     .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                     
                     // 3. COMMON AUTHENTICATED AREA
-                    .requestMatchers("/profile/view/{id}", "/resume/view/{id}").authenticated()
-                    .requestMatchers("/auth/me").authenticated()
+                    .requestMatchers("/profile/view/{id}", "/resume/view/{id}", "/auth/me").authenticated()
 
-
-                    // 4. SEEKER ONLY (Standardized on .hasAuthority to match User Entity Enum)
+                    // 4. SEEKER ONLY
                     .requestMatchers("/profile/edit/**", "/profile/save/**", "/profile/delete/**").hasAuthority("SEEKER")
                     .requestMatchers("/resume/upload/**", "/resume/builder/**").hasAuthority("SEEKER")
                     .requestMatchers("/profile/**", "/resume/**").hasAuthority("SEEKER")
                     .requestMatchers("/applications/**", "/favorites/**").hasAuthority("SEEKER")
 
-                    // 5. EMPLOYER ONLY 
+                    // 5. EMPLOYER ONLY
                     .requestMatchers("/employer/**", "/employers/profile/**").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my", "/jobs/{id}/stats", "/jobs/active").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/{id}/update", "/jobs/{id}/delete", "/jobs/{id}/close", "/jobs/{id}/reopen", "/jobs/{id}/fill").hasAuthority("EMPLOYER")
+                    .requestMatchers("/jobs/draft", "/jobs/{id}/publish", "/jobs/{id}/duplicate").hasAuthority("EMPLOYER")
                     
-                    
-                    // 6. CATCH-ALL PROTECTION
+                    // 6. CATCH-ALL
                     .anyRequest().authenticated()
             )
             .formLogin(form -> form

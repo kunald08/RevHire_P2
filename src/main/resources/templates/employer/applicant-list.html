@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/employer-layout :: employer-layout(~{::section})}">
+<head>
+    <title>Applicants</title>
+</head>
+
+<body>
+<section>
+
+    <!-- ─── Page Header ─── -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="font-size:1.4rem;">
+                <i class="bi bi-people-fill text-primary me-2"></i>
+                <span th:text="${isReviewMode} ? 'Pending Review' : 'All Applicants'">Applicants</span>
+            </h2>
+            <p class="text-muted mb-0" style="font-size:0.88rem;">
+                <span th:text="${jobTitle}">Job Title</span>
+                <span class="mx-1">·</span>
+                <span th:text="${#lists.size(applicants)} + ' applicant(s)'">0 applicant(s)</span>
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a th:if="${isReviewMode}"
+               th:href="@{/employer/jobs/{jobId}/applicants(jobId=${jobId})}"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>All Applicants
+            </a>
+            <a th:if="${!isReviewMode}"
+               th:href="@{/employer/jobs/review/{jobId}/applicants(jobId=${jobId})}"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-funnel me-1"></i>Pending Only
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── Action Bar ─── -->
+    <div class="dashboard-card-section p-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                    data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="bi bi-sliders me-1"></i>Filter
+            </button>
+            <div class="d-flex gap-2">
+                <button id="bulkReviewBtn" class="btn btn-sm btn-warning rounded-pill px-3" disabled>
+                    <i class="bi bi-hourglass-split me-1"></i>Under Review
+                </button>
+                <button id="bulkShortlistBtn" class="btn btn-sm btn-success rounded-pill px-3" disabled>
+                    <i class="bi bi-check-circle-fill me-1"></i>Shortlist Selected
+                </button>
+                <button id="bulkRejectBtn" class="btn btn-sm btn-danger rounded-pill px-3" disabled>
+                    <i class="bi bi-x-circle-fill me-1"></i>Reject Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Applicant Table ─── -->
+    <div class="dashboard-card-section p-0">
+        <div class="table-responsive">
+            <table class="table employer-table align-middle mb-0">
+                <thead>
+                <tr>
+                    <th class="ps-3" style="width:42px;">
+                        <input type="checkbox" id="selectAll" class="form-check-input">
+                    </th>
+                    <th>Applicant</th>
+                    <th>Status</th>
+                    <th>Applied</th>
+                    <th th:if="${!isReviewMode}">Comment</th>
+                    <th>Notes</th>
+                    <th class="text-end pe-3">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="app : ${applicants}">
+                        <td class="ps-3">
+                            <input type="checkbox" class="form-check-input appCheckbox" th:value="${app.applicationId}">
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="applicant-avatar-sm">
+                                    <span th:text="${#strings.substring(app.applicantName,0,1)}">A</span>
+                                </div>
+                                <span class="fw-semibold" th:text="${app.applicantName}">Name</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:switch="${app.status}">
+                                <span th:case="'APPLIED'" class="badge rounded-pill bg-info-subtle text-info border border-info-subtle">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.4rem;"></i>Applied
+                                </span>
+                                <span th:case="'SHORTLISTED'" class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.4rem;"></i>Shortlisted
+                                </span>
+                                <span th:case="'REJECTED'" class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.4rem;"></i>Rejected
+                                </span>
+                                <span th:case="'UNDER_REVIEW'" class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle">
+                                    <i class="bi bi-circle-fill me-1" style="font-size:0.4rem;"></i>Under Review
+                                </span>
+                                <span th:case="*" class="badge rounded-pill bg-secondary" th:text="${app.status}">Status</span>
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted" th:text="${#temporals.format(app.appliedDate, 'dd MMM yyyy')}"></small>
+                        </td>
+                        <td th:if="${!isReviewMode}">
+                            <small class="text-muted" th:text="${app.employerComment}" style="max-width:150px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></small>
+                        </td>
+                        <td>
+                            <small th:text="${app.reviewerNote}"
+                                   th:classappend="${app.reviewerNote == 'No notes yet'} ? 'text-muted fst-italic' : 'text-dark'"
+                                   style="max-width:140px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            </small>
+                        </td>
+                        <td class="text-end pe-3">
+                            <a th:href="@{/employer/applicants/{id}(id=${app.applicationId})}"
+                               class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(applicants)}">
+                        <td colspan="7" class="text-center py-5">
+                            <div class="mx-auto mb-3" style="width:56px;height:56px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-person-x" style="font-size:1.5rem;color:#94a3b8;"></i>
+                            </div>
+                            <p class="fw-semibold text-secondary mb-1">No applicants found</p>
+                            <small class="text-muted">Try adjusting your filters or check back later.</small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ─── Filter Modal ─── -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <div>
+                        <h5 class="modal-title fw-bold"><i class="bi bi-sliders me-2 text-primary"></i>Filter Applicants</h5>
+                        <p class="text-muted mb-0" style="font-size:0.85rem;">Narrow down candidates by criteria</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <form id="filterForm" th:action="@{/employer/jobs/{jobId}/applicants/filter(jobId=${jobId})}" method="GET">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Search by Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                    <input type="text" name="name" class="form-control" placeholder="Enter applicant name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="">All Statuses</option>
+                                    <option value="APPLIED">Applied</option>
+                                    <option value="SHORTLISTED">Shortlisted</option>
+                                    <option value="REJECTED">Rejected</option>
+                                    <option value="UNDER_REVIEW">Under Review</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Min Experience (Years)</label>
+                                <input type="number" name="experience" class="form-control" placeholder="e.g. 2" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Education</label>
+                                <input type="text" name="education" class="form-control" placeholder="e.g. Bachelor's">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Certification</label>
+                                <input type="text" name="certification" class="form-control" placeholder="e.g. AWS Certified">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Skills <small class="text-muted fw-normal">(comma separated)</small></label>
+                                <input type="text" name="skills" class="form-control" placeholder="e.g. Java, Spring Boot, SQL">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" id="resetFilterBtn">Reset</button>
+                    <button type="submit" form="filterForm" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-check2 me-1"></i>Apply Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Bulk Action Modal ─── -->
+    <div class="modal fade" id="bulkModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold" id="modalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p id="selectedCount" class="text-muted" style="font-size:0.9rem;"></p>
+                    <label class="form-label fw-semibold" style="font-size:0.85rem;">Employer Comment</label>
+                    <textarea id="bulkComment" class="form-control" rows="3" required
+                              placeholder="Add a comment for the selected applicants..."></textarea>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="confirmBulkBtn">
+                        <i class="bi bi-check2 me-1"></i>Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script th:inline="javascript">
+document.addEventListener("DOMContentLoaded", function () {
+    const jobId = /*[[${jobId}]]*/ 0;
+    const isReview = /*[[${isReviewMode}]]*/ false;
+    const checkboxes = document.querySelectorAll('.appCheckbox');
+    const selectAll = document.getElementById('selectAll');
+    const bulkShortlist = document.getElementById('bulkShortlistBtn');
+    const bulkReject = document.getElementById('bulkRejectBtn');
+    const bulkReview = document.getElementById('bulkReviewBtn');
+    const confirmBulkBtn = document.getElementById('confirmBulkBtn');
+    const modal = new bootstrap.Modal(document.getElementById('bulkModal'));
+    let selectedAction = "";
+
+    function toggleBulkButtons() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        bulkShortlist.disabled = !anyChecked;
+        bulkReject.disabled = !anyChecked;
+        bulkReview.disabled = !anyChecked;
+    }
+
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        toggleBulkButtons();
+    });
+
+    checkboxes.forEach(cb => cb.addEventListener('change', toggleBulkButtons));
+
+    bulkReview.addEventListener('click', () => { selectedAction = "under_review"; openModal("Confirm Bulk Under Review"); });
+    bulkShortlist.addEventListener('click', () => { selectedAction = "shortlist"; openModal("Confirm Bulk Shortlist"); });
+    bulkReject.addEventListener('click', () => { selectedAction = "reject"; openModal("Confirm Bulk Reject"); });
+
+    function openModal(title) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('selectedCount').innerText = "Selected: " + getSelectedIds().length + " applicant(s)";
+        modal.show();
+    }
+
+    function getSelectedIds() {
+        return Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+    }
+
+    confirmBulkBtn.addEventListener('click', function () {
+        const selectedIds = getSelectedIds();
+        const comment = document.getElementById('bulkComment').value;
+        const baseUrl = isReview ? `/employer/jobs/review/${jobId}` : `/employer/jobs/${jobId}`;
+
+        fetch(`${baseUrl}/applicants/bulk-${selectedAction}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationIds: selectedIds, comment: comment })
+        })
+        .then(res => res.text())
+        .then(data => { alert(data); location.reload(); });
+    });
+
+    document.getElementById('resetFilterBtn')?.addEventListener('click', function () {
+        document.getElementById('filterForm').reset();
+    });
+});
+</script>
+</section>
+</body>
+</html>
