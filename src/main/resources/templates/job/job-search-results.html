@@ -164,10 +164,7 @@
                                 <!-- Action Buttons - Using isSeeker from controller -->
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="action-buttons">
-                                        <!-- View Details Link -->
-                                        <a th:href="@{/jobs/{id}(id=${job.id})}" class="btn btn-outline-secondary btn-sm">
-                                            <i class="bi bi-eye"></i> Details
-                                        </a>
+                                        <!-- DETAILS BUTTON REMOVED - Only this line was removed -->
                                         
                                         <!-- For SEEKERS - Show Apply and Favorite buttons -->
                                         <th:block th:if="${isSeeker}">

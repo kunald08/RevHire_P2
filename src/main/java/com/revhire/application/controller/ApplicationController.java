@@ -6,6 +6,8 @@ import com.revhire.application.dto.WithdrawRequest;
 import com.revhire.application.service.ApplicationService;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
+import com.revhire.profile.entity.Resume;
+import com.revhire.profile.service.ResumeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -23,6 +25,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/applications")
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class ApplicationController {
 
     private final ApplicationService applicationService;
     private final UserRepository userRepository;
+    private final ResumeService resumeService;
 
     /**
      * Handle login redirects to the correct login page
@@ -62,23 +67,35 @@ public class ApplicationController {
                 return "redirect:/auth/login";
             }
             
-            // Check if already applied
-            if (applicationService.hasApplied(jobId, userId)) {
-                redirectAttributes.addFlashAttribute("infoMessage", "You have already applied for this job");
-                return "redirect:/jobs/search/results";
+            // Get user email for ResumeService
+            String userEmail = getCurrentUserEmail(currentUser);
+            if (userEmail == null) {
+                return "redirect:/auth/login";
             }
+            
+            // Check for duplicate application
+            boolean hasApplied = applicationService.hasApplied(jobId, userId);
+            if (hasApplied) {
+                log.info("User {} has already applied for job {}", userId, jobId);
+                model.addAttribute("alreadyApplied", true);
+            }
+            
+            // Get user's resumes for dropdown
+            List<Resume> resumes = resumeService.getResumesByEmail(userEmail);
+            log.info("Found {} resumes for user {}", resumes.size(), userEmail);
             
             ApplicationRequest request = new ApplicationRequest();
             request.setJobId(jobId);
             
             model.addAttribute("applicationRequest", request);
             model.addAttribute("jobId", jobId);
+            model.addAttribute("resumes", resumes);
             
             return "application/apply-job";
             
         } catch (Exception e) {
             log.error("Error showing apply form: {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", "Unable to load application form");
+            redirectAttributes.addFlashAttribute("errorMessage", "Unable to load application form: " + e.getMessage());
             return "redirect:/jobs/search/results";
         }
     }
@@ -94,8 +111,27 @@ public class ApplicationController {
             @AuthenticationPrincipal User currentUser,
             RedirectAttributes redirectAttributes) {
         
+        log.info("========== SUBMIT APPLICATION ==========");
         log.info("Submitting application for job: {}, user: {}", jobId, 
             currentUser != null ? currentUser.getId() : "anonymous");
+        
+        // Log the complete request details
+        if (request != null) {
+            log.info("Request details - jobId: {}, resumeId: {}, coverLetter length: {}", 
+                request.getJobId(),
+                request.getResumeId(),
+                request.getCoverLetter() != null ? request.getCoverLetter().length() : 0);
+            
+            // Check if new resume is present
+            if (request.getNewResume() != null && !request.getNewResume().isEmpty()) {
+                log.info("New resume file present - Name: {}, Size: {}, ContentType: {}", 
+                    request.getNewResume().getOriginalFilename(),
+                    request.getNewResume().getSize(),
+                    request.getNewResume().getContentType());
+            } else {
+                log.warn("No new resume file in request");
+            }
+        }
         
         try {
             // Get authenticated user ID
@@ -104,20 +140,42 @@ public class ApplicationController {
                 return "redirect:/auth/login";
             }
             
+            // Double-check for duplicate before submitting
+            if (applicationService.hasApplied(jobId, userId)) {
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "You have already applied for this job.");
+                return "redirect:/jobs/search/results";
+            }
+            
             if (result.hasErrors()) {
+                log.error("Form validation errors: {}", result.getAllErrors());
                 return "application/apply-job";
+            }
+            
+            // Validate that either resumeId is provided OR newResume is provided
+            if ((request.getResumeId() == null || request.getResumeId() == 0) && 
+                (request.getNewResume() == null || request.getNewResume().isEmpty())) {
+                
+                log.error("No resume selected or uploaded");
+                redirectAttributes.addFlashAttribute("errorMessage", 
+                    "Please select an existing resume or upload a new one.");
+                return "redirect:/applications/apply/" + jobId;
             }
             
             request.setJobId(jobId);
             ApplicationResponse response = applicationService.applyForJob(userId, request);
+            
+            log.info("Application submitted successfully - ID: {}, resumeId: {}, resumeFileName: {}", 
+                response.getId(), response.getResumeId(), response.getResumeFileName());
             
             redirectAttributes.addFlashAttribute("successMessage", 
                 "Application submitted successfully!");
             return "redirect:/applications";
             
         } catch (Exception e) {
-            log.error("Error submitting application: {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            log.error("Error submitting application: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("errorMessage", 
+                "Failed to submit application: " + e.getMessage());
             return "redirect:/applications/apply/" + jobId;
         }
     }
@@ -181,15 +239,23 @@ public class ApplicationController {
             }
             
             ApplicationResponse application = applicationService.getApplicationDetails(id, userId);
+            
+            log.info("Application data - ID: {}, JobID: {}, ResumeID: {}, ResumeFileName: {}", 
+                application != null ? application.getId() : null,
+                application != null ? application.getJobId() : null,
+                application != null ? application.getResumeId() : null,
+                application != null ? application.getResumeFileName() : null);
+            
             model.addAttribute("application", application);
             
-            // Check if withdrawable
-            boolean canWithdraw = application != null && 
-                application.getStatus() != null && 
-                !"WITHDRAWN".equals(application.getStatus().toString()) &&
-                !"SHORTLISTED".equals(application.getStatus().toString()) &&
-                !"REJECTED".equals(application.getStatus().toString());
+            // Explicitly add IDs to model for the template
+            if (application != null) {
+                model.addAttribute("applicationId", application.getId());
+                model.addAttribute("jobId", application.getJobId());
+            }
             
+            // Check if withdrawable
+            boolean canWithdraw = application != null && application.isWithdrawable();
             model.addAttribute("canWithdraw", canWithdraw);
             
             return "application/application-detail";
@@ -202,7 +268,7 @@ public class ApplicationController {
     }
 
     /**
-     * Withdraw an application - FIXED VERSION
+     * Withdraw an application
      */
     @PostMapping("/{id}/withdraw")
     public String withdrawApplication(
@@ -259,6 +325,23 @@ public class ApplicationController {
             if (user != null) {
                 return user.getId();
             }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Helper method to get current user email
+     */
+    private String getCurrentUserEmail(User currentUser) {
+        if (currentUser != null && currentUser.getEmail() != null) {
+            return currentUser.getEmail();
+        }
+        
+        // Try SecurityContextHolder
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            return auth.getName();
         }
         
         return null;

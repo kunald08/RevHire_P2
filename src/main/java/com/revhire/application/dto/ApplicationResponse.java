@@ -12,9 +12,10 @@ public class ApplicationResponse {
     private Long id;
     private Long jobId;
     private String jobTitle;
-    private String companyName;  // Add this field
+    private String companyName;
     private String seekerName;
     private String seekerEmail;
+    private Long resumeId;
     private String resumeFileName;
     private String coverLetter;
     private ApplicationStatus status;
@@ -23,6 +24,7 @@ public class ApplicationResponse {
     private LocalDateTime updatedAt;
     
     public String getStatusBadgeClass() {
+        if (status == null) return "badge bg-secondary";
         switch (status) {
             case APPLIED: return "badge bg-primary";
             case UNDER_REVIEW: return "badge bg-info";
@@ -34,13 +36,14 @@ public class ApplicationResponse {
     }
     
     public String getFormattedAppliedDate() {
-        if (appliedAt == null) return "";
+        if (appliedAt == null) return "N/A";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         return appliedAt.format(formatter);
     }
     
     public boolean isWithdrawable() {
-        return status != ApplicationStatus.WITHDRAWN && 
+        return status != null && 
+               status != ApplicationStatus.WITHDRAWN && 
                status != ApplicationStatus.SHORTLISTED && 
                status != ApplicationStatus.REJECTED;
     }
