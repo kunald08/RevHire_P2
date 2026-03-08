@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <!-- ─── Brand ─── -->
+        <a class="navbar-brand fw-bold" th:href="@{/}">
+            <i class="bi bi-briefcase-fill me-2"></i>RevHire
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarMain">
+
+            <!-- ─── LEFT ─── -->
+            <ul class="navbar-nav me-auto">
+                <!-- Seekers & guests: Find Jobs -->
+                <li class="nav-item" sec:authorize="!hasAuthority('EMPLOYER')">
+                    <a class="nav-link" th:href="@{/jobs/search}">
+                        <i class="bi bi-search me-1"></i>Find Jobs
+                    </a>
+                </li>
+
+                <!-- Seeker links (left side for balance) -->
+                <li class="nav-item" sec:authorize="hasAuthority('SEEKER')">
+                    <a class="nav-link" th:href="@{/applications}">
+                        <i class="bi bi-file-earmark-text me-1"></i>My Applications
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAuthority('SEEKER')">
+                    <a class="nav-link" th:href="@{/favorites}">
+                        <i class="bi bi-heart me-1"></i>Saved Jobs
+                    </a>
+                </li>
+            </ul>
+
+            <!-- ─── RIGHT ─── -->
+            <ul class="navbar-nav ms-auto align-items-center">
+
+                <!-- Guest -->
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link" th:href="@{/auth/login}">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link" th:href="@{/auth/register}">
+                        <i class="bi bi-person-plus me-1"></i>Register
+                    </a>
+                </li>
+
+                <!-- Employer: Post Job CTA -->
+                <li class="nav-item me-2" sec:authorize="hasAuthority('EMPLOYER')">
+                    <a th:href="@{/jobs/create}" class="btn btn-sm btn-primary fw-semibold" style="border-radius:8px;">
+                        <i class="bi bi-plus-lg me-1"></i>Post Job
+                    </a>
+                </li>
+
+                <!-- Notifications Dropdown -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link position-relative" href="#" role="button"
+                       id="notifDropdownToggle" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                       aria-expanded="false" onclick="loadNotifDropdown()">
+                        <i class="bi bi-bell" style="font-size:1.1rem;"></i>
+                        <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle"
+                              id="notif-count" style="display:none;font-size:0.6rem;"></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 notif-dropdown"
+                         style="width:380px;max-height:480px;border-radius:12px;overflow:hidden;">
+                        <!-- Dropdown Header -->
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom"
+                             style="background:#f8f9fb;">
+                            <span class="fw-bold" style="font-size:0.95rem;">
+                                <i class="bi bi-bell-fill text-primary me-1"></i>Notifications
+                            </span>
+                            <button class="btn btn-sm btn-link text-primary text-decoration-none p-0"
+                                    id="markAllReadDropdown" onclick="markAllReadFromDropdown(event)"
+                                    style="font-size:0.82rem;">
+                                Mark all read
+                            </button>
+                        </div>
+                        <!-- Dropdown Body (loaded via AJAX) -->
+                        <div id="notif-dropdown-body" style="max-height:360px;overflow-y:auto;">
+                            <div class="text-center py-4 text-muted" style="font-size:0.88rem;">
+                                <div class="spinner-border spinner-border-sm text-primary me-1"></div>
+                                Loading...
+                            </div>
+                        </div>
+                        <!-- Dropdown Footer -->
+                        <div class="border-top text-center py-2" style="background:#f8f9fb;">
+                            <a th:href="@{/notifications}" class="text-primary text-decoration-none fw-semibold"
+                               style="font-size:0.85rem;">
+                                See all notifications <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Account dropdown -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle" style="font-size:1.1rem;"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                        <li sec:authorize="hasAuthority('SEEKER')">
+                            <a class="dropdown-item" th:href="@{/profile}">
+                                <i class="bi bi-person me-2"></i>My Profile
+                            </a>
+                        </li>
+                        <li sec:authorize="hasAuthority('EMPLOYER')">
+                            <a class="dropdown-item" th:href="@{/employer/dashboard}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/auth/me}">
+                                <i class="bi bi-gear me-2"></i>Account Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/auth/logout}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

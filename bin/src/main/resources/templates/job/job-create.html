@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>RevHire — Post a New Job</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        /* ── Cover ── */
+        .form-cover {
+            height: 150px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+            border-radius: 0 0 28px 28px;
+            position: relative;
+        }
+        .form-cover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px;
+        }
+
+        /* ── Form Card ── */
+        .form-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+            background: #fff;
+            margin-top: -55px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-title-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        /* ── Inputs ── */
+        .fg label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .fg label i {
+            margin-right: 0.35rem;
+            color: #10b981;
+        }
+        .fc, .fs {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 0.7rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+        .fc:focus, .fs:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+            background: #fff;
+        }
+        .fc.is-invalid, .fs.is-invalid {
+            border-color: #ef4444;
+        }
+        .invalid-feedback { font-size: 0.8rem; }
+
+        /* ── Section Divider ── */
+        .form-section { margin-bottom: 2rem; }
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #9ca3af;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        /* ── Step Indicator ── */
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
+            margin-right: 0.5rem;
+        }
+        .step-badge.s1 { background: #4f46e5; }
+        .step-badge.s2 { background: #f59e0b; }
+        .step-badge.s3 { background: #10b981; }
+        .step-badge.s4 { background: #ef4444; }
+
+        /* ── Buttons ── */
+        .btn-submit {
+            border-radius: 12px;
+            padding: 0.75rem 2.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #fff;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16,185,129,0.35);
+            color: #fff;
+        }
+        .btn-cancel {
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel:hover {
+            border-color: #d1d5db;
+            background: #f9fafb;
+            color: #374151;
+        }
+
+        /* ── Salary / Experience hint ── */
+        .range-hint {
+            font-size: 0.78rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+        .salary-separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #9ca3af;
+            padding-top: 1.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Cover -->
+    <div class="form-cover"></div>
+
+    <div class="container" style="max-width: 860px;">
+
+        <!-- Global error -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3"
+             style="border-radius:12px;border:none;" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="form-card p-4 p-md-5">
+
+            <!-- Title -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="form-title-icon"><i class="bi bi-plus-circle"></i></div>
+                <div>
+                    <h4 class="fw-bold mb-0">Post a New Job</h4>
+                    <p class="text-muted mb-0" style="font-size:0.9rem;">Fill in the details to publish a new job listing</p>
+                </div>
+            </div>
+
+            <form th:action="@{/jobs}" th:object="${jobRequest}" method="post" novalidate>
+
+                <!-- ── Step 1: Basic Info ── -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="step-badge s1">1</span> Basic Information
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 fg">
+                            <label for="title"><i class="bi bi-tag"></i> Job Title <span class="text-danger">*</span></label>
+                            <input type="text" id="title" th:field="*{title}"
+                                   th:classappend="${#fields.hasErrors('title') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. Senior Software Engineer" maxlength="200">
+                            <div th:if="${#fields.hasErrors('title')}" class="invalid-feedback" th:errors="*{title}">Error</div>
+                        </div>
+
+                        <div class="col-md-6 fg">
+                            <label for="jobType"><i class="bi bi-diagram-3"></i> Job Type <span class="text-danger">*</span></label>
+                            <select id="jobType" th:field="*{jobType}"
+                                    th:classappend="${#fields.hasErrors('jobType') ? 'is-invalid' : ''}"
+                                    class="form-select fs">
+                                <option value="">Select job type</option>
+                                <option th:each="jt : ${T(com.revhire.common.enums.JobType).values()}"
+                                        th:value="${jt}" th:text="${jt.name().replace('_', ' ')}">TYPE</option>
+                            </select>
+                            <div th:if="${#fields.hasErrors('jobType')}" class="invalid-feedback" th:errors="*{jobType}">Error</div>
+                        </div>
+
+                        <div class="col-md-6 fg">
+                            <label for="location"><i class="bi bi-geo-alt"></i> Location <span class="text-danger">*</span></label>
+                            <input type="text" id="location" th:field="*{location}"
+                                   th:classappend="${#fields.hasErrors('location') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. Bangalore, India">
+                            <div th:if="${#fields.hasErrors('location')}" class="invalid-feedback" th:errors="*{location}">Error</div>
+                        </div>
+
+                        <div class="col-md-4 fg">
+                            <label for="numOpenings"><i class="bi bi-person-plus"></i> No. of Openings <span class="text-danger">*</span></label>
+                            <input type="number" id="numOpenings" th:field="*{numOpenings}" min="1"
+                                   th:classappend="${#fields.hasErrors('numOpenings') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. 5">
+                            <div th:if="${#fields.hasErrors('numOpenings')}" class="invalid-feedback" th:errors="*{numOpenings}">Error</div>
+                        </div>
+
+                        <div class="col-md-4 fg">
+                            <label for="deadline"><i class="bi bi-calendar-event"></i> Application Deadline <span class="text-danger">*</span></label>
+                            <input type="date" id="deadline" th:field="*{deadline}"
+                                   th:classappend="${#fields.hasErrors('deadline') ? 'is-invalid' : ''}"
+                                   class="form-control fc">
+                            <div th:if="${#fields.hasErrors('deadline')}" class="invalid-feedback" th:errors="*{deadline}">Error</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Step 2: Compensation ── -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="step-badge s2">2</span> Compensation &amp; Experience
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-5 fg">
+                            <label for="salaryMin"><i class="bi bi-currency-rupee"></i> Min Salary (&#8377;) <span class="text-danger">*</span></label>
+                            <input type="number" id="salaryMin" th:field="*{salaryMin}" step="1000" min="0"
+                                   th:classappend="${#fields.hasErrors('salaryMin') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. 500000">
+                            <div th:if="${#fields.hasErrors('salaryMin')}" class="invalid-feedback" th:errors="*{salaryMin}">Error</div>
+                            <div class="range-hint">Per annum</div>
+                        </div>
+                        <div class="col-2 salary-separator">to</div>
+                        <div class="col-5 fg">
+                            <label for="salaryMax"><i class="bi bi-currency-rupee"></i> Max Salary (&#8377;) <span class="text-danger">*</span></label>
+                            <input type="number" id="salaryMax" th:field="*{salaryMax}" step="1000" min="0"
+                                   th:classappend="${#fields.hasErrors('salaryMax') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. 1200000">
+                            <div th:if="${#fields.hasErrors('salaryMax')}" class="invalid-feedback" th:errors="*{salaryMax}">Error</div>
+                            <div class="range-hint">Per annum</div>
+                        </div>
+
+                        <!-- Cross-field salary error -->
+                        <div class="col-12" th:if="${#fields.hasGlobalErrors()}">
+                            <div th:each="err : ${#fields.globalErrors()}" class="text-danger" style="font-size:0.85rem;">
+                                <i class="bi bi-exclamation-circle me-1"></i> <span th:text="${err}"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-5 fg">
+                            <label for="experienceMin"><i class="bi bi-clock-history"></i> Min Experience (yrs) <span class="text-danger">*</span></label>
+                            <input type="number" id="experienceMin" th:field="*{experienceMin}" min="0"
+                                   th:classappend="${#fields.hasErrors('experienceMin') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. 2">
+                            <div th:if="${#fields.hasErrors('experienceMin')}" class="invalid-feedback" th:errors="*{experienceMin}">Error</div>
+                        </div>
+                        <div class="col-md-2 salary-separator">to</div>
+                        <div class="col-md-5 fg">
+                            <label for="experienceMax"><i class="bi bi-clock-history"></i> Max Experience (yrs) <span class="text-danger">*</span></label>
+                            <input type="number" id="experienceMax" th:field="*{experienceMax}" min="0"
+                                   th:classappend="${#fields.hasErrors('experienceMax') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. 8">
+                            <div th:if="${#fields.hasErrors('experienceMax')}" class="invalid-feedback" th:errors="*{experienceMax}">Error</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Step 3: Requirements ── -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="step-badge s3">3</span> Requirements
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 fg">
+                            <label for="requiredSkills"><i class="bi bi-tools"></i> Required Skills <span class="text-danger">*</span></label>
+                            <input type="text" id="requiredSkills" th:field="*{requiredSkills}"
+                                   th:classappend="${#fields.hasErrors('requiredSkills') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. Java, Spring Boot, React, SQL">
+                            <div th:if="${#fields.hasErrors('requiredSkills')}" class="invalid-feedback" th:errors="*{requiredSkills}">Error</div>
+                            <div class="range-hint">Separate skills with commas</div>
+                        </div>
+
+                        <div class="col-12 fg">
+                            <label for="educationReq"><i class="bi bi-mortarboard"></i> Education Requirement <span class="text-danger">*</span></label>
+                            <input type="text" id="educationReq" th:field="*{educationReq}"
+                                   th:classappend="${#fields.hasErrors('educationReq') ? 'is-invalid' : ''}"
+                                   class="form-control fc" placeholder="e.g. B.Tech / B.E. in Computer Science or equivalent">
+                            <div th:if="${#fields.hasErrors('educationReq')}" class="invalid-feedback" th:errors="*{educationReq}">Error</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Step 4: Description ── -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span class="step-badge s4">4</span> Job Description
+                    </div>
+
+                    <div class="fg">
+                        <label for="description"><i class="bi bi-file-earmark-text"></i> Description <span class="text-danger">*</span></label>
+                        <textarea id="description" th:field="*{description}" rows="8"
+                                  th:classappend="${#fields.hasErrors('description') ? 'is-invalid' : ''}"
+                                  class="form-control fc"
+                                  placeholder="Describe the role, responsibilities, perks, and what a typical day looks like..."></textarea>
+                        <div th:if="${#fields.hasErrors('description')}" class="invalid-feedback" th:errors="*{description}">Error</div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex flex-wrap gap-3 pt-2">
+                    <button type="submit" class="btn btn-submit">
+                        <i class="bi bi-rocket-takeoff me-1"></i> Post Job
+                    </button>
+                    <button type="submit" formaction="/jobs/draft" formnovalidate class="btn btn-cancel" style="border-color:#6b7280;color:#374151;">
+                        <i class="bi bi-file-earmark me-1"></i> Save as Draft
+                    </button>
+                    <a th:href="@{/jobs/my}" class="btn btn-cancel">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div style="height:3rem;"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

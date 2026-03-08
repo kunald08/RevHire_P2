@@ -7,10 +7,11 @@ import com.revhire.application.service.ApplicationService;
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.ApplicationStatus;
+import com.revhire.common.enums.NotificationType;
+import com.revhire.employer.service.EmployerService;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
 import com.revhire.notification.service.NotificationService;
-import com.revhire.common.enums.NotificationType;
 import com.revhire.profile.entity.JobSeekerProfile;
 import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ProfileRepository;
@@ -48,19 +49,13 @@ public class ApplicationController {
     private final ResumeRepository resumeRepository;
     private final JobRepository jobRepository;
     private final NotificationService notificationService;
+    private final EmployerService employerService;
 
-    /**
-     * Handle login redirects to the correct login page
-     */
     @GetMapping("/login")
     public String redirectToAuthLogin() {
-        log.info("Redirecting to auth login page");
         return "redirect:/auth/login";
     }
 
-    /**
-     * Show apply form for a specific job
-     */
     @GetMapping("/apply/{jobId}")
     public String showApplyForm(
             @PathVariable Long jobId,
@@ -68,22 +63,17 @@ public class ApplicationController {
             Model model,
             RedirectAttributes redirectAttributes) {
         
-        log.info("Showing apply form for job: {}, user: {}", jobId, 
-            currentUser != null ? currentUser.getId() : "anonymous");
-        
         try {
             Long userId = getCurrentUserId(currentUser);
             if (userId == null) {
                 return "redirect:/auth/login";
             }
             
-            // Check if already applied
             if (applicationService.hasApplied(jobId, userId)) {
                 redirectAttributes.addFlashAttribute("infoMessage", "You have already applied for this job");
                 return "redirect:/jobs/search/results";
             }
             
-            // Load job details
             Job job = jobRepository.findById(jobId).orElse(null);
             if (job == null) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Job not found");
@@ -91,7 +81,6 @@ public class ApplicationController {
             }
             model.addAttribute("job", job);
             
-            // Load user's resumes from profile
             List<Resume> resumes = List.of();
             Optional<JobSeekerProfile> profileOpt = profileRepository.findByUserId(userId);
             if (profileOpt.isPresent()) {
@@ -114,9 +103,6 @@ public class ApplicationController {
         }
     }
 
-    /**
-     * Submit a new application
-     */
     @PostMapping("/apply/{jobId}")
     public String submitApplication(
             @PathVariable Long jobId,
@@ -126,9 +112,6 @@ public class ApplicationController {
             Model model,
             RedirectAttributes redirectAttributes) {
         
-        log.info("Submitting application for job: {}, user: {}", jobId, 
-            currentUser != null ? currentUser.getId() : "anonymous");
-        
         try {
             Long userId = getCurrentUserId(currentUser);
             if (userId == null) {
@@ -136,7 +119,6 @@ public class ApplicationController {
             }
             
             if (result.hasErrors()) {
-                // Reload form data
                 Job job = jobRepository.findById(jobId).orElse(null);
                 model.addAttribute("job", job);
                 List<Resume> resumes = List.of();
@@ -156,21 +138,22 @@ public class ApplicationController {
             try {
                 Job job = jobRepository.findById(jobId).orElse(null);
                 if (job != null && job.getEmployer() != null && job.getEmployer().getUser() != null) {
+                    User employerUser = job.getEmployer().getUser();
                     User applicant = userRepository.findById(userId).orElse(null);
                     String applicantName = applicant != null ? applicant.getName() : "A candidate";
+                    
                     notificationService.createNotification(
-                        job.getEmployer().getUser(),
+                        employerUser,
                         applicantName + " applied for \"" + job.getTitle() + "\"",
                         NotificationType.APPLICATION_RECEIVED,
                         "/employer/applicants/" + response.getId()
                     );
                 }
             } catch (Exception e) {
-                log.warn("Failed to send application notification: {}", e.getMessage());
+                log.error("Failed to send application notification: {}", e.getMessage());
             }
             
-            redirectAttributes.addFlashAttribute("successMessage", 
-                "Application submitted successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Application submitted successfully!");
             return "redirect:/applications";
             
         } catch (Exception e) {
@@ -180,9 +163,6 @@ public class ApplicationController {
         }
     }
 
-    /**
-     * View all applications for the current user with status filtering
-     */
     @GetMapping
     public String myApplications(
             @RequestParam(defaultValue = "0") int page,
@@ -192,9 +172,6 @@ public class ApplicationController {
             Model model,
             RedirectAttributes redirectAttributes) {
         
-        log.info("Fetching applications for user: {}, status filter: {}", 
-            currentUser != null ? currentUser.getId() : "anonymous", status);
-        
         try {
             Long userId = getCurrentUserId(currentUser);
             if (userId == null) {
@@ -203,7 +180,6 @@ public class ApplicationController {
             
             Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());
             
-            // Parse status filter
             ApplicationStatus statusFilter = null;
             if (status != null && !status.isEmpty()) {
                 try {
@@ -220,7 +196,6 @@ public class ApplicationController {
                 applications = applicationService.getMyApplications(userId, pageable);
             }
             
-            // Stat counts for dashboard cards
             long totalCount = applicationService.countByStatus(userId, null);
             long appliedCount = applicationService.countByStatus(userId, ApplicationStatus.APPLIED);
             long underReviewCount = applicationService.countByStatus(userId, ApplicationStatus.UNDER_REVIEW);
@@ -233,8 +208,6 @@ public class ApplicationController {
             model.addAttribute("totalPages", applications.getTotalPages());
             model.addAttribute("totalItems", applications.getTotalElements());
             model.addAttribute("activeStatus", status != null ? status : "ALL");
-            
-            // Stat counts
             model.addAttribute("totalCount", totalCount);
             model.addAttribute("appliedCount", appliedCount);
             model.addAttribute("underReviewCount", underReviewCount);
@@ -251,9 +224,6 @@ public class ApplicationController {
         }
     }
 
-    /**
-     * View details of a specific application
-     */
     @GetMapping("/{id}")
     public String viewApplication(
             @PathVariable Long id,
@@ -261,11 +231,7 @@ public class ApplicationController {
             Model model,
             RedirectAttributes redirectAttributes) {
         
-        log.info("Viewing application: {} for user: {}", id, 
-            currentUser != null ? currentUser.getId() : "anonymous");
-        
         try {
-            // Get authenticated user ID
             Long userId = getCurrentUserId(currentUser);
             if (userId == null) {
                 return "redirect:/auth/login";
@@ -273,15 +239,8 @@ public class ApplicationController {
             
             ApplicationResponse application = applicationService.getApplicationDetails(id, userId);
             
-            log.info("CONTROLLER DEBUG for app {}: jobTitle={}, status={}, coverLetter={}, appliedAt={}, jobId={}, jobDesc={}, resumeFile={}",
-                application.getId(), application.getJobTitle(), application.getStatus(),
-                application.getCoverLetter(), application.getAppliedAt(), application.getJobId(),
-                application.getJobDescription() != null ? application.getJobDescription().substring(0, Math.min(30, application.getJobDescription().length())) : "null",
-                application.getResumeFileName());
-            
             model.addAttribute("appDetail", application);
             
-            // Check if withdrawable
             boolean canWithdraw = application != null && 
                 application.getStatus() != null && 
                 !"WITHDRAWN".equals(application.getStatus().toString()) &&
@@ -299,9 +258,6 @@ public class ApplicationController {
         }
     }
 
-    /**
-     * Withdraw an application - FIXED VERSION
-     */
     @PostMapping("/{id}/withdraw")
     public String withdrawApplication(
             @PathVariable Long id,
@@ -309,67 +265,54 @@ public class ApplicationController {
             @AuthenticationPrincipal User currentUser,
             RedirectAttributes redirectAttributes) {
         
-        log.info("Withdrawing application: {} for user: {}", id, 
-            currentUser != null ? currentUser.getId() : "anonymous");
-        
         try {
-            // Get authenticated user ID
             Long userId = getCurrentUserId(currentUser);
             if (userId == null) {
                 return "redirect:/auth/login";
             }
             
-            // Create withdraw request
             WithdrawRequest request = new WithdrawRequest();
-            if (reason != null && !reason.isEmpty()) {
-                request.setReason(reason);
-            } else {
-                request.setReason("Withdrawn by user");
-            }
+            request.setReason(reason != null ? reason : "Withdrawn by user");
             
-            // Call service to withdraw
             applicationService.withdrawApplication(id, userId, request);
             
-            // Send notification to employer about withdrawal
+            // Send withdrawal notification to employer
             try {
                 ApplicationResponse app = applicationService.getApplicationDetails(id, userId);
                 if (app != null && app.getJobId() != null) {
                     Job job = jobRepository.findById(app.getJobId()).orElse(null);
                     if (job != null && job.getEmployer() != null && job.getEmployer().getUser() != null) {
+                        User employerUser = job.getEmployer().getUser();
                         User applicant = userRepository.findById(userId).orElse(null);
                         String applicantName = applicant != null ? applicant.getName() : "A candidate";
+                        
                         notificationService.createNotification(
-                            job.getEmployer().getUser(),
+                            employerUser,
                             applicantName + " withdrew their application for \"" + job.getTitle() + "\"",
                             NotificationType.APPLICATION_WITHDRAWN,
                             "/employer/jobs"
                         );
                     }
                 }
-            } catch (Exception ne) {
-                log.warn("Failed to send withdraw notification: {}", ne.getMessage());
+            } catch (Exception e) {
+                log.error("Failed to send withdrawal notification: {}", e.getMessage());
             }
             
             redirectAttributes.addFlashAttribute("successMessage", "Application withdrawn successfully");
-            log.info("Application {} withdrawn successfully by user {}", id, userId);
             
         } catch (Exception e) {
             log.error("Error withdrawing application: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to withdraw application: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         
         return "redirect:/applications";
     }
 
-    /**
-     * Helper method to get current user ID from either AuthenticationPrincipal or SecurityContext
-     */
     private Long getCurrentUserId(User currentUser) {
         if (currentUser != null) {
             return currentUser.getId();
         }
         
-        // Try SecurityContextHolder
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             String email = auth.getName();
@@ -382,9 +325,6 @@ public class ApplicationController {
         return null;
     }
 
-    /**
-     * Handle exceptions for this controller
-     */
     @ExceptionHandler(Exception.class)
     public String handleError(Exception ex, RedirectAttributes redirectAttributes) {
         log.error("Controller error: {}", ex.getMessage(), ex);

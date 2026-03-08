@@ -30,23 +30,24 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void createNotification(User user, String message, NotificationType type, String link) {
-        logger.info("Creating notification for user {}: {}", user.getId(), message);
-        Notification notification = Notification.builder()
-                .user(user)
-                .message(message)
-                .type(type)
-                .link(link)
-                .isRead(false)
-                .build();
-        notificationRepository.save(notification);
-        logger.info("Notification created successfully with ID: {}", notification.getId());
+        try {
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .message(message)
+                    .type(type)
+                    .link(link)
+                    .isRead(false)
+                    .build();
+            
+            notificationRepository.save(notification);
+        } catch (Exception e) {
+            logger.error("Failed to create notification: {}", e.getMessage());
+        }
     }
 
     @Override
     public List<NotificationResponse> getAllNotifications(Long userId) {
-        logger.info("Fetching all notifications for user {}", userId);
         List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        logger.info("Found {} notifications for user {}", notifications.size(), userId);
         return notifications.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -54,7 +55,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public List<NotificationResponse> getUnreadNotifications(Long userId) {
-        logger.info("Fetching unread notifications for user {}", userId);
         List<Notification> notifications = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
         return notifications.stream()
                 .map(this::toResponse)
@@ -63,40 +63,33 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public long getUnreadCount(Long userId) {
-        logger.debug("Getting unread count for user {}", userId);
         return notificationRepository.countByUserIdAndIsReadFalse(userId);
     }
 
     @Override
     @Transactional
     public void markAsRead(Long notificationId) {
-        logger.info("Marking notification {} as read", notificationId);
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", "id", notificationId));
         notification.setIsRead(true);
         notificationRepository.save(notification);
-        logger.info("Notification {} marked as read", notificationId);
     }
 
     @Override
     @Transactional
     public void markAllAsRead(Long userId) {
-        logger.info("Marking all notifications as read for user {}", userId);
         List<Notification> unread = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
         unread.forEach(n -> n.setIsRead(true));
         notificationRepository.saveAll(unread);
-        logger.info("Marked {} notifications as read for user {}", unread.size(), userId);
     }
 
     @Override
     @Transactional
     public void deleteNotification(Long notificationId) {
-        logger.info("Deleting notification {}", notificationId);
         if (!notificationRepository.existsById(notificationId)) {
             throw new ResourceNotFoundException("Notification", "id", notificationId);
         }
         notificationRepository.deleteById(notificationId);
-        logger.info("Notification {} deleted successfully", notificationId);
     }
 
     private NotificationResponse toResponse(Notification notification) {
