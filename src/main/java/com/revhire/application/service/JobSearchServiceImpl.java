@@ -1,196 +1,130 @@
 package com.revhire.application.service;
 
-import com.revhire.job.dto.JobSearchFilter;
+import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.exception.ResourceNotFoundException;
 import com.revhire.job.dto.JobResponse;
+import com.revhire.job.dto.JobSearchFilter;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
+import com.revhire.job.specification.JobSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * Job search service using Spring Data JPA Specifications for efficient
+ * database-level filtering instead of in-memory filtering.
+ */
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class JobSearchServiceImpl implements JobSearchService {
-    
+
     private final JobRepository jobRepository;
-    
+    private final ApplicationRepository applicationRepository;
+
     @Override
     public Page<JobResponse> searchJobs(JobSearchFilter filter, Pageable pageable) {
         log.info("Starting job search with filter: {}", filter);
-        
+
         try {
-            List<Job> allJobs = jobRepository.findAll();
-            log.info("Total jobs in database: {}", allJobs.size());
-            
-            if (allJobs.isEmpty()) {
-                return new PageImpl<>(new ArrayList<>(), pageable, 0);
+            // Build specification from filter criteria
+            Specification<Job> spec = Specification.where(JobSpecification.isActive());
+
+            if (filter != null) {
+                if (filter.hasKeyword()) {
+                    spec = spec.and(JobSpecification.keywordSearch(filter.getKeyword()));
+                }
+                if (filter.hasLocation()) {
+                    spec = spec.and(JobSpecification.locationContains(filter.getLocation()));
+                }
+                if (filter.hasCompany()) {
+                    spec = spec.and(JobSpecification.companyName(filter.getCompany()));
+                }
+                if (filter.getMinExperience() != null) {
+                    spec = spec.and(JobSpecification.minExperience(filter.getMinExperience()));
+                }
+                if (filter.getMaxExperience() != null) {
+                    spec = spec.and(JobSpecification.maxExperience(filter.getMaxExperience()));
+                }
+                if (filter.getMinSalary() != null && filter.getMinSalary() > 0) {
+                    spec = spec.and(JobSpecification.minSalary(BigDecimal.valueOf(filter.getMinSalary())));
+                }
+                if (filter.getMaxSalary() != null && filter.getMaxSalary() > 0) {
+                    spec = spec.and(JobSpecification.maxSalary(BigDecimal.valueOf(filter.getMaxSalary())));
+                }
+                if (filter.getJobType() != null) {
+                    spec = spec.and(JobSpecification.jobType(filter.getJobType()));
+                }
+                if (filter.getDatePostedAfter() != null) {
+                    spec = spec.and(JobSpecification.postedAfter(filter.getDatePostedAfter()));
+                }
             }
-            
-            List<Job> filteredJobs = allJobs.stream()
-                .filter(job -> job != null)
-                .filter(job -> applyFilters(job, filter))
-                .collect(Collectors.toList());
-            
-            log.info("Jobs after filtering: {}", filteredJobs.size());
-            
-            int start = (int) pageable.getOffset();
-            int end = Math.min((start + pageable.getPageSize()), filteredJobs.size());
-            List<Job> pageContent = start < filteredJobs.size() ? 
-                filteredJobs.subList(start, end) : new ArrayList<>();
-            
-            List<JobResponse> responses = pageContent.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
-            
-            return new PageImpl<>(responses, pageable, filteredJobs.size());
-            
+
+            Page<Job> jobs = jobRepository.findAll(spec, pageable);
+            log.info("Jobs found: {}", jobs.getTotalElements());
+
+            return jobs.map(this::convertToResponse);
+
         } catch (Exception e) {
             log.error("Error in job search: {}", e.getMessage(), e);
-            return new PageImpl<>(new ArrayList<>(), pageable, 0);
+            return Page.empty(pageable);
         }
     }
-    
+
     @Override
     public JobResponse getJobDetails(Long jobId) {
         log.info("Fetching job details for ID: {}", jobId);
-        
-        try {
-            Job job = jobRepository.findById(jobId)
+
+        Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
-            
-            return convertToResponse(job);
-            
-        } catch (ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error fetching job details: {}", e.getMessage());
-            throw new RuntimeException("Failed to fetch job details", e);
-        }
+
+        return convertToResponse(job);
     }
-    
-    private boolean applyFilters(Job job, JobSearchFilter filter) {
-        if (filter == null) return true;
-        
-        try {
-            if (!isJobActive(job)) {
-                return false;
-            }
-            
-            if (filter.getKeyword() != null && !filter.getKeyword().isEmpty()) {
-                String keyword = filter.getKeyword().toLowerCase();
-                boolean keywordMatch = false;
-                
-                if (job.getTitle() != null && job.getTitle().toLowerCase().contains(keyword)) keywordMatch = true;
-                if (!keywordMatch && job.getDescription() != null && job.getDescription().toLowerCase().contains(keyword)) keywordMatch = true;
-                if (!keywordMatch && job.getRequiredSkills() != null && job.getRequiredSkills().toLowerCase().contains(keyword)) keywordMatch = true;
-                
-                if (!keywordMatch) return false;
-            }
-            
-            if (filter.getLocation() != null && !filter.getLocation().isEmpty()) {
-                String location = filter.getLocation().toLowerCase();
-                if (job.getLocation() == null || !job.getLocation().toLowerCase().contains(location)) return false;
-            }
-            
-            if (filter.getMinSalary() != null && filter.getMinSalary() > 0) {
-                BigDecimal minSalary = BigDecimal.valueOf(filter.getMinSalary());
-                if (job.getSalaryMax() == null || job.getSalaryMax().compareTo(minSalary) < 0) return false;
-            }
-            
-            if (filter.getMaxSalary() != null && filter.getMaxSalary() > 0) {
-                BigDecimal maxSalary = BigDecimal.valueOf(filter.getMaxSalary());
-                if (job.getSalaryMin() == null || job.getSalaryMin().compareTo(maxSalary) > 0) return false;
-            }
-            
-            if (filter.getJobType() != null) {
-                if (job.getJobType() == null || !job.getJobType().toString().equals(filter.getJobType().toString())) return false;
-            }
-            
-            if (filter.getCompany() != null && !filter.getCompany().isEmpty()) {
-                String company = filter.getCompany().toLowerCase();
-                boolean companyMatch = false;
-                
-                if (job.getEmployer() != null) {
-                    try {
-                        java.lang.reflect.Method method = job.getEmployer().getClass().getMethod("getCompanyName");
-                        String companyName = (String) method.invoke(job.getEmployer());
-                        if (companyName != null && companyName.toLowerCase().contains(company)) companyMatch = true;
-                    } catch (Exception e) {
-                        log.debug("Could not get company name for job {}", job.getId());
-                    }
-                }
-                
-                if (!companyMatch) return false;
-            }
-            
-            if (filter.getMinExperience() != null) {
-                if (job.getExperienceMin() == null || job.getExperienceMin() > filter.getMinExperience()) return false;
-            }
-            
-            if (filter.getMaxExperience() != null) {
-                if (job.getExperienceMax() == null || job.getExperienceMax() < filter.getMaxExperience()) return false;
-            }
-            
-            if (filter.getDatePostedAfter() != null) {
-                if (job.getCreatedAt() == null || job.getCreatedAt().toLocalDate().isBefore(filter.getDatePostedAfter())) return false;
-            }
-            
-            return true;
-            
-        } catch (Exception e) {
-            log.error("Error filtering job {}: {}", job.getId(), e.getMessage());
-            return false;
-        }
-    }
-    
-    private boolean isJobActive(Job job) {
-        try {
-            Object status = job.getStatus();
-            return status != null && "ACTIVE".equals(status.toString());
-        } catch (Exception e) {
-            return false;
-        }
-    }
-    
+
+    /**
+     * Convert Job entity to JobResponse DTO including employer/company info.
+     */
     private JobResponse convertToResponse(Job job) {
         if (job == null) return null;
-        
+
         try {
-            String companyName = null;
+            long appCount = applicationRepository.countByJobId(job.getId());
+
+            JobResponse.JobResponseBuilder builder = JobResponse.builder()
+                    .id(job.getId())
+                    .title(job.getTitle() != null ? job.getTitle() : "Untitled")
+                    .description(job.getDescription())
+                    .location(job.getLocation())
+                    .salaryMin(job.getSalaryMin())
+                    .salaryMax(job.getSalaryMax())
+                    .experienceMin(job.getExperienceMin())
+                    .experienceMax(job.getExperienceMax())
+                    .requiredSkills(job.getRequiredSkills())
+                    .educationReq(job.getEducationReq())
+                    .numOpenings(job.getNumOpenings())
+                    .jobType(job.getJobType())
+                    .status(job.getStatus())
+                    .deadline(job.getDeadline())
+                    .viewCount(job.getViewCount())
+                    .createdAt(job.getCreatedAt())
+                    .applicationCount(appCount);
+
+            // Include employer/company info
             if (job.getEmployer() != null) {
-                companyName = job.getEmployer().getCompanyName();
+                builder.employerId(job.getEmployer().getId())
+                        .companyName(job.getEmployer().getCompanyName())
+                        .companyLocation(job.getEmployer().getLocation())
+                        .industry(job.getEmployer().getIndustry());
             }
-            
-            return JobResponse.builder()
-                .id(job.getId())
-                .title(job.getTitle() != null ? job.getTitle() : "Untitled")
-                .description(job.getDescription())
-                .location(job.getLocation())
-                .salaryMin(job.getSalaryMin())
-                .salaryMax(job.getSalaryMax())
-                .experienceMin(job.getExperienceMin())
-                .experienceMax(job.getExperienceMax())
-                .requiredSkills(job.getRequiredSkills())
-                .educationReq(job.getEducationReq())
-                .numOpenings(job.getNumOpenings())
-                .jobType(job.getJobType())
-                .status(job.getStatus())
-                .deadline(job.getDeadline())
-                .viewCount(job.getViewCount())
-                .companyName(companyName)
-                .build();
-            
+
+            return builder.build();
+
         } catch (Exception e) {
             log.error("Error converting job {}: {}", job.getId(), e.getMessage());
             return null;

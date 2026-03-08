@@ -3,6 +3,7 @@ package com.revhire.profile;
 import com.revhire.exception.BadRequestException;
 import com.revhire.exception.FileStorageException;
 import com.revhire.exception.ResourceNotFoundException;
+import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.profile.entity.JobSeekerProfile;
 import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ResumeRepository;
@@ -37,6 +38,9 @@ public class ResumeServiceTest {
 
     @Mock
     private ProfileService profileService;
+
+    @Mock
+    private ApplicationRepository applicationRepository;
 
     @InjectMocks
     private ResumeServiceImpl resumeService;

@@ -107,6 +107,15 @@ public class JobSearchController {
                         boolean isFavorited = favoriteService.isJobFavorited(userId, job.getId());
                         favoriteStatuses.put(job.getId(), isFavorited);
                     }
+                    
+                    // Build hasApplied map
+                    Map<Long, Boolean> appliedStatuses = new HashMap<>();
+                    for (JobResponse job : jobs.getContent()) {
+                        boolean hasApplied = applicationService.hasApplied(job.getId(), userId);
+                        appliedStatuses.put(job.getId(), hasApplied);
+                    }
+                    model.addAttribute("appliedStatuses", appliedStatuses);
+                    
                     log.info("Added favorite statuses for {} jobs", favoriteStatuses.size());
                 } else {
                     log.warn("User not found in database for email: {}", email);

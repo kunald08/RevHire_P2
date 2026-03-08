@@ -1,177 +1,481 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(~{::body})}">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="'RevHire — ' + ${job.title}">RevHire — Job Detail</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        /* ── Hero ── */
+        .job-hero {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+            border-radius: 0 0 28px 28px;
+            padding: 3rem 0 4rem;
+            position: relative;
+            color: #fff;
+        }
+        .job-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px;
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
 
+        .company-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(255,255,255,0.15);
+            border-radius: 24px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            opacity: 0.9;
+        }
+
+        /* ── Status Badge ── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-active  { background: #dcfce7; color: #166534; }
+        .status-closed  { background: #fef2f2; color: #991b1b; }
+        .status-filled  { background: #e0f2fe; color: #075985; }
+        .status-expired { background: #fef3c7; color: #92400e; }
+        .status-draft   { background: #f3f4f6; color: #374151; }
+
+        /* ── Cards ── */
+        .jd-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        .jd-card:hover {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+
+        /* ── Info Tiles ── */
+        .info-tile {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: 14px;
+            border: 1px solid #f3f4f6;
+            transition: all 0.25s ease;
+        }
+        .info-tile:hover {
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(79,70,229,0.08);
+        }
+        .tile-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .tile-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 2px;
+        }
+        .tile-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* ── Section Header ── */
+        .sec-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        .sec-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Skill Chips ── */
+        .skill-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            transition: all 0.25s ease;
+        }
+        .skill-chip:hover {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79,70,229,0.25);
+        }
+        .skill-chip .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4f46e5;
+        }
+        .skill-chip:hover .dot {
+            background: #fff;
+        }
+
+        /* ── Description ── */
+        .desc-text {
+            color: #374151;
+            line-height: 1.85;
+            font-size: 0.95rem;
+            white-space: pre-line;
+        }
+
+        /* ── Action Bar ── */
+        .action-bar {
+            position: sticky;
+            bottom: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid #f3f4f6;
+            padding: 1rem 0;
+            z-index: 10;
+        }
+        .btn-apply {
+            border-radius: 12px;
+            padding: 0.7rem 2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #fff;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-apply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79,70,229,0.35);
+            color: #fff;
+        }
+        .btn-action {
+            border-radius: 12px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 600;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            transition: all 0.3s ease;
+        }
+        .btn-action:hover {
+            border-color: #d1d5db;
+            background: #f9fafb;
+        }
+        .btn-danger-outline {
+            border-color: #fecaca;
+            color: #ef4444;
+        }
+        .btn-danger-outline:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #dc2626;
+        }
+    </style>
+</head>
 <body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<style>
-    body { background: #eef2ff; }
+    <!-- ── Hero ── -->
+    <div class="job-hero">
+        <div class="container hero-content" style="max-width: 1100px;">
 
-    /* HEADER */
-    .job-header {
-        background: linear-gradient(120deg,#4f46e5,#7c3aed);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="company-badge">
+                    <i class="bi bi-building"></i>
+                    <span th:text="${job.companyName}">Company</span>
+                </span>
+                <!-- Status -->
+                <span th:switch="${job.status.name()}">
+                    <span th:case="'ACTIVE'"  class="status-pill status-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                    <span th:case="'CLOSED'"  class="status-pill status-closed"><i class="bi bi-x-circle-fill"></i> Closed</span>
+                    <span th:case="'FILLED'"  class="status-pill status-filled"><i class="bi bi-person-check-fill"></i> Filled</span>
+                    <span th:case="'EXPIRED'" class="status-pill status-expired"><i class="bi bi-clock-fill"></i> Expired</span>
+                    <span th:case="*"         class="status-pill status-draft"><i class="bi bi-file-earmark"></i> <span th:text="${job.status}">Draft</span></span>
+                </span>
+            </div>
 
-    /* ACTION BAR */
-    .action-bar {
-        background: white;
-        padding: 18px;
-        border-radius: 12px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
+            <h2 class="fw-bold mb-2" th:text="${job.title}">Job Title</h2>
 
-    /* JOB CARDS */
-    .job-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-    }
-
-    /* INFO TILES */
-    .info-tile {
-        background: white;
-        border-radius: 10px;
-        padding: 18px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: 0.2s;
-        height: 100%;
-    }
-
-    .info-tile:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 18px rgba(0,0,0,0.15);
-    }
-
-    .tile-icon { font-size: 22px; margin-bottom: 6px; color: #6366f1; }
-    .tile-label { font-size: 13px; color: #6b7280; font-weight: 600; }
-    .tile-value { font-size: 16px; font-weight: 600; color: #111827; }
-
-    /* SECTION TITLES */
-    .section-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: #1f2937;
-        border-left: 4px solid #6366f1;
-        padding-left: 10px;
-    }
-
-    /* BADGES */
-    .badge-active { background: #16a34a; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
-    .badge-closed { background: #f59e0b; padding: 6px 12px; border-radius: 20px; font-size: 13px; color: black; }
-    .badge-filled { background: #dc2626; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
-</style>
-
-<div class="container mt-4" style="max-width:1100px;">
-
-    <div class="mb-3">
-        <a th:href="@{/jobs/my}" class="btn btn-outline-secondary btn-sm">
-            ← Back to My Jobs
-        </a>
-    </div>
-
-    <div class="job-header">
-        <h2 class="fw-bold mb-2" th:text="${job.title}"></h2>
-        <div class="mt-2">
-            <span th:if="${#strings.toString(job.status) == 'ACTIVE'}" class="badge badge-active">ACTIVE</span>
-            <span th:if="${#strings.toString(job.status) == 'CLOSED'}" class="badge badge-closed">CLOSED</span>
-            <span th:if="${#strings.toString(job.status) == 'FILLED'}" class="badge badge-filled">FILLED</span>
+            <div class="hero-meta">
+                <span><i class="bi bi-geo-alt"></i> <span th:text="${job.location}">Location</span></span>
+                <span><i class="bi bi-diagram-3"></i> <span th:text="${job.jobTypeDisplay}">Full Time</span></span>
+                <span><i class="bi bi-currency-rupee"></i> <span th:text="${job.salaryDisplay}">Salary</span></span>
+                <span><i class="bi bi-clock-history"></i> <span th:text="${job.experienceDisplay}">Exp</span></span>
+            </div>
         </div>
     </div>
 
+    <div class="container" style="max-width: 1100px;">
+
+        <!-- Alerts -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show mt-3"
+             style="border-radius:12px;border:none;background:#ecfdf5;color:#065f46;" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3"
+             style="border-radius:12px;border:none;" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row g-4 mt-0">
+            <!-- ── Main Content ── -->
+            <div class="col-lg-8">
+
+                <!-- Info Tiles Grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <div class="info-tile">
+                            <div class="tile-icon" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-currency-rupee"></i></div>
+                            <div>
+                                <div class="tile-label">Salary Range</div>
+                                <div class="tile-value" th:text="${job.salaryDisplay}">&#8377;5L - &#8377;12L</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="info-tile">
+                            <div class="tile-icon" style="background:#ecfdf5;color:#10b981;"><i class="bi bi-clock-history"></i></div>
+                            <div>
+                                <div class="tile-label">Experience</div>
+                                <div class="tile-value" th:text="${job.experienceDisplay}">2-8 years</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="info-tile">
+                            <div class="tile-icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-person-plus"></i></div>
+                            <div>
+                                <div class="tile-label">Openings</div>
+                                <div class="tile-value" th:text="${job.numOpenings + ' position' + (job.numOpenings > 1 ? 's' : '')}">5 positions</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="info-tile">
+                            <div class="tile-icon" style="background:#faf5ff;color:#7c3aed;"><i class="bi bi-calendar-event"></i></div>
+                            <div>
+                                <div class="tile-label">Apply Before</div>
+                                <div class="tile-value" th:text="${#temporals.format(job.deadline, 'dd MMM yyyy')}">15 Jun 2026</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="jd-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-file-earmark-text"></i></div>
+                        <h5 class="fw-bold mb-0">Job Description</h5>
+                    </div>
+                    <p class="desc-text" th:text="${job.description}">Description here.</p>
+                </div>
+
+                <!-- Skills -->
+                <div class="jd-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon" style="background:#faf5ff;color:#7c3aed;"><i class="bi bi-tools"></i></div>
+                        <h5 class="fw-bold mb-0">Required Skills</h5>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span th:each="skill : ${job.requiredSkills.split(',')}" class="skill-chip">
+                            <span class="dot"></span>
+                            <span th:text="${skill.trim()}">Java</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Education -->
+                <div class="jd-card p-4 mb-4">
+                    <div class="sec-header">
+                        <div class="sec-icon" style="background:#fef3e2;color:#f59e0b;"><i class="bi bi-mortarboard"></i></div>
+                        <h5 class="fw-bold mb-0">Education</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-mortarboard-fill text-warning"></i>
+                        <span class="fw-medium" th:text="${job.educationReq}">B.Tech</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Sidebar ── -->
+            <div class="col-lg-4">
+
+                <!-- Company Card -->
+                <div class="jd-card p-4 mb-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div style="width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed);">
+                            <span th:text="${job.companyName != null ? job.companyName.substring(0,1).toUpperCase() : 'C'}">C</span>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0" th:text="${job.companyName}">Company</h6>
+                            <small class="text-muted" th:text="${job.industry}">Industry</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 text-muted" style="font-size:0.85rem;" th:if="${job.companyLocation}">
+                        <i class="bi bi-geo-alt"></i>
+                        <span th:text="${job.companyLocation}">Location</span>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="jd-card p-4 mb-4">
+                    <h6 class="fw-bold text-muted mb-3" style="text-transform:uppercase;font-size:0.78rem;letter-spacing:0.5px;">Job Stats</h6>
+
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:#f3f4f6!important;">
+                        <span class="text-muted" style="font-size:0.88rem;"><i class="bi bi-eye me-1"></i> Views</span>
+                        <span class="fw-bold" th:text="${job.viewCount}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:#f3f4f6!important;">
+                        <span class="text-muted" style="font-size:0.88rem;"><i class="bi bi-people me-1"></i> Applications</span>
+                        <span class="fw-bold" th:text="${job.applicationCount}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2" th:if="${job.daysRemaining != null}">
+                        <span class="text-muted" style="font-size:0.88rem;"><i class="bi bi-hourglass-split me-1"></i> Days Left</span>
+                        <span class="fw-bold" th:classappend="${job.daysRemaining <= 3 ? 'text-danger' : (job.daysRemaining <= 7 ? 'text-warning' : 'text-success')}"
+                              th:text="${job.daysRemaining}">10</span>
+                    </div>
+                </div>
+
+                <!-- Posted Date -->
+                <div class="jd-card p-4" th:if="${job.createdAt != null}">
+                    <div class="d-flex align-items-center gap-2 text-muted" style="font-size:0.88rem;">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Posted on <strong th:text="${#temporals.format(job.createdAt, 'dd MMM yyyy')}">01 Jan 2026</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Sticky Action Bar ── -->
     <div class="action-bar">
-        <a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="btn btn-primary">
-            ✏ Edit Job
-        </a>
+        <div class="container d-flex flex-wrap gap-2 justify-content-between align-items-center" style="max-width:1100px;">
+            <div class="d-flex flex-wrap gap-2">
+                <!-- Employer Actions -->
+                <div sec:authorize="hasAuthority('EMPLOYER')" th:if="${isOwner}">
+                    <a th:href="@{/jobs/{id}/edit(id=${job.id})}" class="btn btn-action">
+                        <i class="bi bi-pencil-square me-1"></i> Edit
+                    </a>
 
-        <form th:if="${#strings.toString(job.status) == 'ACTIVE'}" th:action="@{/jobs/{id}/close(id=${job.id})}" method="post">
-            <button type="submit" class="btn btn-warning">⛔ Close Job</button>
-        </form>
+                    <!-- Publish button for DRAFT jobs -->
+                    <span th:if="${job.status.name() == 'DRAFT'}">
+                        <form th:action="@{/jobs/{id}/publish(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-action ms-1" style="border-color:#bbf7d0;color:#16a34a;font-weight:600;">
+                                <i class="bi bi-rocket-takeoff me-1"></i> Publish
+                            </button>
+                        </form>
+                    </span>
 
-        <form th:if="${#strings.toString(job.status) == 'ACTIVE'}" th:action="@{/jobs/{id}/fill(id=${job.id})}" method="post">
-            <button type="submit" class="btn btn-dark">✔ Mark as Filled</button>
-        </form>
+                    <!-- Lifecycle buttons based on status -->
+                    <span th:if="${job.status.name() == 'ACTIVE'}">
+                        <form th:action="@{/jobs/{id}/close(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-action btn-danger-outline ms-1"
+                                    onclick="return confirm('Close this job listing?')">
+                                <i class="bi bi-x-circle me-1"></i> Close
+                            </button>
+                        </form>
+                        <form th:action="@{/jobs/{id}/fill(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-action ms-1" style="border-color:#bfdbfe;color:#3b82f6;"
+                                    onclick="return confirm('Mark this job as filled?')">
+                                <i class="bi bi-person-check me-1"></i> Mark Filled
+                            </button>
+                        </form>
+                    </span>
+                    <span th:if="${job.status.name() == 'CLOSED' or job.status.name() == 'EXPIRED'}">
+                        <form th:action="@{/jobs/{id}/reopen(id=${job.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-action ms-1" style="border-color:#bbf7d0;color:#16a34a;">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Reopen
+                            </button>
+                        </form>
+                    </span>
 
-        <form th:if="${#strings.toString(job.status) == 'CLOSED'}" th:action="@{/jobs/{id}/reopen(id=${job.id})}" method="post">
-            <button type="submit" class="btn btn-success">🔄 Reopen Job</button>
-        </form>
+                    <!-- Duplicate button (always visible for owners) -->
+                    <form th:action="@{/jobs/{id}/duplicate(id=${job.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-action ms-1" style="border-color:#e5e7eb;color:#374151;"
+                                title="Duplicate this job as a new draft">
+                            <i class="bi bi-copy me-1"></i> Duplicate
+                        </button>
+                    </form>
+                </div>
 
-        <a th:href="@{/jobs/{id}/stats(id=${job.id})}" class="btn btn-outline-dark">
-            📊 View Statistics
-        </a>
+                <!-- Seeker apply -->
+                <div sec:authorize="hasAuthority('SEEKER')">
+                    <a th:if="${job.status.name() == 'ACTIVE'}" th:href="@{/applications/apply/{id}(id=${job.id})}" class="btn btn-apply">
+                        <i class="bi bi-send me-1"></i> Apply Now
+                    </a>
+                    <span th:unless="${job.status.name() == 'ACTIVE'}" class="text-muted fw-medium" style="font-size:0.9rem;">
+                        <i class="bi bi-info-circle me-1"></i> This job is no longer accepting applications
+                    </span>
+                </div>
+            </div>
+
+            <a th:href="@{/jobs/my}" class="btn btn-action" sec:authorize="hasAuthority('EMPLOYER')">
+                <i class="bi bi-arrow-left me-1"></i> Back to My Jobs
+            </a>
+        </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="info-tile">
-                <div class="tile-icon">📍</div>
-                <div class="tile-label">Location</div>
-                <div class="tile-value" th:text="${job.location}"></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-tile">
-                <div class="tile-icon">💼</div>
-                <div class="tile-label">Job Type</div>
-                <div class="tile-value" th:text="${job.jobType}"></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-tile">
-                <div class="tile-icon">💰</div>
-                <div class="tile-label">Salary Range</div>
-                <div class="tile-value"><span th:text="${job.salaryMin}"></span> - <span th:text="${job.salaryMax}"></span></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-tile">
-                <div class="tile-icon">⭐</div>
-                <div class="tile-label">Experience</div>
-                <div class="tile-value"><span th:text="${job.experienceMin}"></span> - <span th:text="${job.experienceMax}"></span> years</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-tile">
-                <div class="tile-icon">👥</div>
-                <div class="tile-label">Open Positions</div>
-                <div class="tile-value" th:text="${job.numOpenings}"></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-tile">
-                <div class="tile-icon">⏳</div>
-                <div class="tile-label">Deadline</div>
-                <div class="tile-value" th:text="${job.deadline}"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="job-card">
-        <div class="section-title">Job Description</div>
-        <p th:text="${job.description}"></p>
-    </div>
-
-    <div class="job-card">
-        <div class="section-title">Required Skills</div>
-        <p th:text="${job.requiredSkills}"></p>
-    </div>
-
-    <div class="job-card">
-        <div class="section-title">Education Requirement</div>
-        <p th:text="${job.educationReq}"></p>
-    </div>
-</div>
-
+    <div style="height:1rem;"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>

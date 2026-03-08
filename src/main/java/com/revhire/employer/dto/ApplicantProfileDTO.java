@@ -14,7 +14,7 @@ public class ApplicantProfileDTO {
     private Long userId;
     private Long seekerId;
 
-    private String applicantName;;
+    private String applicantName;
 
     private Long resumeId;
     

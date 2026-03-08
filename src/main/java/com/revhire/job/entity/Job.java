@@ -10,8 +10,13 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Job entity — represents a single job posting belonging to an Employer.
+ * Lifecycle: DRAFT → ACTIVE → CLOSED / FILLED.
+ */
 @Entity
 @Table(name = "jobs")
 @Data
@@ -24,35 +29,48 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Many jobs belong to one employer
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employer_id", nullable = false)
+    @ToString.Exclude
     private Employer employer;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 200)
     private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 500)
     private String requiredSkills;
+
     private Integer experienceMin;
     private Integer experienceMax;
+
+    @Column(length = 100)
     private String educationReq;
+
+    @Column(length = 200)
     private String location;
 
+    @Column(precision = 12, scale = 2)
     private BigDecimal salaryMin;
+
+    @Column(precision = 12, scale = 2)
     private BigDecimal salaryMax;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private JobType jobType;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private JobStatus status;
 
     private LocalDate deadline;
-    private Integer numOpenings;
-    
+
+    @Builder.Default
+    private Integer numOpenings = 1;
+
     @Builder.Default
     @Column(nullable = false)
     private Long viewCount = 0L;
@@ -67,19 +85,26 @@ public class Job {
         if (this.status == null) {
             this.status = JobStatus.ACTIVE;
         }
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-    
+
     /**
-     * CHANGE: Added bi-directional mapping.
-     * PURPOSE: To allow Thymeleaf to access job.applications.size().
-     * mappedBy="job" refers to the 'job' field inside the Application entity.
+     * Bi-directional mapping to Application.
+     * Allows Thymeleaf to access job.applications.size() for stats.
      */
+    @Builder.Default
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude // Prevent infinite recursion with Lombok's ToString
-    private List<Application> applications;
-   }
+    @ToString.Exclude
+    private List<Application> applications = new ArrayList<>();
+
+    /** Transient field populated by service layer — avoids N+1 lazy-load. */
+    @Transient
+    private Long applicationCount;
+}
