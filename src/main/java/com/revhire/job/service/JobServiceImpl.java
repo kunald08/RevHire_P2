@@ -1,6 +1,7 @@
 package com.revhire.job.service;
 
-import com.revhire.auth.entity.User;  
+import com.revhire.application.repository.ApplicationRepository;
+import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
 import com.revhire.common.enums.JobStatus;
 import com.revhire.common.enums.Role;
@@ -28,7 +29,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.revhire.application.repository.ApplicationRepository;
 import com.revhire.common.enums.ApplicationStatus;
 
 @Service
@@ -315,6 +315,17 @@ public class JobServiceImpl implements JobService {
                 .viewCount(job.getViewCount())
                 .build();
     }
+    
+    @Override
+    public List<JobResponse> getActiveJobsByEmployer(String email) {
+
+        List<Job> jobs = jobRepository
+                .findByEmployer_User_EmailAndStatus(email, JobStatus.ACTIVE);
+
+        return jobs.stream()
+                .map(this::mapToResponse)
+                .toList();
+        }
     
     @Override
     public JobResponse getJobById(Long id) {

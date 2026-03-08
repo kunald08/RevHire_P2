@@ -7,50 +7,104 @@
 </head>
 
 <body>
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">
+            <i class="bi bi-speedometer2 me-2"></i>Employer Dashboard
+        </h2>
+        <a th:href="@{/jobs/create}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Post New Job
+        </a>
+    </div>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold">
-        <i class="bi bi-speedometer2 me-2"></i>Employer Dashboard
-    </h2>
+    <div class="row mb-4" th:if="${stats != null}">
+		<div class="col-md-3">
+		    <a th:href="@{/jobs/my}" 
+		       class="text-decoration-none text-dark">
 
-    <a th:href="@{/jobs/create}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Post New Job
-    </a>
-</div>
+		        <div class="card shadow-sm text-center border-0 dashboard-card">
+		            <div class="card-body">
+		                <h6 class="text-muted">Total Jobs</h6>
+		                <h3 class="fw-bold"
+		                    th:text="${stats.totalJobs}">0</h3>
+		            </div>
+		        </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
+		    </a>
+		</div>
 
-        <h5 class="mb-3">Your Job Postings</h5>
+		<div class="col-md-3">
+		    <a th:href="@{/jobs/active}" 
+		       class="text-decoration-none text-dark">
 
-        <ul class="list-group">
-            <li class="list-group-item d-flex justify-content-between align-items-center"
-                th:each="job : ${jobs}">
+		        <div class="card shadow-sm text-center border-0 dashboard-card">
+		            <div class="card-body">
+		                <h6 class="text-muted">Active Jobs</h6>
+		                <h3 class="fw-bold text-success"
+		                    th:text="${stats.activeJobs}">0</h3>
+		            </div>
+		        </div>
 
-                <a th:href="@{/jobs/{id}(id=${job.id})}"
-                   th:text="${job.title}"
-                   class="fw-semibold text-decoration-none">
-                </a>
+		    </a>
+		</div>
 
-                <span th:if="${job.status.name() == 'ACTIVE'}"
-                      class="badge bg-success">ACTIVE</span>
+		<div class="col-md-3">
+		    <a th:href="@{/employer/jobs}" 
+		       class="text-decoration-none text-dark">
 
-                <span th:if="${job.status.name() == 'CLOSED'}"
-                      class="badge bg-warning text-dark">CLOSED</span>
+		        <div class="card shadow-sm text-center border-0 dashboard-card">
+		            <div class="card-body">
+		                <h6 class="text-muted">Total Applications</h6>
+		                <h3 class="fw-bold text-primary"
+		                    th:text="${stats.totalApplications}">0</h3>
+		            </div>
+		        </div>
 
-                <span th:if="${job.status.name() == 'FILLED'}"
-                      class="badge bg-danger">FILLED</span>
+		    </a>
+		</div>
 
-            </li>
+        <div class="col-md-3">
+			<a th:href="@{/employer/jobs/review}" class="text-decoration-none text-dark">
+            <div class="card shadow-sm text-center border-0 dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending Reviews</h6>
+                    <h3 class="fw-bold text-warning" th:text="${stats.pendingReviews}">0</h3>
+                </div>
+            </div>
+			</a>
+        </div>
+    </div>
 
-            <li class="list-group-item text-center"
-                th:if="${#lists.isEmpty(jobs)}">
-                No job postings yet.
-            </li>
-        </ul>
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Recent Job Postings</h5>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0"
+                    th:each="job : ${jobs}">
+                    
+                    <div>
+                        <a th:href="@{/employer/jobs/{id}(id=${job.id})}"
+                           th:text="${job.title}"
+                           class="fw-semibold text-decoration-none text-dark">
+                        </a>
+                        <small class="text-muted d-block" th:text="${job.location}">Location</small>
+                    </div>
 
+                    <div th:switch="${#strings.toString(job.status)}">
+                        <span th:case="'ACTIVE'" class="badge bg-success-subtle text-success border border-success">ACTIVE</span>
+                        <span th:case="'CLOSED'" class="badge bg-warning-subtle text-warning border border-warning">CLOSED</span>
+                        <span th:case="'FILLED'" class="badge bg-danger-subtle text-danger border border-danger">FILLED</span>
+                        <span th:case="*" class="badge bg-secondary" th:text="${job.status}">STATUS</span>
+                    </div>
+                </li>
+
+                <li class="list-group-item text-center py-4" th:if="${#lists.isEmpty(jobs)}">
+                    <p class="text-muted mb-0">No job postings yet.</p>
+                    <a th:href="@{/employer/jobs/create}" class="btn btn-sm btn-outline-primary mt-2">Create your first post</a>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
-
 </body>
 </html>

@@ -177,4 +177,14 @@ public class JobController {
         model.addAttribute("stats", stats);
         return "job/job-stats";
     }
+    @GetMapping("/active")
+    public String activeJobs(Authentication authentication, Model model) {
+
+        String email = authentication.getName();
+
+        model.addAttribute("jobs",
+                jobService.getActiveJobsByEmployer(email));
+
+        return "job/my-jobs";   
+    }
 }
