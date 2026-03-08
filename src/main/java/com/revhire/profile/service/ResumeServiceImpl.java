@@ -124,6 +124,7 @@ public class ResumeServiceImpl implements ResumeService {
         return resume;
     }
 
+
     @Override
     @Transactional
     public void deleteResume(String email, Long resumeId) {
@@ -148,4 +149,5 @@ public class ResumeServiceImpl implements ResumeService {
         resumeRepository.delete(resume);
         logger.info("Resume ID: {} deleted successfully for user: {}", resumeId, email);
     }
+
 }

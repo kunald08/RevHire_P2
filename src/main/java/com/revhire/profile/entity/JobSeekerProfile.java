@@ -75,13 +75,13 @@ public class JobSeekerProfile {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Resume> resumes = new ArrayList<>();
-
+    private Integer totalExperience;
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-
+    
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();

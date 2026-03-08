@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Applicants</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+</head>
+
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container mt-4">
+
+    <h2 class="fw-bold mb-4">
+        <span th:text="${isReviewMode} ? 'Applicants for Review: ' + ${jobTitle} : 'All Applicants: ' + ${jobTitle}"></span>
+    </h2>
+
+	<p class="mb-3">
+	    <a th:if="${isReviewMode}" 
+	       th:href="@{/employer/jobs/{jobId}/applicants(jobId=${jobId})}" 
+	       class="text-decoration-none text-primary">
+	        <i class="bi bi-arrow-left"></i> View all applicants
+	    </a>
+
+	    <a th:if="${!isReviewMode}" 
+	       th:href="@{/employer/jobs/review/{jobId}/applicants(jobId=${jobId})}" 
+	       class="text-decoration-none text-primary">
+	        <i class="bi bi-funnel"></i> View only applicants pending review
+	    </a>
+	</p>
+
+    <div class="d-flex justify-content-between mb-3">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">Filter</button>
+        <div>
+            <button id="bulkShortlistBtn" class="btn btn-success me-2" disabled>Bulk Shortlist</button>
+            <button id="bulkRejectBtn" class="btn btn-danger" disabled>Bulk Reject</button>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+        <tr>
+            <th><input type="checkbox" id="selectAll"></th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Applied Date</th>
+            <th th:if="${!isReviewMode}">Employer Comment</th>
+            <th>Reviewer Notes</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+			<tr th:each="app : ${applicants}">
+			            <td><input type="checkbox" class="appCheckbox" th:value="${app.applicationId}"></td>
+			            <td th:text="${app.applicantName}"></td>
+			            <td th:text="${app.status}"></td>
+			            <td th:text="${#temporals.format(app.appliedDate, 'dd MMM yyyy')}"></td>
+			            <td th:if="${!isReviewMode}"th:text="${app.employerComment}"></td>
+			            
+			            <td >		
+							 <span th:text="${app.reviewerNote}" 
+						           th:classappend="${app.reviewerNote == 'No notes yet'} ? 'text-muted fst-italic' : ''">
+						       </span>
+			            </td>
+			            
+			            <td>
+			                <a th:href="@{/employer/applicants/{id}(id=${app.applicationId})}" class="btn btn-sm btn-primary">View</a>
+			            </td>
+			        </tr>
+        </tbody>
+    </table>
+	<div class="modal fade" id="filterModal" tabindex="-1">
+	    <div class="modal-dialog modal-lg">
+	        <div class="modal-content">
+	            <div class="modal-header bg-primary text-white">
+	                <h5 class="modal-title"><i class="bi bi-funnel"></i> Filter Applicants</h5>
+	                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+	            </div>
+	            <div class="modal-body">
+	                <form id="filterForm" th:action="@{/employer/jobs/{jobId}/applicants/filter(jobId=${jobId})}" method="GET">
+	                    <div class="row g-3">
+							<div class="col-md-12">
+							                <label class="form-label fw-bold">Search by Name</label>
+							                <input type="text" name="name" class="form-control" placeholder="Enter applicant name">
+							            </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Application Status</label>
+	                            <select name="status" class="form-select">
+	                                <option value="">All Statuses</option>
+	                                <option value="APPLIED">Applied</option>
+	                                <option value="SHORTLISTED">Shortlisted</option>
+	                                <option value="REJECTED">Rejected</option>
+	                                <option value="UNDER_REVIEW">Under Review</option>
+	                            </select>
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Min Experience (Years)</label>
+	                            <input type="number" name="experience" class="form-control" placeholder="e.g. 2">
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Education</label>
+	                            <input type="text" name="education" class="form-control" placeholder="e.g. Bachelor's">
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label fw-bold">Certification</label>
+	                            <input type="text" name="certification" class="form-control" placeholder="e.g. AWS Certified">
+	                        </div>
+	                        <div class="col-md-12">
+	                            <label class="form-label fw-bold">Skills (Comma separated)</label>
+	                            <input type="text" name="skills" class="form-control" placeholder="e.g. Java, Spring Boot, SQL">
+	                        </div>
+	                    </div>
+	                </form>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-secondary" id="resetFilterBtn">Reset</button>
+	                <button type="submit" form="filterForm" class="btn btn-primary">Apply Filter</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+    <div class="modal fade" id="bulkModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="selectedCount"></p>
+                    <label class="form-label">Employer Comment</label>
+                    <textarea id="bulkComment" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmBulkBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script th:inline="javascript">
+document.addEventListener("DOMContentLoaded", function () {
+    const jobId = /*[[${jobId}]]*/ 0;
+    const isReview = /*[[${isReviewMode}]]*/ false; 
+    const checkboxes = document.querySelectorAll('.appCheckbox');
+    const selectAll = document.getElementById('selectAll');
+    const bulkShortlist = document.getElementById('bulkShortlistBtn');
+    const bulkReject = document.getElementById('bulkRejectBtn');
+    const confirmBulkBtn = document.getElementById('confirmBulkBtn');
+    const modal = new bootstrap.Modal(document.getElementById('bulkModal'));
+    let selectedAction = "";
+
+    function toggleBulkButtons() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        bulkShortlist.disabled = !anyChecked;
+        bulkReject.disabled = !anyChecked;
+    }
+
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        toggleBulkButtons();
+    });
+
+    checkboxes.forEach(cb => cb.addEventListener('change', toggleBulkButtons));
+
+    bulkShortlist.addEventListener('click', () => { selectedAction = "shortlist"; openModal("Confirm Bulk Shortlist"); });
+    bulkReject.addEventListener('click', () => { selectedAction = "reject"; openModal("Confirm Bulk Reject"); });
+
+    function openModal(title) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('selectedCount').innerText = "Selected Applicants: " + getSelectedIds().length;
+        modal.show();
+    }
+
+    function getSelectedIds() {
+        return Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+    }
+
+    confirmBulkBtn.addEventListener('click', function () {
+        const selectedIds = getSelectedIds();
+        const comment = document.getElementById('bulkComment').value;
+        const baseUrl = isReview ? `/employer/jobs/review/${jobId}` : `/employer/jobs/${jobId}`;
+
+        fetch(`${baseUrl}/applicants/bulk-${selectedAction}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationIds: selectedIds, comment: comment })
+        })
+        .then(res => res.text())
+        .then(data => { alert(data); location.reload(); });
+    });
+	
+});
+
+</script>
+</body>
+</html>

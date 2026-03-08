@@ -1,4 +1,4 @@
-package com.revhire.config;
+package com.revhire.auth.security;
 
 import com.revhire.auth.entity.User;
 import com.revhire.auth.repository.UserRepository;
@@ -46,7 +46,7 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
                 if (!profileExists) {
                     response.sendRedirect("/employers/profile/create");
                 } else {
-                    response.sendRedirect("/jobs/my");
+                    response.sendRedirect("/employer/dashboard");
                 }
 
                 return;

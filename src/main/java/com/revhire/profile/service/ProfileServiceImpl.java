@@ -430,4 +430,12 @@ public class ProfileServiceImpl implements ProfileService {
             }
         }
     }
+    
+    @Override
+    public int getExperienceInYears(Long profileId) {
+        // Returns total months, returns 0 if no records found
+        int totalMonths = experienceRepository.calculateTotalMonthsByProfileId(profileId)
+                                              .orElse(0);
+        return totalMonths / 12;
+    }
 }

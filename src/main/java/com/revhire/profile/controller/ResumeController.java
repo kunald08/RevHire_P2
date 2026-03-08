@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -115,7 +116,7 @@ public class ResumeController {
     @GetMapping("/resume/download/{id}")
     public ResponseEntity<byte[]> downloadResume(@PathVariable Long id) {
         logger.info("Downloading resume file ID: {}", id);
-
+        
         Resume resume = resumeService.downloadResume(id);
 
         String contentType = "PDF".equals(resume.getFileType())
