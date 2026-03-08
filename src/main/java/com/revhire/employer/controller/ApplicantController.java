@@ -7,6 +7,7 @@ import com.revhire.employer.service.ApplicantService;
 import com.revhire.employer.service.EmployerService;
 import com.revhire.job.entity.Job;
 import com.revhire.profile.dto.ProfileResponse;
+import com.revhire.profile.entity.JobSeekerProfile;
 import com.revhire.profile.entity.Resume;
 import com.revhire.profile.service.ProfileService;
 import com.revhire.profile.service.ResumeService;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -143,6 +145,7 @@ public class ApplicantController {
         
         return "employer/applicant-profile";
     }
+
 
 	@PostMapping("/applicants/process-action")
 	public String processAction(

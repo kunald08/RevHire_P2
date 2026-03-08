@@ -5,9 +5,11 @@ import com.revhire.common.enums.ApplicationStatus;
 import com.revhire.employer.dto.ApplicantProfileDTO;
 import com.revhire.employer.dto.ApplicantRowDTO;
 import com.revhire.job.entity.Job;
+import com.revhire.profile.entity.JobSeekerProfile;
 import com.revhire.profile.entity.Resume;
 import com.revhire.employer.dto.ApplicationNoteDTO;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,4 +57,5 @@ public interface ApplicantService {
         String skills
     );
     Resume getLatestResumeByProfileId(Long profileId);
+    Optional<JobSeekerProfile> findProfileByUserId(Long userId);
 }
