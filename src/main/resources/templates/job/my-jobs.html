@@ -338,7 +338,18 @@
                             <button type="submit" class="btn btn-sm btn-outline-dark" title="Duplicate this job as a new draft">
                                 <i class="bi bi-copy me-1"></i> Duplicate
                             </button>
-                        </form>
+                        </form>						
+						<form th:if="${job.applicationCount == 0 and job.status.name() != 'FILLED'}"
+						      th:action="@{/jobs/{id}/delete(id=${job.id})}"
+						      method="post"
+						      style="display:inline;">
+
+						    <button type="submit"
+						            class="btn btn-sm btn-outline-danger"
+						            onclick="return confirm('Delete this job permanently?')">
+						        <i class="bi bi-trash me-1"></i> Delete
+						    </button>
+						</form>
                     </div>
                 </div>
             </div>
