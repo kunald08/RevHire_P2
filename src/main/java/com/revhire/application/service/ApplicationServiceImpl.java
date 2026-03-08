@@ -13,6 +13,7 @@ import com.revhire.exception.ResourceNotFoundException;
 import com.revhire.exception.UnauthorizedException;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
+import com.revhire.notification.service.NotificationService;
 import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
     private final ResumeRepository resumeRepository;
+    private final NotificationService notificationService;
 
     @PostConstruct
     public void init() {
@@ -144,6 +146,16 @@ public class ApplicationServiceImpl implements ApplicationService {
             log.info("✅ Application saved with ID: {}, Resume ID in saved application: {}", 
                 saved.getId(), 
                 saved.getResume() != null ? saved.getResume().getId() : "NULL");
+
+            // Send notification to the employer about the new application
+            try {
+                User employerUser = job.getEmployer().getUser();
+                if (employerUser != null) {
+                    notificationService.notifyNewApplication(employerUser, user.getName(), job.getTitle(), job.getId());
+                }
+            } catch (Exception notifEx) {
+                log.warn("Failed to send notification for new application: {}", notifEx.getMessage());
+            }
 
             return convertToResponse(saved);
 
@@ -257,6 +269,22 @@ public class ApplicationServiceImpl implements ApplicationService {
             applicationRepository.save(application);
             
             log.info("Application {} withdrawn successfully", applicationId);
+
+            // Send notifications for withdrawal
+            try {
+                User seeker = application.getSeeker();
+                Job job = application.getJob();
+                // Notify the seeker about successful withdrawal
+                notificationService.notifyApplicationWithdrawn(seeker, job.getTitle(), applicationId);
+                // Notify the employer about the withdrawal
+                User employerUser = job.getEmployer().getUser();
+                if (employerUser != null) {
+                    notificationService.notifyEmployerApplicationWithdrawn(
+                            employerUser, seeker.getName(), job.getTitle(), job.getId());
+                }
+            } catch (Exception notifEx) {
+                log.warn("Failed to send withdrawal notifications: {}", notifEx.getMessage());
+            }
 
         } catch (Exception e) {
             log.error("Error withdrawing application: {}", e.getMessage(), e);

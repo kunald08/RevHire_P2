@@ -28,6 +28,7 @@ import com.revhire.profile.entity.Resume;
 import com.revhire.profile.repository.ProfileRepository;
 import com.revhire.profile.repository.ResumeRepository;
 import com.revhire.profile.service.ProfileService;
+import com.revhire.notification.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,6 +45,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final EmployerRepository employerRepository;
     private final ResumeRepository resumeRepository;
     private final ProfileService profileService;
+    private final NotificationService notificationService;
     
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
@@ -102,12 +104,29 @@ public class ApplicantServiceImpl implements ApplicantService {
     public void bulkUpdateStatus(List<Long> ids, String action, String comment) {
         List<Application> applications = applicationRepository.findAllById(ids);
         for (Application app : applications) {
+            ApplicationStatus newStatus = null;
             if ("SHORTLIST".equalsIgnoreCase(action)) {
                 app.setStatus(ApplicationStatus.SHORTLISTED);
+                newStatus = ApplicationStatus.SHORTLISTED;
             } else if ("REJECT".equalsIgnoreCase(action)) {
                 app.setStatus(ApplicationStatus.REJECTED);
+                newStatus = ApplicationStatus.REJECTED;
             }
             app.setEmployerComment(comment);
+
+            // Send notification to seeker about status change
+            if (newStatus != null) {
+                try {
+                    notificationService.notifyApplicationStatusChange(
+                            app.getSeeker(),
+                            app.getJob().getTitle(),
+                            newStatus,
+                            app.getId());
+                } catch (Exception e) {
+                    // Log but don't fail the status update
+                    System.err.println("Failed to send notification: " + e.getMessage());
+                }
+            }
         }
         applicationRepository.saveAll(applications);
     }

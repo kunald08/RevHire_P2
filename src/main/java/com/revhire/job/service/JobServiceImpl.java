@@ -15,6 +15,7 @@ import com.revhire.job.dto.JobResponse;
 import com.revhire.job.dto.JobStatsResponse;
 import com.revhire.job.entity.Job;
 import com.revhire.job.repository.JobRepository;
+import com.revhire.notification.service.NotificationEventService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +42,7 @@ public class JobServiceImpl implements JobService {
     private final EmployerRepository employerRepository;
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
+    private final NotificationEventService notificationEventService;
 
     // ==============================
     // CREATE JOB
@@ -85,6 +87,13 @@ public class JobServiceImpl implements JobService {
         Job saved = jobRepository.save(job);
 
         logger.info("Job created successfully. ID: {}", saved.getId());
+
+        // Send job recommendation notifications to seekers with matching skills
+        try {
+            notificationEventService.sendJobRecommendations(saved);
+        } catch (Exception e) {
+            logger.warn("Failed to send job recommendation notifications: {}", e.getMessage());
+        }
 
         return mapToResponse(saved);
     }
