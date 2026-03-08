@@ -135,4 +135,5 @@ public class EmployerController {
         model.addAttribute("activeMenu", "profile");
         return "employer/company-profile-public";
     }
+    
 }
