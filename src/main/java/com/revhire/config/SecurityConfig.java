@@ -1,5 +1,7 @@
 package com.revhire.config;
 
+import org.apache.logging.log4j.LogManager; 
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -34,12 +36,15 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
+	
+	private static final Logger logger = LogManager.getLogger(SecurityConfig.class);
+	
     private final CustomUserDetailsService userDetailsService;
     private final CustomLoginSuccessHandler successHandler;
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    	logger.info("Initializing RevHire Security Filter Chain...");
         http
             .csrf(csrf -> csrf.disable()) // Keep disabled for now to allow POST requests
             .authorizeHttpRequests(auth -> auth
@@ -79,6 +84,7 @@ public class SecurityConfig {
                 .successHandler(successHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
+                
             )
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")

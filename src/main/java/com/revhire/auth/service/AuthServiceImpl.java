@@ -9,7 +9,8 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+	private static final Logger logger = LogManager.getLogger(AuthServiceImpl.class);
+	
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
@@ -54,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
     private void sendHtmlEmail(String to, String subject, String title, String message, String otp, String actionUrl, String actionText) {
         try {
+        	logger.debug("Preparing to send HTML email to: {} | Subject: {}", to, subject);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
@@ -73,17 +77,21 @@ public class AuthServiceImpl implements AuthService {
             helper.setFrom(fromEmail);
 
             mailSender.send(mimeMessage);
+            logger.info("Email successfully sent to: {}", to);
         } catch (Exception e) {
-            System.err.println("Failed to send email to " + to + ": " + e.getMessage());
+        	logger.error("SMTP Error: Failed to send email to {}. Reason: {}", to, e.getMessage());
+        
         }
     }
 
     @Override
     public void register(RegisterRequest request) {
         String email = request.getEmail();
+        logger.info("Service: Processing registration for {}", email);
         long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
 
         if (userRepository.existsByEmail(email)) {
+        	logger.warn("Security: Registration attempt for existing email: {}. Triggering enumeration protection.", email);
             // Enumeration Protection: Set a dummy OTP so the timer works, but send the "Already Exists" email
             otpStore.put(email, new OtpData("000000", expiryTime, 0, true));
             sendAlreadyRegisteredEmail(email);
@@ -95,7 +103,8 @@ public class AuthServiceImpl implements AuthService {
         
         pendingRegistrations.put(email, request);
         otpStore.put(email, new OtpData(otp, expiryTime, 0, false)); 
-
+        
+        logger.info("Service: Generated OTP for new user {}. Dispatching welcome email.", email);
         sendHtmlEmail(email, "RevHire - Verify Your Email", "Welcome to RevHire!", 
             "Thank you for joining. Use the code below to verify your account.", otp, null, null);
     }
@@ -107,15 +116,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public void confirmRegistration(String email, String userOtp) {
+    	logger.info("Service: Confirming registration for {}", email);
         OtpData data = otpStore.get(email);
         
         if (data == null) {
+        	logger.warn("Service: No OTP data found in memory for {}", email);
             throw new RuntimeException("No pending verification found.");
         }
 
         // If it's a dummy or wrong OTP, we just say "Invalid OTP" 
         // This prevents attackers from knowing the account exists via the error message
         if (data.isDummy || !data.otp.equals(userOtp)) {
+        	logger.error("Security: Invalid OTP entered for {}. (IsDummy: {})", email, data.isDummy);
             throw new RuntimeException("Invalid OTP!");
         }
 
@@ -125,6 +137,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (System.currentTimeMillis() > data.expiryTime) {
+        	logger.warn("Service: OTP expired for {}", email);
             otpStore.remove(email);
             pendingRegistrations.remove(email);
             throw new RuntimeException("OTP has expired!");
@@ -140,25 +153,33 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
+        logger.info("Service: Successfully persisted new user {} to database.", email);
+        
         otpStore.remove(email);
         pendingRegistrations.remove(email);
     }
 
     @Scheduled(fixedRate = 600000) 
     public void cleanExpiredEntries() {
+    	logger.debug("Scheduled Task: Cleaning up expired OTPs and registrations.");
         long now = System.currentTimeMillis();
         otpStore.entrySet().removeIf(entry -> now > entry.getValue().expiryTime);
         pendingRegistrations.keySet().removeIf(email -> !otpStore.containsKey(email));
+        logger.debug("Scheduled Task: Cleanup complete.");
     }
 
    @Override
 	@Transactional
 	public void resendRegistrationOtp(String email) {
+	   logger.info("Service: Resend OTP requested for {}", email);
+	   
 	    long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
+	    
 	    OtpData oldData = otpStore.get(email);
 	
 	    // 1. Check limit
 	    if (oldData != null && oldData.resendCount >= 3) {
+	    	logger.warn("Service: Resend limit reached for {}", email);
 	        throw new RuntimeException("LIMIT_REACHED");
 	    }
 	
@@ -167,6 +188,7 @@ public class AuthServiceImpl implements AuthService {
 	
 	    // 2. Handle Existing User
 	    if (userRepository.existsByEmail(email)) {
+	    	logger.info("Service: Resending 'Already Registered' notice to {}", email);
 	        otpStore.put(email, new OtpData("000000", expiryTime, nextCount, true));
 	        sendAlreadyRegisteredEmail(email);
 	        // Throwing a custom message allows the frontend to see the count even on "success"
@@ -181,9 +203,11 @@ public class AuthServiceImpl implements AuthService {
 	        sendHtmlEmail(email, "RevHire - New Verification Code", "Your New Code", 
 	            "As requested, here is your new verification code.", newOtp, null, null);
 	        
+	        logger.info("Service: Resent new OTP to {}. Attempts remaining: {}", email, remaining);
 	        // Throwing this helps the AJAX handler update the "Attempts Left" label
 	        throw new RuntimeException("SENT_REMAINING:" + remaining);
 	    } else {
+	    	logger.error("Service: Resend failed for {}. Session likely expired.", email);
 	        throw new RuntimeException("SESSION_EXPIRED");
 	    }
 	}
@@ -202,51 +226,74 @@ public class AuthServiceImpl implements AuthService {
         return seconds > 0 ? seconds : 0;
     }
 
-    // --- OTHER METHODS (changePassword, resetPassword, etc.) REMAIN SAME ---
     @Override
     public void changePassword(String email, String oldPassword, String newPassword) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) throw new RuntimeException("Incorrect current password.");
+    	logger.info("Service: Attempting password change for user: {}", email);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> {
+            logger.error("Service: Password change failed. User {} not found.", email);
+            return new RuntimeException("User not found");
+        });
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            logger.warn("Security: Password change rejected for {}. Current password mismatch.", email);
+            throw new RuntimeException("Incorrect current password.");
+        }
         validatePasswordStrength(newPassword);
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        logger.info("Service: Password successfully updated for {}.", email);
     }
 
     @Override
     @Transactional
     public void sendForgotPasswordLink(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
+    	logger.info("Service: Forgot password request received for: {}", email);
+        userRepository.findByEmail(email).ifPresentOrElse(user -> {
             String token = java.util.UUID.randomUUID().toString();
             user.setResetToken(token);
             user.setResetTokenExpiry(System.currentTimeMillis() + (15 * 60 * 1000));
             userRepository.save(user);
             String resetLink = "http://localhost:8080/auth/reset-password?token=" + token;
+            logger.info("Service: Generated reset token for {}. Dispatching email link.", email);
             sendHtmlEmail(user.getEmail(), "RevHire - Reset Password", "Reset Request", "Click below to reset.", null, resetLink, "Reset Password");
+        }, () -> {
+            // Silently log to prevent account enumeration, but don't throw error to UI
+            logger.warn("Security: Forgot password requested for non-existent email: {}", email);
         });
     }
 
     @Override
     @Transactional
     public void resetPassword(String token, String newPassword) {
-        User user = userRepository.findByResetToken(token).orElseThrow(() -> new RuntimeException("Invalid link."));
-        if (user.getResetTokenExpiry() < System.currentTimeMillis()) throw new RuntimeException("Link expired.");
+    	logger.info("Service: Attempting password reset via token.");
+        User user = userRepository.findByResetToken(token).orElseThrow(() -> {
+            logger.warn("Security: Password reset failed. Invalid or used token.");
+            return new RuntimeException("Invalid link.");
+        });
+        if (user.getResetTokenExpiry() < System.currentTimeMillis()){
+            logger.warn("Security: Password reset failed for {}. Token expired.", user.getEmail());
+            throw new RuntimeException("Link expired.");
+        }
         validatePasswordStrength(newPassword);
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
         userRepository.save(user);
+        logger.info("Service: Password successfully reset for user: {}", user.getEmail());
     }
 
     private void validatePasswordStrength(String password) {
         String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$";
         if (password == null || !password.matches(pattern)) {
+        	logger.warn("Security: Password strength validation failed.");
             throw new RuntimeException("Password too weak.");
         }
     }
     
     @Override
     public void sendLoginOtp(String email) {
+    	logger.info("Service: Generating Login OTP for {}", email);
         // 1. Ensure user exists
         if (!userRepository.existsByEmail(email)) {
+        	logger.warn("Security: Login OTP requested for non-existent user: {}", email);
             throw new RuntimeException("User not found");
         }
 
@@ -255,6 +302,7 @@ public class AuthServiceImpl implements AuthService {
         long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
         otpStore.put(email, new OtpData(otp, expiryTime, 0, false));
 
+        logger.info("Service: Login OTP generated for {}. Sending email.", email);
         // 3. Send Email
         sendHtmlEmail(email, "RevHire - Login OTP", "Your Login Code", 
             "Use the code below to sign in to your account.", otp, null, null);
@@ -263,8 +311,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void resendLoginOtp(String email) {
+    	logger.info("Service: Resend Login OTP requested for {}", email);
         // 1. Check if user exists (Crucial for Login)
         if (!userRepository.existsByEmail(email)) {
+        	logger.warn("Security: Resend Login OTP failed. User {} does not exist.", email);
             throw new RuntimeException("USER_NOT_FOUND");
         }
 
@@ -272,6 +322,7 @@ public class AuthServiceImpl implements AuthService {
         
         // 2. Check Resend Limit
         if (oldData != null && oldData.resendCount >= 3) {
+        	logger.warn("Service: Resend Login OTP limit reached for {}", email);
             throw new RuntimeException("LIMIT_REACHED");
         }
 
@@ -282,6 +333,7 @@ public class AuthServiceImpl implements AuthService {
         // 3. Store and Send (Login specific)
         otpStore.put(email, new OtpData(newOtp, expiryTime, nextCount, false));
         
+        logger.info("Service: New Login OTP sent to {}. Attempt #{}", email, nextCount);
         sendHtmlEmail(email, "RevHire - Your Login Code", "New Login OTP", 
             "Here is your requested login verification code.", newOtp, null, null);
         
@@ -291,29 +343,37 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public void verifyLoginOtp(String email, String userOtp) {
+    	logger.info("Service: Verifying Login OTP for {}", email);
         OtpData data = otpStore.get(email);
 
         if (data == null) {
+        	logger.warn("Service: Verification failed. No login session found for {}", email);
             throw new RuntimeException("No login session found.");
         }
 
         if (System.currentTimeMillis() > data.expiryTime) {
+        	logger.warn("Service: Login OTP expired for {}", email);
             otpStore.remove(email);
             throw new RuntimeException("OTP has expired.");
         }
 
         if (!data.otp.equals(userOtp)) {
+        	logger.error("Security: Invalid Login OTP entry for {}", email);
             throw new RuntimeException("Invalid OTP!");
         }
-
+        
+        logger.info("Service: Login OTP verified successfully for {}", email);
         otpStore.remove(email); // Success, clear the OTP
     }
 
     @Override
     public void authenticateUserManually(String email, HttpServletRequest request) {
+    	logger.info("Service: Initiating manual authentication for {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+                .orElseThrow(() -> {
+                    logger.error("Service: Manual auth failed. User {} not found.", email);
+                    return new RuntimeException("User not found");
+                });
         // Create UserDetails for Spring Security
         org.springframework.security.core.userdetails.UserDetails userDetails = 
             org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
@@ -332,5 +392,7 @@ public class AuthServiceImpl implements AuthService {
         // Persist the session so the user stays logged in while browsing
         request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", 
             org.springframework.security.core.context.SecurityContextHolder.getContext());
+        
+        logger.info("Service: Manual authentication complete. SecurityContext updated for {}", email);
     }
 }
