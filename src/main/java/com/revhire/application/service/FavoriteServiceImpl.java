@@ -70,8 +70,10 @@ public class FavoriteServiceImpl implements FavoriteService {
             throw new ResourceNotFoundException("User", "id", seekerId);
         }
         
-        return favoriteRepository.findBySeekerId(seekerId, pageable)
-            .map(this::convertToResponse);
+        Page<Favorite> favoritesPage = favoriteRepository.findBySeekerId(seekerId, pageable);
+        log.info("Found {} favorites for seeker: {}", favoritesPage.getTotalElements(), seekerId);
+        
+        return favoritesPage.map(this::convertToResponse);
     }
     
     @Override
@@ -80,20 +82,28 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
     
     private FavoriteResponse convertToResponse(Favorite favorite) {
+        Job job = favorite.getJob();
+        
+        String requiredSkills = job.getRequiredSkills();
+        if (requiredSkills == null) {
+            requiredSkills = "";
+        }
+        
         return FavoriteResponse.builder()
             .id(favorite.getId())
-            .jobId(favorite.getJob().getId())
-            .jobTitle(favorite.getJob().getTitle())
-            .companyName(favorite.getJob().getEmployer().getCompanyName())
-            .location(favorite.getJob().getLocation())
-            .jobType(favorite.getJob().getJobType() != null ? favorite.getJob().getJobType().toString() : null)
-            .industry(favorite.getJob().getEmployer().getIndustry())
-            .salaryMin(favorite.getJob().getSalaryMin())
-            .salaryMax(favorite.getJob().getSalaryMax())
-            .experienceMin(favorite.getJob().getExperienceMin())
-            .experienceMax(favorite.getJob().getExperienceMax())
-            .requiredSkills(favorite.getJob().getRequiredSkills())
-            .deadline(favorite.getJob().getDeadline())
+            .jobId(job.getId())
+            .jobTitle(job.getTitle() != null ? job.getTitle() : "Untitled")
+            .companyName(job.getEmployer() != null && job.getEmployer().getCompanyName() != null ? 
+                job.getEmployer().getCompanyName() : "Unknown Company")
+            .location(job.getLocation() != null ? job.getLocation() : "Location not specified")
+            .jobType(job.getJobType() != null ? job.getJobType().toString() : null)
+            .industry(job.getEmployer() != null ? job.getEmployer().getIndustry() : null)
+            .salaryMin(job.getSalaryMin())
+            .salaryMax(job.getSalaryMax())
+            .experienceMin(job.getExperienceMin())
+            .experienceMax(job.getExperienceMax())
+            .requiredSkills(requiredSkills)
+            .deadline(job.getDeadline())
             .savedAt(favorite.getSavedAt())
             .build();
     }

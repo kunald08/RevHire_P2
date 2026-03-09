@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>RevHire — My Applications</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        .app-hero {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+            border-radius: 0 0 28px 28px;
+            padding: 2rem 0 3.5rem;
+            color: #fff;
+            position: relative;
+        }
+        .app-hero::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px; pointer-events: none;
+        }
+        .app-hero .hero-content { position: relative; z-index: 2; }
+
+        /* Stat Cards */
+        .stat-card {
+            border: none; border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: all 0.3s; cursor: pointer;
+            text-decoration: none; color: inherit;
+        }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); color: inherit; }
+        .stat-card.active-filter { border: 2px solid #7c3aed; }
+        .stat-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        /* Status Tabs */
+        .status-tabs { border-bottom: 2px solid #f3f4f6; }
+        .status-tabs .nav-link {
+            border: none; border-radius: 0;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500; color: #6b7280;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .status-tabs .nav-link:hover { color: #7c3aed; }
+        .status-tabs .nav-link.active {
+            color: #7c3aed; border-bottom-color: #7c3aed;
+            background: none; font-weight: 600;
+        }
+
+        /* Application Card */
+        .app-card {
+            border: none; border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: all 0.3s;
+        }
+        .app-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.10); }
+        .app-card .card-body { padding: 1.25rem; }
+
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.3rem 0.75rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .status-APPLIED { background: #dbeafe; color: #1e40af; }
+        .status-UNDER_REVIEW { background: #fef3c7; color: #92400e; }
+        .status-SHORTLISTED { background: #dcfce7; color: #166534; }
+        .status-REJECTED { background: #fef2f2; color: #991b1b; }
+        .status-WITHDRAWN { background: #f3f4f6; color: #374151; }
+
+        .company-sm {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.85rem; color: #6b7280;
+        }
+        .app-meta {
+            display: flex; flex-wrap: wrap; gap: 1rem;
+            font-size: 0.82rem; color: #9ca3af; margin-top: 0.5rem;
+        }
+        .app-meta span { display: inline-flex; align-items: center; gap: 0.25rem; }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- ══ HERO ══ -->
+    <section class="app-hero">
+        <div class="container hero-content">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">My Applications</h2>
+                    <p class="opacity-90 mb-0">Track and manage all your job applications</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/jobs/search}" class="btn btn-light btn-sm">
+                        <i class="bi bi-search me-1"></i> Find Jobs
+                    </a>
+                    <a th:href="@{/favorites}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-heart me-1"></i> Favorites
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container mt-n4 mb-5" style="margin-top: -2rem; position: relative; z-index: 5;">
+
+        <!-- ══ STAT CARDS ══ -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-lg-2">
+                <a th:href="@{/applications}" class="card stat-card h-100 text-center p-3"
+                   th:classappend="${activeStatus == 'ALL'} ? 'active-filter' : ''">
+                    <div class="stat-icon mx-auto mb-2" style="background:#f0ebff;color:#7c3aed;"><i class="bi bi-stack"></i></div>
+                    <div class="fw-bold fs-4" th:text="${totalCount}">0</div>
+                    <small class="text-muted">Total</small>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <a th:href="@{/applications(status='APPLIED')}" class="card stat-card h-100 text-center p-3"
+                   th:classappend="${activeStatus == 'APPLIED'} ? 'active-filter' : ''">
+                    <div class="stat-icon mx-auto mb-2" style="background:#dbeafe;color:#1e40af;"><i class="bi bi-send-fill"></i></div>
+                    <div class="fw-bold fs-4" th:text="${appliedCount}">0</div>
+                    <small class="text-muted">Applied</small>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <a th:href="@{/applications(status='UNDER_REVIEW')}" class="card stat-card h-100 text-center p-3"
+                   th:classappend="${activeStatus == 'UNDER_REVIEW'} ? 'active-filter' : ''">
+                    <div class="stat-icon mx-auto mb-2" style="background:#fef3c7;color:#92400e;"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="fw-bold fs-4" th:text="${underReviewCount}">0</div>
+                    <small class="text-muted">In Review</small>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <a th:href="@{/applications(status='SHORTLISTED')}" class="card stat-card h-100 text-center p-3"
+                   th:classappend="${activeStatus == 'SHORTLISTED'} ? 'active-filter' : ''">
+                    <div class="stat-icon mx-auto mb-2" style="background:#dcfce7;color:#166534;"><i class="bi bi-star-fill"></i></div>
+                    <div class="fw-bold fs-4" th:text="${shortlistedCount}">0</div>
+                    <small class="text-muted">Shortlisted</small>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <a th:href="@{/applications(status='REJECTED')}" class="card stat-card h-100 text-center p-3"
+                   th:classappend="${activeStatus == 'REJECTED'} ? 'active-filter' : ''">
+                    <div class="stat-icon mx-auto mb-2" style="background:#fef2f2;color:#991b1b;"><i class="bi bi-x-circle-fill"></i></div>
+                    <div class="fw-bold fs-4" th:text="${rejectedCount}">0</div>
+                    <small class="text-muted">Rejected</small>
+                </a>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <a th:href="@{/applications(status='WITHDRAWN')}" class="card stat-card h-100 text-center p-3"
+                   th:classappend="${activeStatus == 'WITHDRAWN'} ? 'active-filter' : ''">
+                    <div class="stat-icon mx-auto mb-2" style="background:#f3f4f6;color:#374151;"><i class="bi bi-arrow-return-left"></i></div>
+                    <div class="fw-bold fs-4" th:text="${withdrawnCount}">0</div>
+                    <small class="text-muted">Withdrawn</small>
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-1"></i> <span th:text="${successMessage}">Success</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-1"></i> <span th:text="${errorMessage}">Error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- ══ EMPTY STATE ══ -->
+        <div th:if="${applications.content.isEmpty()}" class="text-center py-5">
+            <div style="width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 50%; background: #f3f4f6; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-briefcase" style="font-size: 2rem; color: #9ca3af;"></i>
+            </div>
+            <h4 class="fw-bold" th:if="${activeStatus == 'ALL'}">No Applications Yet</h4>
+            <h4 class="fw-bold" th:unless="${activeStatus == 'ALL'}">No Applications with This Status</h4>
+            <p class="text-muted" th:if="${activeStatus == 'ALL'}">Start exploring jobs and submit your first application!</p>
+            <p class="text-muted" th:unless="${activeStatus == 'ALL'}">Try viewing all applications or a different status filter</p>
+            <div class="d-flex justify-content-center gap-2">
+                <a th:href="@{/jobs/search}" class="btn btn-primary"><i class="bi bi-search me-1"></i> Browse Jobs</a>
+                <a th:unless="${activeStatus == 'ALL'}" th:href="@{/applications}" class="btn btn-outline-secondary">
+                    <i class="bi bi-stack me-1"></i> View All
+                </a>
+            </div>
+        </div>
+
+        <!-- ══ APPLICATION CARDS ══ -->
+        <div th:unless="${applications.content.isEmpty()}" class="d-flex flex-column gap-3">
+            <div th:each="app : ${applications.content}" class="card app-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h5 class="fw-bold mb-0">
+                                    <a th:href="@{/applications/{id}(id=${app.id})}" class="text-decoration-none text-dark"
+                                       th:text="${app.jobTitle}">Software Engineer</a>
+                                </h5>
+                                <span class="status-pill"
+                                      th:classappend="'status-' + ${app.status}"
+                                      th:text="${app.status}">APPLIED</span>
+                            </div>
+                            <span class="company-sm">
+                                <i class="bi bi-building"></i>
+                                <span th:text="${app.companyName}">TechCorp</span>
+                            </span>
+                            <div class="app-meta">
+                                <span th:if="${app.jobLocation != null}"><i class="bi bi-geo-alt"></i> <span th:text="${app.jobLocation}">NYC</span></span>
+                                <span th:if="${app.formattedJobType != null}"><i class="bi bi-tag"></i> <span th:text="${app.formattedJobType}">Full Time</span></span>
+                                <span><i class="bi bi-calendar3"></i> Applied <span th:text="${app.formattedAppliedDate}">Jan 15</span></span>
+                                <span th:if="${app.timeAgo != null}"><i class="bi bi-clock"></i> <span th:text="${app.timeAgo}">2 days ago</span></span>
+                                <!-- Resume info -->
+                                <span th:if="${app.resumeFileName != null}" class="text-success">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                                    <a th:href="@{/resume/download/{id}(id=${app.resumeId})}" 
+                                       class="text-success text-decoration-none" target="_blank"
+                                       th:text="${app.resumeFileName}">resume.pdf</a>
+                                </span>
+                                <span th:if="${app.resumeFileName == null}" class="text-warning">
+                                    <i class="bi bi-file-earmark-x"></i> No resume attached
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 ms-3">
+                            <a th:href="@{/applications/{id}(id=${app.id})}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i> Details
+                            </a>
+                            <form th:if="${app.withdrawable}"
+                                  th:action="@{/applications/{id}/withdraw(id=${app.id})}"
+                                  method="post" style="display:inline;"
+                                  onsubmit="return confirm('Withdraw this application? This cannot be undone.');">
+                                <input type="hidden" name="reason" value="Withdrawn by user">
+                                <button type="submit" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-arrow-return-left me-1"></i> Withdraw
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ PAGINATION ══ -->
+        <nav th:if="${applications.totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${applications.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/applications(page=${applications.number - 1}, status=${activeStatus != 'ALL' ? activeStatus : null})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, applications.totalPages - 1)}"
+                    th:classappend="${applications.number == i} ? 'active'">
+                    <a class="page-link" th:href="@{/applications(page=${i}, status=${activeStatus != 'ALL' ? activeStatus : null})}"
+                       th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${applications.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/applications(page=${applications.number + 1}, status=${activeStatus != 'ALL' ? activeStatus : null})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>
+</body>
+</html>
