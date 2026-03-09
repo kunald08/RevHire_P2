@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}"></head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main class="notif-page py-4">
+        <div class="container" style="max-width: 820px;">
+
+            <!-- ─── Header ─── -->
+            <div class="notif-header mb-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="notif-header-icon">
+                            <i class="bi bi-bell-fill"></i>
+                        </div>
+                        <div>
+                            <h1 class="h4 fw-bold mb-0">
+                                Notifications
+                                <span class="badge rounded-pill bg-danger ms-2"
+                                      id="header-unread-badge"
+                                      th:if="${unreadCount > 0}"
+                                      th:text="${unreadCount}"
+                                      style="font-size: 0.7rem; vertical-align: middle;">0</span>
+                            </h1>
+                            <p class="text-secondary mb-0" style="font-size: 0.88rem;">
+                                Stay updated on your applications &amp; activity
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                            id="markAllReadBtn"
+                            th:if="${unreadCount > 0}"
+                            onclick="markAllReadAjax()">
+                        <i class="bi bi-check-all me-1"></i>Mark all read
+                    </button>
+                </div>
+            </div>
+
+            <!-- ─── Stats Ribbon ─── -->
+            <div class="row g-3 mb-4" th:if="${totalCount > 0}">
+                <div class="col-4">
+                    <div class="notif-stat-chip text-center p-3 rounded-3">
+                        <div class="fw-bold fs-5 text-primary" id="stat-total"
+                             th:text="${totalCount}">0</div>
+                        <div class="text-secondary" style="font-size:0.78rem;">Total</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="notif-stat-chip text-center p-3 rounded-3">
+                        <div class="fw-bold fs-5 text-danger" id="stat-unread"
+                             th:text="${unreadCount}">0</div>
+                        <div class="text-secondary" style="font-size:0.78rem;">Unread</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="notif-stat-chip text-center p-3 rounded-3">
+                        <div class="fw-bold fs-5 text-success" id="stat-read"
+                             th:text="${totalCount - unreadCount}">0</div>
+                        <div class="text-secondary" style="font-size:0.78rem;">Read</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Filter Tabs ─── -->
+            <div class="notif-tabs mb-3" th:if="${totalCount > 0}">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/notifications}"
+                       class="notif-tab"
+                       th:classappend="${activeFilter == 'ALL'} ? ' active' : ''">
+                        All
+                        <span class="notif-tab-badge" th:text="${totalCount}">0</span>
+                    </a>
+                    <a th:href="@{/notifications(type='APPLICATION_UPDATE')}"
+                       class="notif-tab"
+                       th:classappend="${activeFilter == 'APPLICATION_UPDATE'} ? ' active' : ''">
+                        <i class="bi bi-file-earmark-check me-1"></i>Status Updates
+                        <span class="notif-tab-badge" th:if="${applicationUpdateCount > 0}"
+                              th:text="${applicationUpdateCount}">0</span>
+                    </a>
+                    <a th:href="@{/notifications(type='APPLICATION_RECEIVED')}"
+                       class="notif-tab"
+                       th:classappend="${activeFilter == 'APPLICATION_RECEIVED'} ? ' active' : ''">
+                        <i class="bi bi-inbox-fill me-1"></i>New Applications
+                        <span class="notif-tab-badge" th:if="${applicationReceivedCount > 0}"
+                              th:text="${applicationReceivedCount}">0</span>
+                    </a>
+                    <a th:href="@{/notifications(type='APPLICATION_WITHDRAWN')}"
+                       class="notif-tab"
+                       th:classappend="${activeFilter == 'APPLICATION_WITHDRAWN'} ? ' active' : ''">
+                        <i class="bi bi-arrow-return-left me-1"></i>Withdrawals
+                        <span class="notif-tab-badge" th:if="${applicationWithdrawnCount > 0}"
+                              th:text="${applicationWithdrawnCount}">0</span>
+                    </a>
+                    <a th:href="@{/notifications(type='SYSTEM')}"
+                       class="notif-tab"
+                       th:classappend="${activeFilter == 'SYSTEM'} ? ' active' : ''">
+                        <i class="bi bi-gear me-1"></i>System
+                        <span class="notif-tab-badge" th:if="${systemCount > 0}"
+                              th:text="${systemCount}">0</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ─── Empty State ─── -->
+            <div th:if="${#lists.isEmpty(notifications)}" class="text-center py-5" id="notif-empty">
+                <div class="notif-empty-icon mx-auto mb-3">
+                    <i class="bi bi-bell-slash" style="font-size: 2.5rem; color: #94a3b8;"></i>
+                </div>
+                <h5 class="fw-semibold text-secondary">
+                    <span th:if="${activeFilter != 'ALL'}">No notifications of this type</span>
+                    <span th:if="${activeFilter == 'ALL'}">No notifications yet</span>
+                </h5>
+                <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                    When there's activity on your account, you'll see it here.
+                </p>
+                <a th:if="${activeFilter != 'ALL'}" th:href="@{/notifications}"
+                   class="btn btn-sm btn-outline-primary mt-3 rounded-pill px-3">
+                    <i class="bi bi-arrow-left me-1"></i>View all notifications
+                </a>
+            </div>
+
+            <!-- ─── Notification Cards ─── -->
+            <div class="d-flex flex-column gap-2" id="notif-list"
+                 th:unless="${#lists.isEmpty(notifications)}">
+                <div th:each="notif : ${notifications}"
+                     class="notif-card"
+                     th:classappend="${!notif.isRead} ? ' notif-unread' : ''"
+                     th:id="'notif-' + ${notif.id}">
+
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Type Icon -->
+                        <div class="notif-type-icon flex-shrink-0"
+                             th:style="'background:' + ${notif.typeBgColor}">
+                            <i class="bi" th:class="'bi ' + ${notif.typeIcon}"
+                               th:classappend="' ' + ${notif.typeColor}"></i>
+                        </div>
+
+                        <!-- Content — entire area is clickable if link exists -->
+                        <a th:if="${notif.link}" th:href="@{${notif.link}}"
+                           class="flex-grow-1 min-width-0 text-decoration-none notif-content-link"
+                           th:data-notif-id="${notif.id}"
+                           th:data-notif-link="${notif.link}"
+                           onclick="markNotifRead(event, this.dataset.notifId, this.dataset.notifLink); return false;">
+                            <p class="mb-1" style="font-size: 0.92rem; line-height: 1.45;"
+                               th:classappend="${!notif.isRead} ? ' fw-semibold text-dark' : ' text-secondary'">
+                                <span th:text="${notif.message}">Notification message</span>
+                            </p>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <small class="text-muted" th:title="${notif.formattedDate}">
+                                    <i class="bi bi-clock me-1"></i>
+                                    <span th:text="${notif.timeAgo}">2h ago</span>
+                                </small>
+                                <span class="notif-type-label" th:text="${notif.type.name().replace('_', ' ')}"
+                                      th:classappend="' ' + ${notif.typeColor}">
+                                    Type
+                                </span>
+                                <span th:unless="${notif.isRead}"
+                                      class="badge rounded-pill bg-primary"
+                                      style="font-size: 0.6rem; padding: 0.25rem 0.5rem;">NEW</span>
+                            </div>
+                        </a>
+                        <div th:unless="${notif.link}" class="flex-grow-1 min-width-0">
+                            <p class="mb-1" style="font-size: 0.92rem; line-height: 1.45;"
+                               th:classappend="${!notif.isRead} ? ' fw-semibold text-dark' : ' text-secondary'">
+                                <span th:text="${notif.message}">Notification message</span>
+                            </p>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <small class="text-muted" th:title="${notif.formattedDate}">
+                                    <i class="bi bi-clock me-1"></i>
+                                    <span th:text="${notif.timeAgo}">2h ago</span>
+                                </small>
+                                <span class="notif-type-label" th:text="${notif.type.name().replace('_', ' ')}"
+                                      th:classappend="' ' + ${notif.typeColor}">
+                                    Type
+                                </span>
+                                <span th:unless="${notif.isRead}"
+                                      class="badge rounded-pill bg-primary"
+                                      style="font-size: 0.6rem; padding: 0.25rem 0.5rem;">NEW</span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <span class="d-inline" th:unless="${notif.isRead}">
+                                <button type="button"
+                                        class="btn btn-sm btn-light rounded-circle notif-action-btn mark-read-btn"
+                                        title="Mark as read"
+                                        th:data-notif-id="${notif.id}"
+                                        onclick="markAsReadAjax(this.dataset.notifId, this)">
+                                    <i class="bi bi-check2"></i>
+                                </button>
+                            </span>
+                            <button type="button"
+                                    class="btn btn-sm btn-light rounded-circle notif-action-btn notif-delete-btn"
+                                    title="Delete notification"
+                                    th:data-notif-id="${notif.id}"
+                                    onclick="deleteNotifAjax(this.dataset.notifId, this)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /container -->
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>

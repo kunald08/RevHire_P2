@@ -2,10 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title th:text="'RevHire — ' + (${appDetail.jobTitle != null ? application.jobTitle : 'Application Details'})">RevHire — Application Detail</title>
+    <title th:text="'RevHire — ' + (${appDetail.jobTitle != null ? appDetail.jobTitle : 'Application Details'})">RevHire — Application Detail</title>
     <th:block th:replace="~{fragments/layout :: head}"></th:block>
     <style>
-        /* ── Hero ── */
         .app-hero {
             background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
             padding: 2.5rem 0 4rem;
@@ -13,28 +12,7 @@
             position: relative;
             overflow: hidden;
         }
-        .app-hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: rgba(99, 102, 241, 0.08);
-        }
-        .app-hero::after {
-            content: '';
-            position: absolute;
-            bottom: -60%;
-            left: -10%;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            background: rgba(168, 85, 247, 0.06);
-        }
         .hero-inner { position: relative; z-index: 2; }
-
         .back-link {
             color: rgba(255,255,255,0.7);
             text-decoration: none;
@@ -43,7 +21,6 @@
             transition: color 0.2s;
         }
         .back-link:hover { color: #fff; }
-
         .company-chip {
             display: inline-flex;
             align-items: center;
@@ -56,7 +33,6 @@
             font-weight: 500;
             backdrop-filter: blur(6px);
         }
-
         .hero-meta-row {
             display: flex;
             flex-wrap: wrap;
@@ -70,7 +46,6 @@
             align-items: center;
             gap: 0.35rem;
         }
-
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -87,8 +62,6 @@
         .status-SHORTLISTED   { background: #dcfce7; color: #166534; }
         .status-REJECTED      { background: #fee2e2; color: #991b1b; }
         .status-WITHDRAWN     { background: #f3f4f6; color: #374151; }
-
-        /* ── Content Cards ── */
         .detail-section {
             border: none;
             border-radius: 16px;
@@ -115,8 +88,6 @@
             font-size: 0.95rem;
             flex-shrink: 0;
         }
-
-        /* ── Stat tiles ── */
         .stat-tiles {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -132,11 +103,6 @@
             border: 1px solid #f3f4f6;
             box-shadow: 0 1px 8px rgba(0,0,0,0.04);
             transition: all 0.2s;
-        }
-        .stat-tile:hover {
-            border-color: #818cf8;
-            box-shadow: 0 2px 10px rgba(99,102,241,0.08);
-            transform: translateY(-1px);
         }
         .stat-icon {
             width: 40px;
@@ -160,16 +126,12 @@
             font-weight: 600;
             color: #1f2937;
         }
-
-        /* ── Job description ── */
         .job-desc-body {
             font-size: 0.92rem;
             line-height: 1.75;
             color: #374151;
             white-space: pre-line;
         }
-
-        /* ── Skills tags ── */
         .skill-tag {
             display: inline-flex;
             align-items: center;
@@ -182,8 +144,6 @@
             color: #4338ca;
             border: 1px solid #c7d2fe;
         }
-
-        /* ── Resume card ── */
         .resume-card {
             display: flex;
             align-items: center;
@@ -203,8 +163,6 @@
             justify-content: center;
         }
         .resume-icon i { font-size: 1.35rem; color: #dc2626; }
-
-        /* ── Cover letter ── */
         .cover-box {
             padding: 1.25rem;
             border-radius: 14px;
@@ -215,8 +173,6 @@
             font-size: 0.92rem;
             color: #374151;
         }
-
-        /* ── Timeline ── */
         .app-timeline { position: relative; padding-left: 2rem; }
         .app-timeline::before {
             content: '';
@@ -246,8 +202,6 @@
         .tl-wait { background: #e5e7eb; color: #9ca3af; }
         .tl-fail { background: #ef4444; color: #fff; }
         .tl-warn { background: #f59e0b; color: #fff; }
-
-        /* ── Info grid ── */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -271,7 +225,6 @@
             font-weight: 600;
             color: #1f2937;
         }
-
         @media (max-width: 768px) {
             .info-grid { grid-template-columns: 1fr; }
             .stat-tiles { grid-template-columns: 1fr 1fr; }
@@ -281,7 +234,6 @@
 <body>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- ══════════ HERO ══════════ -->
     <section class="app-hero">
         <div class="container hero-inner">
             <a th:href="@{/applications}" class="back-link mb-3 d-inline-flex align-items-center gap-1">
@@ -289,7 +241,7 @@
             </a>
 
             <div class="d-flex flex-wrap align-items-center gap-3 mt-2 mb-2">
-                <h2 class="fw-bold mb-0 fs-3" th:text="${appDetail.jobTitle != null ? application.jobTitle : 'Job Details Unavailable'}">Software Engineer</h2>
+                <h2 class="fw-bold mb-0 fs-3" th:text="${appDetail.jobTitle != null ? appDetail.jobTitle : 'Job Details Unavailable'}">Software Engineer</h2>
                 <span th:if="${appDetail.status != null}"
                       class="status-badge"
                       th:classappend="'status-' + ${appDetail.status.name()}"
@@ -306,7 +258,7 @@
                     <i class="bi bi-geo-alt-fill"></i>
                     <span th:text="${appDetail.jobLocation}">New York</span>
                 </span>
-                <span th:if="${appDetail.formattedJobType != null and !application.formattedJobType.equals('Not Specified')}">
+                <span th:if="${appDetail.formattedJobType != null and !appDetail.formattedJobType.equals('Not Specified')}">
                     <i class="bi bi-briefcase-fill"></i>
                     <span th:text="${appDetail.formattedJobType}">Full Time</span>
                 </span>
@@ -314,11 +266,11 @@
                     <i class="bi bi-currency-dollar"></i>
                     <span th:text="${appDetail.formattedSalary}">$80K - $120K</span>
                 </span>
-                <span th:if="${appDetail.formattedAppliedDate != null and !application.formattedAppliedDate.isEmpty()}">
+                <span th:if="${appDetail.formattedAppliedDate != null and !appDetail.formattedAppliedDate.isEmpty()}">
                     <i class="bi bi-calendar3"></i> Applied
                     <span th:text="${appDetail.formattedAppliedDate}">Jan 15, 2024</span>
                 </span>
-                <span th:if="${appDetail.timeAgo != null and !application.timeAgo.isEmpty()}">
+                <span th:if="${appDetail.timeAgo != null and !appDetail.timeAgo.isEmpty()}">
                     <i class="bi bi-clock"></i>
                     <span th:text="${appDetail.timeAgo}">2 days ago</span>
                 </span>
@@ -326,14 +278,9 @@
         </div>
     </section>
 
-    <!-- ══════════ BODY ══════════ -->
     <div class="container pb-5" style="margin-top: -2rem; position: relative; z-index: 5;">
         <div class="row g-4">
-
-            <!-- ══ LEFT COLUMN ══ -->
             <div class="col-lg-8">
-
-                <!-- Stat Tiles -->
                 <div class="stat-tiles mb-4">
                     <div class="stat-tile">
                         <div class="stat-icon" style="background:#dbeafe; color:#2563eb;">
@@ -341,7 +288,7 @@
                         </div>
                         <div>
                             <div class="stat-label">Status</div>
-                            <div class="stat-value" th:text="${appDetail.status != null ? application.status.name() : 'N/A'}">Applied</div>
+                            <div class="stat-value" th:text="${appDetail.status != null ? appDetail.status.name() : 'N/A'}">Applied</div>
                         </div>
                     </div>
                     <div class="stat-tile">
@@ -350,7 +297,7 @@
                         </div>
                         <div>
                             <div class="stat-label">Applied On</div>
-                            <div class="stat-value" th:text="${appDetail.formattedAppliedDate != null and !application.formattedAppliedDate.isEmpty() ? application.formattedAppliedDate : 'N/A'}">Jan 15</div>
+                            <div class="stat-value" th:text="${appDetail.formattedAppliedDate != null and !appDetail.formattedAppliedDate.isEmpty() ? appDetail.formattedAppliedDate : 'N/A'}">Jan 15</div>
                         </div>
                     </div>
                     <div class="stat-tile">
@@ -359,7 +306,7 @@
                         </div>
                         <div>
                             <div class="stat-label">Last Updated</div>
-                            <div class="stat-value" th:text="${appDetail.formattedUpdatedDate != null and !application.formattedUpdatedDate.isEmpty() ? application.formattedUpdatedDate : 'N/A'}">Jan 16</div>
+                            <div class="stat-value" th:text="${appDetail.formattedUpdatedDate != null and !appDetail.formattedUpdatedDate.isEmpty() ? appDetail.formattedUpdatedDate : 'N/A'}">Jan 16</div>
                         </div>
                     </div>
                     <div class="stat-tile" th:if="${appDetail.formattedExperience != null}">
@@ -373,8 +320,7 @@
                     </div>
                 </div>
 
-                <!-- ── Job Description ── -->
-                <div th:if="${appDetail.jobDescription != null and !application.jobDescription.isEmpty()}" class="detail-section mb-4">
+                <div th:if="${appDetail.jobDescription != null and !appDetail.jobDescription.isEmpty()}" class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
                             <div class="icon-dot" style="background:#eef2ff; color:#4f46e5;">
@@ -388,8 +334,7 @@
                     </div>
                 </div>
 
-                <!-- ── Required Skills ── -->
-                <div th:if="${appDetail.requiredSkills != null and !application.requiredSkills.isEmpty()}" class="detail-section mb-4">
+                <div th:if="${appDetail.requiredSkills != null and !appDetail.requiredSkills.isEmpty()}" class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
                             <div class="icon-dot" style="background:#fef3c7; color:#d97706;">
@@ -405,7 +350,6 @@
                     </div>
                 </div>
 
-                <!-- ── Job Details Grid ── -->
                 <div class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
@@ -415,7 +359,7 @@
                             Job Details
                         </div>
                         <div class="info-grid">
-                            <div class="info-item" th:if="${appDetail.formattedJobType != null and !application.formattedJobType.equals('Not Specified')}">
+                            <div class="info-item" th:if="${appDetail.formattedJobType != null and !appDetail.formattedJobType.equals('Not Specified')}">
                                 <div class="info-label"><i class="bi bi-briefcase me-1"></i> Job Type</div>
                                 <div class="info-val" th:text="${appDetail.formattedJobType}">Full Time</div>
                             </div>
@@ -431,11 +375,11 @@
                                 <div class="info-label"><i class="bi bi-bar-chart me-1"></i> Experience</div>
                                 <div class="info-val" th:text="${appDetail.formattedExperience}">2 - 5 years</div>
                             </div>
-                            <div class="info-item" th:if="${appDetail.educationReq != null and !application.educationReq.isEmpty()}">
+                            <div class="info-item" th:if="${appDetail.educationReq != null and !appDetail.educationReq.isEmpty()}">
                                 <div class="info-label"><i class="bi bi-mortarboard me-1"></i> Education</div>
                                 <div class="info-val" th:text="${appDetail.educationReq}">Bachelor's</div>
                             </div>
-                            <div class="info-item" th:if="${appDetail.numOpenings != null and application.numOpenings > 0}">
+                            <div class="info-item" th:if="${appDetail.numOpenings != null and appDetail.numOpenings > 0}">
                                 <div class="info-label"><i class="bi bi-people me-1"></i> Openings</div>
                                 <div class="info-val" th:text="${appDetail.numOpenings}">3</div>
                             </div>
@@ -447,7 +391,6 @@
                     </div>
                 </div>
 
-                <!-- ── Resume ── -->
                 <div class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
@@ -484,7 +427,6 @@
                     </div>
                 </div>
 
-                <!-- ── Cover Letter ── -->
                 <div class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
@@ -493,11 +435,11 @@
                             </div>
                             Cover Letter
                         </div>
-                        <div th:if="${appDetail.coverLetter != null and !application.coverLetter.isEmpty()}"
+                        <div th:if="${appDetail.coverLetter != null and !appDetail.coverLetter.isEmpty()}"
                              class="cover-box"
                              th:text="${appDetail.coverLetter}">
                         </div>
-                        <div th:if="${appDetail.coverLetter == null or application.coverLetter.isEmpty()}"
+                        <div th:if="${appDetail.coverLetter == null or appDetail.coverLetter.isEmpty()}"
                              class="text-center py-4" style="background: #f9fafb; border-radius: 14px; border: 2px dashed #e5e7eb;">
                             <i class="bi bi-envelope-open text-muted d-block mb-1" style="font-size: 1.4rem;"></i>
                             <span class="text-muted" style="font-size: 0.88rem;">No cover letter submitted</span>
@@ -505,8 +447,7 @@
                     </div>
                 </div>
 
-                <!-- ── Employer Feedback ── -->
-                <div th:if="${appDetail.employerComment != null and !application.employerComment.isEmpty()}" class="detail-section mb-4">
+                <div th:if="${appDetail.employerComment != null and !appDetail.employerComment.isEmpty()}" class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
                             <div class="icon-dot" style="background:#dbeafe; color:#2563eb;">
@@ -520,8 +461,7 @@
                     </div>
                 </div>
 
-                <!-- ── Withdrawal Reason ── -->
-                <div th:if="${appDetail.withdrawReason != null and !application.withdrawReason.isEmpty()}" class="detail-section mb-4">
+                <div th:if="${appDetail.withdrawReason != null and !appDetail.withdrawReason.isEmpty()}" class="detail-section mb-4">
                     <div class="card-body p-4">
                         <div class="section-header">
                             <div class="icon-dot" style="background:#fef3c7; color:#d97706;">
@@ -536,10 +476,7 @@
                 </div>
             </div>
 
-            <!-- ══ RIGHT SIDEBAR ══ -->
             <div class="col-lg-4">
-
-                <!-- Quick Actions -->
                 <div class="detail-section mb-4">
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Actions</h6>
@@ -563,46 +500,36 @@
                     </div>
                 </div>
 
-                <!-- Application Timeline -->
                 <div class="detail-section mb-4">
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-3"><i class="bi bi-clock-history text-primary me-1"></i> Application Timeline</h6>
                         <div class="app-timeline">
-                            <!-- Applied (always shown) -->
                             <div class="tl-item">
                                 <div class="tl-dot tl-done"><i class="bi bi-check2"></i></div>
                                 <div class="fw-semibold" style="font-size:0.9rem;">Applied</div>
-                                <small class="text-muted" th:text="${appDetail.formattedAppliedDate != null and !application.formattedAppliedDate.isEmpty() ? application.formattedAppliedDate : 'Date not available'}">Jan 15, 2024</small>
+                                <small class="text-muted" th:text="${appDetail.formattedAppliedDate != null and !appDetail.formattedAppliedDate.isEmpty() ? appDetail.formattedAppliedDate : 'Date not available'}">Jan 15, 2024</small>
                             </div>
-
-                            <!-- Under Review -->
-                            <div class="tl-item" th:if="${appDetail.status != null and (application.status.name() == 'UNDER_REVIEW' or application.status.name() == 'SHORTLISTED' or application.status.name() == 'REJECTED')}">
+                            <div class="tl-item" th:if="${appDetail.status != null and (appDetail.status.name() == 'UNDER_REVIEW' or appDetail.status.name() == 'SHORTLISTED' or appDetail.status.name() == 'REJECTED')}">
                                 <div class="tl-dot tl-done"><i class="bi bi-check2"></i></div>
                                 <div class="fw-semibold" style="font-size:0.9rem;">Under Review</div>
                                 <small class="text-muted">Application reviewed by employer</small>
                             </div>
-                            <div class="tl-item" th:if="${appDetail.status != null and application.status.name() == 'APPLIED'}">
+                            <div class="tl-item" th:if="${appDetail.status != null and appDetail.status.name() == 'APPLIED'}">
                                 <div class="tl-dot tl-wait"><i class="bi bi-hourglass-split"></i></div>
                                 <div class="text-muted" style="font-size:0.9rem;">Under Review</div>
                                 <small class="text-muted">Pending</small>
                             </div>
-
-                            <!-- Shortlisted -->
-                            <div class="tl-item" th:if="${appDetail.status != null and application.status.name() == 'SHORTLISTED'}">
+                            <div class="tl-item" th:if="${appDetail.status != null and appDetail.status.name() == 'SHORTLISTED'}">
                                 <div class="tl-dot tl-done"><i class="bi bi-star-fill"></i></div>
                                 <div class="fw-semibold text-success" style="font-size:0.9rem;">Shortlisted!</div>
                                 <small class="text-muted">You've been shortlisted</small>
                             </div>
-
-                            <!-- Rejected -->
-                            <div class="tl-item" th:if="${appDetail.status != null and application.status.name() == 'REJECTED'}">
+                            <div class="tl-item" th:if="${appDetail.status != null and appDetail.status.name() == 'REJECTED'}">
                                 <div class="tl-dot tl-fail"><i class="bi bi-x-lg"></i></div>
                                 <div class="fw-semibold text-danger" style="font-size:0.9rem;">Not Selected</div>
                                 <small class="text-muted">Application was not selected</small>
                             </div>
-
-                            <!-- Withdrawn -->
-                            <div class="tl-item" th:if="${appDetail.status != null and application.status.name() == 'WITHDRAWN'}">
+                            <div class="tl-item" th:if="${appDetail.status != null and appDetail.status.name() == 'WITHDRAWN'}">
                                 <div class="tl-dot tl-warn"><i class="bi bi-arrow-return-left"></i></div>
                                 <div class="fw-semibold text-warning" style="font-size:0.9rem;">Withdrawn</div>
                                 <small class="text-muted">You withdrew this application</small>
@@ -611,7 +538,6 @@
                     </div>
                 </div>
 
-                <!-- Application Summary Card -->
                 <div class="detail-section">
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-3"><i class="bi bi-card-checklist text-info me-1"></i> Summary</h6>
@@ -624,7 +550,7 @@
                                 <span class="text-muted">Company</span>
                                 <span class="fw-semibold" th:text="${appDetail.companyName}">TechCorp</span>
                             </li>
-                            <li class="d-flex justify-content-between py-2 border-bottom" th:if="${appDetail.formattedJobType != null and !application.formattedJobType.equals('Not Specified')}">
+                            <li class="d-flex justify-content-between py-2 border-bottom" th:if="${appDetail.formattedJobType != null and !appDetail.formattedJobType.equals('Not Specified')}">
                                 <span class="text-muted">Type</span>
                                 <span class="fw-semibold" th:text="${appDetail.formattedJobType}">Full Time</span>
                             </li>
@@ -639,14 +565,13 @@
                             <li class="d-flex justify-content-between py-2" th:if="${appDetail.status != null}">
                                 <span class="text-muted">Status</span>
                                 <span class="fw-semibold"
-                                      th:classappend="${appDetail.status.name() == 'SHORTLISTED' ? 'text-success' : (application.status.name() == 'REJECTED' ? 'text-danger' : 'text-primary')}"
+                                      th:classappend="${appDetail.status.name() == 'SHORTLISTED' ? 'text-success' : (appDetail.status.name() == 'REJECTED' ? 'text-danger' : 'text-primary')}"
                                       th:text="${appDetail.status.name()}">APPLIED</span>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 

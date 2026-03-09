@@ -18,7 +18,6 @@
             border-radius: 0 0 28px 28px; pointer-events: none;
         }
         .fav-hero .hero-content { position: relative; z-index: 2; }
-
         .fav-card {
             border: none; border-radius: 16px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.06);
@@ -26,7 +25,6 @@
             overflow: hidden;
         }
         .fav-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(79,70,229,0.12); }
-
         .fav-card .card-top {
             display: flex; justify-content: space-between; align-items: flex-start;
         }
@@ -39,7 +37,6 @@
         .type-CONTRACT { background: #fce7f3; color: #9d174d; }
         .type-INTERNSHIP { background: #dcfce7; color: #166534; }
         .type-REMOTE { background: #ede9fe; color: #5b21b6; }
-
         .remove-btn {
             width: 36px; height: 36px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
@@ -47,19 +44,16 @@
             transition: all 0.2s; cursor: pointer;
         }
         .remove-btn:hover { background: #ef4444; color: #fff; transform: scale(1.1); }
-
         .meta-item {
             display: inline-flex; align-items: center; gap: 4px;
             font-size: 0.82rem; color: #6b7280;
         }
         .meta-item i { font-size: 0.9rem; }
-
         .skill-tag {
             display: inline-block; padding: 2px 10px; border-radius: 20px;
             font-size: 0.72rem; font-weight: 500;
             background: #f3f4f6; color: #4b5563;
         }
-
         .deadline-chip {
             display: inline-flex; align-items: center; gap: 4px;
             padding: 3px 10px; border-radius: 20px;
@@ -68,7 +62,6 @@
         .deadline-ok { background: #dcfce7; color: #166534; }
         .deadline-soon { background: #fef3c7; color: #92400e; }
         .deadline-expired { background: #fef2f2; color: #991b1b; }
-
         .empty-state {
             text-align: center; padding: 4rem 1rem;
         }
@@ -83,7 +76,6 @@
 <body>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- ══ HERO ══ -->
     <section class="fav-hero">
         <div class="container hero-content">
             <h2 class="fw-bold mb-1"><i class="bi bi-heart-fill me-2"></i> My Favorites</h2>
@@ -96,7 +88,6 @@
 
     <div class="container mb-5" style="margin-top: -2.5rem; position: relative; z-index: 5;">
 
-        <!-- Flash Messages -->
         <div th:if="${param.successMessage}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
             <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${param.successMessage[0]}">Success</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -106,7 +97,6 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- ══ EMPTY STATE ══ -->
         <div th:if="${favorites == null or favorites.content.isEmpty()}" class="empty-state">
             <div class="empty-icon"><i class="bi bi-heart"></i></div>
             <h4 class="fw-bold mb-2">No Favorites Yet</h4>
@@ -116,12 +106,10 @@
             </a>
         </div>
 
-        <!-- ══ FAVORITES GRID ══ -->
         <div th:unless="${favorites == null or favorites.content.isEmpty()}" class="row g-4">
             <div class="col-md-6 col-lg-4" th:each="fav : ${favorites.content}">
                 <div class="card fav-card h-100">
                     <div class="card-body p-4">
-                        <!-- Top Row: Type + Remove -->
                         <div class="card-top mb-3">
                             <span class="type-badge" th:classappend="'type-' + ${fav.jobType}" th:text="${fav.jobType?.toString()?.replace('_', ' ')}">Full Time</span>
                             <form th:action="@{/favorites/{jobId}/remove(jobId=${fav.jobId})}" method="post" style="margin:0;">
@@ -132,7 +120,6 @@
                             </form>
                         </div>
 
-                        <!-- Title + Company -->
                         <h6 class="fw-bold mb-1">
                             <a th:href="@{/jobs/{id}(id=${fav.jobId})}" class="text-decoration-none text-dark"
                                th:text="${fav.jobTitle}">Software Engineer</a>
@@ -142,7 +129,6 @@
                             <span th:text="${fav.companyName}">TechCorp</span>
                         </div>
 
-                        <!-- Meta -->
                         <div class="d-flex flex-wrap gap-3 mb-3">
                             <span class="meta-item" th:if="${fav.location != null}">
                                 <i class="bi bi-geo-alt-fill text-primary"></i>
@@ -158,13 +144,11 @@
                             </span>
                         </div>
 
-                        <!-- Skills -->
                         <div th:if="${fav.requiredSkills != null and !fav.requiredSkills.isEmpty()}" class="d-flex flex-wrap gap-1 mb-3">
-                            <span class="skill-tag" th:each="skill, stat : ${fav.requiredSkills}" th:if="${stat.index < 4}" th:text="${skill}">Java</span>
-                            <span class="skill-tag" th:if="${fav.requiredSkills.size() > 4}" th:text="'+' + (${fav.requiredSkills.size()} - 4) + ' more'">+2 more</span>
+                            <span class="skill-tag" th:each="skill, stat : ${fav.requiredSkills.split(',')}" th:if="${stat.index < 4}" th:text="${skill.trim()}">Java</span>
+                            <span class="skill-tag" th:if="${#arrays.length(fav.requiredSkills.split(',')) > 4}" th:text="'+' + (${#arrays.length(fav.requiredSkills.split(',')) - 4}) + ' more'">+2 more</span>
                         </div>
 
-                        <!-- Deadline -->
                         <div th:if="${fav.daysRemaining != null}" class="mb-2">
                             <span class="deadline-chip"
                                   th:classappend="${fav.daysRemaining < 0 ? 'deadline-expired' : (fav.daysRemaining <= 7 ? 'deadline-soon' : 'deadline-ok')}"
@@ -174,7 +158,6 @@
                         </div>
                     </div>
 
-                    <!-- Footer -->
                     <div class="card-footer bg-white border-top-0 px-4 pb-4 pt-0">
                         <div class="d-flex gap-2">
                             <a th:href="@{/jobs/{id}(id=${fav.jobId})}" class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill">
@@ -189,7 +172,6 @@
             </div>
         </div>
 
-        <!-- ══ PAGINATION ══ -->
         <nav th:if="${favorites != null and favorites.totalPages > 1}" class="mt-5">
             <ul class="pagination justify-content-center">
                 <li class="page-item" th:classappend="${favorites.first} ? 'disabled'">
@@ -209,7 +191,6 @@
             </ul>
         </nav>
 
-        <!-- Summary Bar -->
         <div th:unless="${favorites == null or favorites.content.isEmpty()}" class="text-center mt-4">
             <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill" style="background:#f3f4f6;">
                 <i class="bi bi-heart-fill text-danger"></i>
