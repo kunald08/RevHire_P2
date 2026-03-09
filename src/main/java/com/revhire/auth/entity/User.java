@@ -50,6 +50,12 @@ public class User
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private Long resetTokenExpiry; // Stores timestamp in milliseconds
 
     @PrePersist
     protected void onCreate()

@@ -33,21 +33,24 @@
                             <input type="email" th:field="*{email}" class="form-control" placeholder="hr@company.com" required>
                         </div>
 						<div class="mb-3">
-						    <label class="form-label">Password</label>
+						    <label for="passwordInput" class="form-label">Password</label>
 						    <div class="input-group">
 						        <input type="password" th:field="*{password}" id="passwordInput" 
-						               class="form-control" placeholder="Create a strong password" required>
+						               class="form-control" onkeyup="checkPasswordStrength(this.value)" required>
 						        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
 						            <i class="bi bi-eye" id="eyeIcon"></i>
 						        </button>
 						    </div>
 						</div>
-                        <div class="mb-3">
+						                        <div class="mb-3">
                             <label class="form-label">Company Phone</label>
                             <input type="text" th:field="*{phone}" class="form-control" placeholder="+91..." required>
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100 btn-lg shadow-sm">Register as Employer</button>
+						<button type="submit" class="btn btn-success w-100 btn-lg shadow-sm" id="regBtn">
+						    <span id="btnText">Register as Employer</span>
+						    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+						</button>
                     </form>
                     
                     <p class="text-center mt-4 mb-0 text-muted">

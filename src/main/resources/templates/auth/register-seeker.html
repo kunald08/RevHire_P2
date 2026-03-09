@@ -34,20 +34,23 @@
                         </div>
 						<div class="mb-3">
 						    <label class="form-label">Password</label>
-						    <div class="input-group">
-						        <input type="password" th:field="*{password}" id="passwordInput" 
-						               class="form-control" placeholder="Create a strong password" required>
-						        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-						            <i class="bi bi-eye" id="eyeIcon"></i>
-						        </button>
-						    </div>
+							<div class="input-group">
+							    <input type="password" th:field="*{password}" id="passwordInput" 
+							           class="form-control" placeholder="Create a strong password" required>
+							    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+							        <i class="bi bi-eye" id="eyeIcon"></i>
+							    </button>
+							</div>
 						</div>
                         <div class="mb-3">
                             <label class="form-label">Location</label>
                             <input type="text" th:field="*{location}" class="form-control" placeholder="e.g. Chennai, India">
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm">Create Seeker Account</button>
+						<button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm" id="regBtn">
+						    <span id="btnText">Create Seeker Account</span>
+						    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+						</button>
                     </form>
                     
                     <p class="text-center mt-4 mb-0 text-muted">

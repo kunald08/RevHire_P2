@@ -1,5 +1,7 @@
 package com.revhire.config;
 
+import org.apache.logging.log4j.LogManager; 
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -15,55 +17,74 @@ import com.revhire.auth.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Temporary Security Config — allows all access so the team can develop without auth blocking.
- * Ashwathy will replace this with full session-based security on feature/auth branch.
+ * **********************************************************************************
+ * SECURITY CONFIGURATION - REVHIRE PROJECT
+ * **********************************************************************************
+ * Author:    Aswathy J Lal
+ * Date:      Tuesday, March 03, 2026
+ * Status:    Auth Implementation - Corrected & Finalized
+ * * USAGE & ARCHITECTURE:
+ * 1. RBAC (Role-Based Access Control): Uses .hasAuthority() instead of .hasRole()
+ * to map directly to our User Entity's 'Role' Enum strings (SEEKER/EMPLOYER).
+ * 2. GRANULAR PROTECTION: Implements strict path-based security. 
+ * 3. GLOBAL ERROR HANDLING: Permitted /error to allow custom 404/500 views.
+ * 4. UX ENHANCEMENT: Redirects unauthorized users with context-aware parameters.
+ * **********************************************************************************
  */
-
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
+	
+	private static final Logger logger = LogManager.getLogger(SecurityConfig.class);
+	
     private final CustomUserDetailsService userDetailsService;
     private final CustomLoginSuccessHandler successHandler;
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    	logger.info("Initializing RevHire Security Filter Chain...");
         http
             .csrf(csrf -> csrf.disable()) // Keep disabled for now to allow POST requests
             .authorizeHttpRequests(auth -> auth
-            		// 1. THE ONLY PUBLIC PAGES
-                    .requestMatchers("/").permitAll()                                  // Landing/Home
-                    .requestMatchers("/jobs/search/**", "/jobs/search/results").permitAll() // Member D Search
-                    .requestMatchers("/jobs/{id}").permitAll()                         // Member C Job View
-                    .requestMatchers("/employers/{id}").permitAll()                    // Member C Company View
+            		// 1. PUBLIC PAGES
+                    .requestMatchers("/").permitAll()                                      
+                    .requestMatchers("/error", "/auth/denied").permitAll()
+                    .requestMatchers("/jobs/search/**", "/jobs/search/results").permitAll() 
+                    .requestMatchers("/jobs/{id:\\d+}/").permitAll()   
+                    .requestMatchers("/employers/{id:\\d+}/").permitAll()  
+                    .requestMatchers("/auth/forgot-password", "/auth/reset-password", "/auth/resend-otp", "/auth/verify-login/**", "/auth/login/otp-request/**").permitAll()
                     
-                    // 2. AUTHENTICATION PATHS (Must be public so users can actually log in!)
-                    .requestMatchers("/auth/login", "/auth/register/**", "/login").permitAll()
-                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/uploads/**").permitAll()
+                    // 2. AUTHENTICATION & STATIC ASSETS
+                    .requestMatchers("/auth/login", "/auth/register/**", "/auth/verify", "/login").permitAll()
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                    
+                    // 3. COMMON AUTHENTICATED AREA
+                    .requestMatchers("/profile/view/{id}", "/resume/view/{id}", "/auth/me").authenticated()
 
-                    // 3. SEEKER ONLY 
+                    // 4. SEEKER ONLY
+                    .requestMatchers("/profile/edit/**", "/profile/save/**", "/profile/delete/**").hasAuthority("SEEKER")
+                    .requestMatchers("/resume/upload/**", "/resume/builder/**").hasAuthority("SEEKER")
                     .requestMatchers("/profile/**", "/resume/**").hasAuthority("SEEKER")
                     .requestMatchers("/applications/**", "/favorites/**").hasAuthority("SEEKER")
 
-                    // 4. EMPLOYER ONLY 
+                    // 5. EMPLOYER ONLY
                     .requestMatchers("/employer/**", "/employers/profile/**").hasAuthority("EMPLOYER")
                     .requestMatchers("/jobs/create", "/jobs/{id}/edit", "/jobs/my", "/jobs/{id}/stats", "/jobs/active").hasAuthority("EMPLOYER")
                     .requestMatchers("/jobs/{id}/update", "/jobs/{id}/delete", "/jobs/{id}/close", "/jobs/{id}/reopen", "/jobs/{id}/fill").hasAuthority("EMPLOYER")
                     .requestMatchers("/jobs/draft", "/jobs/{id}/publish", "/jobs/{id}/duplicate").hasAuthority("EMPLOYER")
-                    .requestMatchers("/auth/me").authenticated()
                     
-                    // 5. REQUIRE LOGIN FOR EVERYTHING ELSE (Notifications, /auth/me, etc.)
+                    // 6. CATCH-ALL
                     .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/auth/login")
-                .loginProcessingUrl("/login") // Matches <form th:action="@{/login}">
-                //.defaultSuccessUrl("/", true)
+                .loginProcessingUrl("/login") 
                 .successHandler(successHandler)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
+                
             )
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")
@@ -72,12 +93,10 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            // 5. CUSTOM ACCESS DENIED HANDLING
             .exceptionHandling(ex -> ex
-                .accessDeniedPage("/auth/denied") // Redirect here if a Seeker visits an Employer page
+                .accessDeniedPage("/auth/denied") 
                 .authenticationEntryPoint((request, response, authException) -> {
-                    // Check if the user is trying to access a protected area
-                    // and redirect with the 'loginRequired' parameter
+                    // Redirects unauthorized guest access to login
                     response.sendRedirect("/auth/login?loginRequired=true");
                 })
             );
