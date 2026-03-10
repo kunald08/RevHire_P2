@@ -53,19 +53,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final ProfileService profileService;
     private final NotificationService notificationService;
     
-//    @Override
-//    public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
-//        return applicationRepository.findByJobId(jobId).stream()
-//                .map(app -> new ApplicantRowDTO(
-//                        app.getId(),
-//                        app.getSeeker().getName(),
-//                        app.getStatus().name(),
-//                        app.getAppliedAt(),
-//                        app.getEmployerComment() != null ? app.getEmployerComment() : "-",
-//                        getNoteContent(app.getId())
-//                ))
-//                .collect(Collectors.toList());
-//    }
+
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
         return applicationRepository.findByJobId(jobId).stream()
@@ -171,6 +159,8 @@ public class ApplicantServiceImpl implements ApplicantService {
 	    dto.setApplicantName(application.getSeeker().getName());
 	    dto.setSeekerId(seekerId);
 	    dto.setCoverLetter(application.getCoverLetter());
+	    dto.setStatus(application.getStatus().toString()); 
+	    dto.setEmployerComment(application.getEmployerComment());
 	    Resume resume = application.getResume();
 	    if (resume != null) {
 	        dto.setObjective(resume.getObjective() != null ? resume.getObjective() : "No objective provided.");
