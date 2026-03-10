@@ -60,7 +60,6 @@ public class ApplicantServiceImpl implements ApplicantService {
                 // Hide withdrawn applications
                 .filter(app -> app.getStatus() != ApplicationStatus.WITHDRAWN) 
                 .map(this::mapToDTO) // Re-using your mapToDTO method for consistency
-
                 .collect(Collectors.toList());
     }
  // Inside ApplicantServiceImpl.java
@@ -69,17 +68,11 @@ public class ApplicantServiceImpl implements ApplicantService {
         // Fetch the note for this specific application
         // Ensure findByApplicationId exists in your ApplicantNoteRepository
         var note = applicantNoteRepository.findByApplicationId(app.getId()).orElse(null);
-        String applicantName = app.getSeeker() != null && app.getSeeker().getName() != null
-                ? app.getSeeker().getName()
-                : "Unknown applicant";
-        String applicationStatus = app.getStatus() != null
-                ? app.getStatus().name()
-                : ApplicationStatus.APPLIED.name();
         
         return new ApplicantRowDTO(
                 app.getId(),
-                applicantName,
-                applicationStatus,
+                app.getSeeker().getName(),
+                app.getStatus().name(),
                 app.getAppliedAt(),
                 app.getEmployerComment() != null ? app.getEmployerComment() : "-",
                 // This is the crucial part:
@@ -166,6 +159,8 @@ public class ApplicantServiceImpl implements ApplicantService {
 	    dto.setApplicantName(application.getSeeker().getName());
 	    dto.setSeekerId(seekerId);
 	    dto.setCoverLetter(application.getCoverLetter());
+	    dto.setStatus(application.getStatus().toString()); 
+	    dto.setEmployerComment(application.getEmployerComment());
 	    Resume resume = application.getResume();
 	    if (resume != null) {
 	        dto.setObjective(resume.getObjective() != null ? resume.getObjective() : "No objective provided.");
@@ -279,8 +274,16 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
     @Override
     public List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses) {
-        return applicationRepository.findByJobIdAndStatusIn(jobId, statuses).stream()
-                .map(this::mapToDTO)
+        return applicationRepository.findByJobId(jobId).stream()
+                .filter(app -> statuses.contains(app.getStatus())) // Filter by status
+                .map(app -> new ApplicantRowDTO(
+                        app.getId(),
+                        app.getSeeker().getName(),
+                        app.getStatus().name(),
+                        app.getAppliedAt(),
+                        app.getEmployerComment() != null ? app.getEmployerComment() : "-",
+                       getNoteContent(app.getId())
+                ))
                 .collect(Collectors.toList());
     }
     @Override
