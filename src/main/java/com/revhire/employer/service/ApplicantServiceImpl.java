@@ -159,6 +159,8 @@ public class ApplicantServiceImpl implements ApplicantService {
 	    dto.setApplicantName(application.getSeeker().getName());
 	    dto.setSeekerId(seekerId);
 	    dto.setCoverLetter(application.getCoverLetter());
+	    dto.setStatus(application.getStatus().toString()); 
+	    dto.setEmployerComment(application.getEmployerComment());
 	    Resume resume = application.getResume();
 	    if (resume != null) {
 	        dto.setObjective(resume.getObjective() != null ? resume.getObjective() : "No objective provided.");
