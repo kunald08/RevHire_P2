@@ -278,7 +278,7 @@ public class AuthController {
         model.addAttribute("errorCode", "403");
         model.addAttribute("errorTitle", "Access Denied");
         model.addAttribute("errorMessage", "Oops! You don't have permission to access this area.");
-        return "auth/error"; 
+        return "error"; 
     }
     
     @GetMapping("/me")
