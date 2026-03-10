@@ -148,7 +148,14 @@
                                 <li><i class="bi bi-check-circle-fill"></i>Build or upload a resume that recruiters can review instantly</li>
                                 <li><i class="bi bi-check-circle-fill"></i>Monitor applications and interview updates in one place</li>
                             </ul>
-                            <a th:href="@{/jobs/search}" class="btn btn-outline-primary">Start Job Search</a>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="!isAuthenticated()">
+                                <a th:href="@{/jobs/search}" class="btn btn-outline-primary">Start Job Search</a>
+                                <a th:href="@{/auth/register/seeker}" class="btn btn-link text-decoration-none">Join as Seeker</a>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="hasAuthority('SEEKER')">
+                                <a th:href="@{/jobs/search}" class="btn btn-outline-primary">Find Jobs</a>
+                                <a th:href="@{/applications}" class="btn btn-link text-decoration-none">My Applications</a>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -160,12 +167,14 @@
                                 <li><i class="bi bi-check-circle-fill"></i>Shortlist candidates with filtering and private notes</li>
                                 <li><i class="bi bi-check-circle-fill"></i>Keep your team aligned with transparent application stages</li>
                             </ul>
-                            <a sec:authorize="!isAuthenticated()" th:href="@{/auth/register/employer}" class="btn btn-primary">
-                                Register as Employer
-                            </a>
-                            <a sec:authorize="isAuthenticated()" th:href="@{/employer/dashboard}" class="btn btn-primary">
-                                Go to Dashboard
-                            </a>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="!isAuthenticated()">
+                                <a th:href="@{/auth/register/employer}" class="btn btn-primary">Register as Employer</a>
+                                <a th:href="@{/auth/login}" class="btn btn-link text-decoration-none">Employer Login</a>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="hasAuthority('EMPLOYER')">
+                                <a th:href="@{/employer/dashboard}" class="btn btn-primary">Go to Dashboard</a>
+                                <a th:href="@{/jobs/create}" class="btn btn-link text-decoration-none">Post a Job</a>
+                            </div>
                         </div>
                     </div>
                 </div>
