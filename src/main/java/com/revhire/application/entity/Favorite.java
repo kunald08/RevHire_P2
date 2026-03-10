@@ -5,19 +5,27 @@ import com.revhire.job.entity.Job;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "favorites", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"seeker_id", "job_id"}))
+@Table(name = "favorites",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"seeker_id", "job_id"}))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Favorite {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "favorite_seq",
+            sequenceName = "favorite_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "favorite_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,4 +39,5 @@ public class Favorite {
     @CreationTimestamp
     @Column(name = "saved_at", nullable = false, updatable = false)
     private LocalDateTime savedAt;
+
 }

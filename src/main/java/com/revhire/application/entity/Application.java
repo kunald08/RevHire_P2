@@ -8,19 +8,27 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "applications", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"job_id", "seeker_id"}))
+@Table(name = "applications",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"job_id", "seeker_id"}))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Application {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "application_seq",
+            sequenceName = "application_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "application_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,7 +43,7 @@ public class Application {
     @JoinColumn(name = "resume_id")
     private Resume resume;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String coverLetter;
 
     @Enumerated(EnumType.STRING)
@@ -43,10 +51,10 @@ public class Application {
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.APPLIED;
 
-    @Column(name = "employer_comment", columnDefinition = "TEXT")
+    @Column(name = "employer_comment", columnDefinition = "CLOB")
     private String employerComment;
 
-    @Column(name = "withdraw_reason", columnDefinition = "TEXT")
+    @Column(name = "withdraw_reason", columnDefinition = "CLOB")
     private String withdrawReason;
 
     @CreationTimestamp
@@ -56,12 +64,10 @@ public class Application {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
 
     public boolean canWithdraw() {
-        return status != ApplicationStatus.WITHDRAWN && 
-               status != ApplicationStatus.SHORTLISTED && 
-               status != ApplicationStatus.REJECTED;
-
+        return status != ApplicationStatus.WITHDRAWN &&
+                status != ApplicationStatus.SHORTLISTED &&
+                status != ApplicationStatus.REJECTED;
     }
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+
  * Employer entity — represents a company profile linked to a User with EMPLOYER role.
  * One employer profile per user account. Owns zero-to-many Job postings.
  */
@@ -22,7 +23,15 @@ import java.util.List;
 public class Employer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "employer_seq",
+            sequenceName = "employer_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "employer_seq"
+    )
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -39,7 +48,7 @@ public class Employer {
     @Column(length = 50)
     private String companySize;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String description;
 
     @Column(length = 500)

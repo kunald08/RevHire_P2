@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+
  * Job entity — represents a single job posting belonging to an Employer.
  * Lifecycle: DRAFT → ACTIVE → CLOSED / FILLED.
  */
@@ -26,7 +27,15 @@ import java.util.List;
 public class Job {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "job_seq",
+            sequenceName = "job_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "job_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,7 +46,7 @@ public class Job {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "CLOB")
     private String description;
 
     @Column(length = 500)
@@ -82,9 +91,11 @@ public class Job {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+
         if (this.status == null) {
             this.status = JobStatus.ACTIVE;
         }
+
         if (this.viewCount == null) {
             this.viewCount = 0L;
         }
@@ -96,8 +107,8 @@ public class Job {
     }
 
     /**
+
      * Bi-directional mapping to Application.
-     * Allows Thymeleaf to access job.applications.size() for stats.
      */
     @Builder.Default
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
