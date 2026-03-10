@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 /**
+
  * Education entity — stores educational qualifications of a job seeker.
  */
 @Entity
@@ -17,7 +18,15 @@ import java.time.LocalDate;
 public class Education {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "education_seq",
+            sequenceName = "education_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "education_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

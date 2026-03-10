@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
+
  * Resume entity — stores both textual resume content (objective, projects)
  * and uploaded file data (PDF/DOCX, max 2MB).
  */
@@ -17,7 +18,15 @@ import java.time.LocalDateTime;
 public class Resume {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "resume_seq",
+            sequenceName = "resume_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "resume_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,10 +35,10 @@ public class Resume {
     @EqualsAndHashCode.Exclude
     private JobSeekerProfile profile;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String objective;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String projects;
 
     @Column(name = "file_name", length = 255)
@@ -39,7 +48,7 @@ public class Resume {
     private String fileType;
 
     @Lob
-    @Column(name = "file_data", columnDefinition = "LONGBLOB")
+    @Column(name = "file_data", columnDefinition = "BLOB")
     private byte[] fileData;
 
     @Column(name = "file_size")

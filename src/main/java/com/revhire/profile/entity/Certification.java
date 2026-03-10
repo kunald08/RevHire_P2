@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 /**
+
  * Certification entity — stores professional certifications of a job seeker.
  */
 @Entity
@@ -17,7 +18,15 @@ import java.time.LocalDate;
 public class Certification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "certification_seq",
+            sequenceName = "certification_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "certification_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
