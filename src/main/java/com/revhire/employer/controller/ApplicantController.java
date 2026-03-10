@@ -137,6 +137,10 @@ public class ApplicantController {
         // Fetch the latest resume using the profile ID
         Resume latestResume = applicantService.getLatestResumeByProfileId(profile.getId());
         
+     // Logic: If the application is withdrawn, make it read-only
+        boolean isReadOnly = "WITHDRAWN".equalsIgnoreCase(applicant.getStatus());
+        
+        model.addAttribute("isReadOnly", isReadOnly);
         model.addAttribute("applicant", applicant);
         model.addAttribute("profile", profile);
         model.addAttribute("existingNote", applicantService.getNoteForApplication(appId));
