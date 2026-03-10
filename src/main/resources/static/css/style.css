@@ -247,7 +247,93 @@ section.bg-primary {
 }
 
 /* Footer */
-footer a:hover {
+.site-footer {
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.2), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.18), transparent 28%),
+        linear-gradient(135deg, #0f172a 0%, #111827 52%, #1f2937 100%);
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.site-footer-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.site-footer-copy,
+.site-footer-bottom {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+.site-footer-title {
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #f8fafc;
+}
+
+.site-footer-links li + li,
+.site-footer-contact li + li {
+    margin-top: 0.7rem;
+}
+
+.site-footer-links a {
+    color: rgba(226, 232, 240, 0.78);
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.site-footer-links a:hover {
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+.site-footer-contact li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: rgba(226, 232, 240, 0.78);
+}
+
+.site-footer-contact i {
+    margin-top: 0.15rem;
+    color: #93c5fd;
+}
+
+.site-footer-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.34);
+    color: rgba(241, 245, 249, 0.88);
+    font-size: 0.83rem;
+}
+
+.site-footer-cta {
+    padding: 0.65rem 1rem;
+    border: 1px solid rgba(147, 197, 253, 0.38);
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.16);
+    color: #eff6ff;
+    font-weight: 600;
+}
+
+.site-footer-cta:hover {
+    background: rgba(59, 130, 246, 0.3);
+    color: #ffffff;
+}
+
+.site-footer-divider {
+    margin: 2rem 0 1.25rem;
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+.site-footer a:hover {
     color: #fff !important;
 }
 

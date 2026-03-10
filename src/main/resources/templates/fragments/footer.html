@@ -1,30 +1,69 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<footer th:fragment="footer" class="bg-dark text-light py-4 mt-5">
+<footer th:fragment="footer" class="site-footer text-light py-5 mt-5">
     <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <h5><i class="bi bi-briefcase-fill me-2"></i>RevHire</h5>
-                <p class="text-muted">Connecting talent with opportunity. Your next career move starts here.</p>
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="site-footer-brand d-inline-flex align-items-center mb-3">
+                    <i class="bi bi-briefcase-fill me-2"></i>
+                    <span>RevHire</span>
+                </div>
+                <p class="site-footer-copy mb-4">
+                    Connecting talent with opportunity through a cleaner hiring journey for job seekers and employers.
+                </p>
+                <div class="site-footer-meta d-flex flex-wrap gap-2">
+                    <span class="site-footer-chip"><i class="bi bi-search me-2"></i>Smart job discovery</span>
+                    <span class="site-footer-chip"><i class="bi bi-people me-2"></i>Employer workflows</span>
+                    <span class="site-footer-chip"><i class="bi bi-bell me-2"></i>Status updates</span>
+                </div>
             </div>
-            <div class="col-md-3">
-                <h6>Quick Links</h6>
-                <ul class="list-unstyled">
-                    <li><a class="text-muted text-decoration-none" th:href="@{/jobs/search}">Find Jobs</a></li>
-                    <li><a class="text-muted text-decoration-none" th:href="@{/auth/register}">Register</a></li>
-                    <li><a class="text-muted text-decoration-none" th:href="@{/auth/login}">Login</a></li>
+
+            <div class="col-sm-6 col-lg-3">
+                <h6 class="site-footer-title">Quick Links</h6>
+                <ul class="list-unstyled site-footer-links mb-0">
+                    <li><a th:href="@{/}">Home</a></li>
+                    <li><a th:href="@{/jobs/search}">Find Jobs</a></li>
+                    <li sec:authorize="!isAuthenticated()"><a th:href="@{/auth/register}">Create Account</a></li>
+                    <li sec:authorize="!isAuthenticated()"><a th:href="@{/auth/login}">Login</a></li>
+                    <li sec:authorize="hasAuthority('SEEKER')"><a th:href="@{/profile}">My Profile</a></li>
+                    <li sec:authorize="hasAuthority('SEEKER')"><a th:href="@{/applications}">My Applications</a></li>
+                    <li sec:authorize="hasAuthority('EMPLOYER')"><a th:href="@{/employer/dashboard}">Employer Dashboard</a></li>
+                    <li sec:authorize="hasAuthority('EMPLOYER')"><a th:href="@{/jobs/create}">Post a Job</a></li>
                 </ul>
             </div>
-            <div class="col-md-3">
-                <h6>Contact</h6>
-                <p class="text-muted mb-0">
-                    <i class="bi bi-envelope me-1"></i>support@revhire.com
-                </p>
+
+            <div class="col-sm-6 col-lg-2">
+                <h6 class="site-footer-title">Resources</h6>
+                <ul class="list-unstyled site-footer-links mb-0">
+                    <li sec:authorize="isAuthenticated()"><a th:href="@{/favorites}">Saved Jobs</a></li>
+                    <li sec:authorize="isAuthenticated()"><a th:href="@{/notifications}">Notifications</a></li>
+                    <li sec:authorize="isAuthenticated()"><a th:href="@{/auth/me}">Account Settings</a></li>
+                    <li sec:authorize="!isAuthenticated()"><a th:href="@{/auth/register/seeker}">Join as Job Seeker</a></li>
+                    <li sec:authorize="!isAuthenticated()"><a th:href="@{/auth/register/employer}">Join as Employer</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-3">
+                <h6 class="site-footer-title">Contact</h6>
+                <ul class="list-unstyled site-footer-contact mb-3">
+                    <li><i class="bi bi-envelope"></i><span>support@revhire.com</span></li>
+                    <li><i class="bi bi-geo-alt"></i><span>Hiring support available across India</span></li>
+                    <li><i class="bi bi-clock"></i><span>Mon to Sat, 9:00 AM to 6:00 PM</span></li>
+                </ul>
+                <a th:href="@{/auth/register/employer}" class="btn btn-sm site-footer-cta" sec:authorize="!hasAuthority('EMPLOYER')">
+                    Start Hiring
+                </a>
             </div>
         </div>
-        <hr class="border-secondary">
-        <p class="text-center text-muted mb-0">&copy; 2026 RevHire. All rights reserved.</p>
+
+        <hr class="site-footer-divider">
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <p class="site-footer-bottom mb-0">&copy; 2026 RevHire. All rights reserved.</p>
+            <p class="site-footer-bottom mb-0">Built for faster applications, clearer updates, and better hiring decisions.</p>
+        </div>
     </div>
 </footer>
 </body>
