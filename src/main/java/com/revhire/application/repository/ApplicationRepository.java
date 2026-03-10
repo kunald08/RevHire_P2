@@ -49,6 +49,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
      */
     long countByJobEmployerIdAndStatus(Long employerId, ApplicationStatus status);
     List<Application> findByJobId(Long jobId);
+    List<Application> findByJobIdAndStatusIn(Long jobId, List<ApplicationStatus> statuses);
 
     // Find by job and seeker
     Optional<Application> findByJobIdAndSeekerId(Long jobId, Long seekerId);

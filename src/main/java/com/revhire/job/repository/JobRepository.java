@@ -24,15 +24,27 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
 
     long countByEmployerIdAndStatus(Long employerId, JobStatus status);
     List<Job> findByEmployer_User_EmailAndStatus(String email, JobStatus status);
-    @Query("SELECT DISTINCT j FROM Job j JOIN j.applications a " +
-    	       "WHERE j.employer.user.email = :email " +
-    	       "AND a.status IN :statuses " +
-    	       "AND (:keyword IS NULL OR :keyword = '' OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    	Page<Job> findPendingJobsByEmailAndStatusAndTitle(
-    	        @Param("email") String email, 
-    	        @Param("statuses") List<ApplicationStatus> statuses, 
-    	        @Param("keyword") String keyword, 
-    	        Pageable pageable);
+    @Query(
+            value = "SELECT j FROM Job j " +
+                    "WHERE j.employer.user.email = :email " +
+                    "AND (:keyword IS NULL OR TRIM(:keyword) = '' OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                    "AND EXISTS (" +
+                    "    SELECT 1 FROM Application a " +
+                    "    WHERE a.job = j AND a.status IN :statuses" +
+                    ")",
+            countQuery = "SELECT COUNT(j) FROM Job j " +
+                    "WHERE j.employer.user.email = :email " +
+                    "AND (:keyword IS NULL OR TRIM(:keyword) = '' OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                    "AND EXISTS (" +
+                    "    SELECT 1 FROM Application a " +
+                    "    WHERE a.job = j AND a.status IN :statuses" +
+                    ")"
+    )
+    Page<Job> findPendingJobsByEmailAndStatusAndTitle(
+            @Param("email") String email,
+            @Param("statuses") List<ApplicationStatus> statuses,
+            @Param("keyword") String keyword,
+            Pageable pageable);
  // Add this to JobRepository.java
     Page<Job> findByEmployerUserEmailAndTitleContainingIgnoreCase(
             String email, 
@@ -57,4 +69,3 @@ public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificatio
     int closeExpiredJobs(@Param("today") LocalDate today);
 
 }
-
