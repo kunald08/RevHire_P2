@@ -99,25 +99,27 @@
                     </button>
 
                     <!-- Under Review / Shortlist / Reject -->
-                    <div class="d-flex gap-2 mb-2">
-                        <button class="btn btn-warning btn-sm rounded-pill px-3 flex-grow-1"
-                                th:onclick="'openActionModal(\'UNDER_REVIEW\', ' + ${applicant.applicationId} + ')'"
-                                th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('UNDER_REVIEW')}">
-                            <i class="bi bi-hourglass-split me-1"></i>Under Review
-                        </button>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success btn-sm rounded-pill px-3 flex-grow-1"
-                                th:onclick="'openActionModal(\'SHORTLIST\', ' + ${applicant.applicationId} + ')'"
-                                th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('SHORTLISTED')}">
-                            <i class="bi bi-check-circle me-1"></i>Shortlist
-                        </button>
-                        <button class="btn btn-danger btn-sm rounded-pill px-3 flex-grow-1"
-                                th:onclick="'openActionModal(\'REJECT\', ' + ${applicant.applicationId} + ')'"
-                                th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('REJECTED')}">
-                            <i class="bi bi-x-circle me-1"></i>Reject
-                        </button>
-                    </div>
+					<div th:if="${applicant.status != null and !applicant.status.equalsIgnoreCase('WITHDRAWN')}">
+	                    <div class="d-flex gap-2 mb-2">
+	                        <button class="btn btn-warning btn-sm rounded-pill px-3 flex-grow-1"
+	                                th:onclick="'openActionModal(\'UNDER_REVIEW\', ' + ${applicant.applicationId} + ')'"
+	                                th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('UNDER_REVIEW')}">
+	                            <i class="bi bi-hourglass-split me-1"></i>Under Review
+	                        </button>
+	                    </div>
+	                    <div class="d-flex gap-2">
+	                        <button class="btn btn-success btn-sm rounded-pill px-3 flex-grow-1"
+	                                th:onclick="'openActionModal(\'SHORTLIST\', ' + ${applicant.applicationId} + ')'"
+	                                th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('SHORTLISTED')}">
+	                            <i class="bi bi-check-circle me-1"></i>Shortlist
+	                        </button>
+	                        <button class="btn btn-danger btn-sm rounded-pill px-3 flex-grow-1"
+	                                th:onclick="'openActionModal(\'REJECT\', ' + ${applicant.applicationId} + ')'"
+	                                th:disabled="${applicant.status != null and applicant.status.equalsIgnoreCase('REJECTED')}">
+	                            <i class="bi bi-x-circle me-1"></i>Reject
+	                        </button>
+	                    </div>
+					</div>
                 </div>
             </div>
         </div>
@@ -218,7 +220,7 @@
             </div>
 
             <!-- Reviewer Notes -->
-			<div class="dashboard-card-section">
+			<div class="dashboard-card-section" th:if="${applicant.status != null and !applicant.status.equalsIgnoreCase('WITHDRAWN')}">
                 <div class="section-title"><i class="bi bi-journal-text"></i>Reviewer Notes</div>
                 <textarea id="noteTextArea" class="form-control mb-2" rows="4"
                           th:text="${existingNote != null ? existingNote.note : ''}"

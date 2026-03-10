@@ -53,10 +53,13 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final ProfileService profileService;
     private final NotificationService notificationService;
     
+
     @Override
     public List<ApplicantRowDTO> getApplicantsByJob(Long jobId) {
         return applicationRepository.findByJobId(jobId).stream()
-                .map(this::mapToDTO)
+                // Hide withdrawn applications
+                .filter(app -> app.getStatus() != ApplicationStatus.WITHDRAWN) 
+                .map(this::mapToDTO) // Re-using your mapToDTO method for consistency
                 .collect(Collectors.toList());
     }
  // Inside ApplicantServiceImpl.java
@@ -65,17 +68,11 @@ public class ApplicantServiceImpl implements ApplicantService {
         // Fetch the note for this specific application
         // Ensure findByApplicationId exists in your ApplicantNoteRepository
         var note = applicantNoteRepository.findByApplicationId(app.getId()).orElse(null);
-        String applicantName = app.getSeeker() != null && app.getSeeker().getName() != null
-                ? app.getSeeker().getName()
-                : "Unknown applicant";
-        String applicationStatus = app.getStatus() != null
-                ? app.getStatus().name()
-                : ApplicationStatus.APPLIED.name();
         
         return new ApplicantRowDTO(
                 app.getId(),
-                applicantName,
-                applicationStatus,
+                app.getSeeker().getName(),
+                app.getStatus().name(),
                 app.getAppliedAt(),
                 app.getEmployerComment() != null ? app.getEmployerComment() : "-",
                 // This is the crucial part:
@@ -85,7 +82,7 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
     public long getApplicantCount(Long jobId) {
-        return applicationRepository.countByJobId(jobId);
+        return applicantRepository.countByJobIdAndStatusNot(jobId, ApplicationStatus.WITHDRAWN);
     }
 
     @Override
@@ -162,6 +159,8 @@ public class ApplicantServiceImpl implements ApplicantService {
 	    dto.setApplicantName(application.getSeeker().getName());
 	    dto.setSeekerId(seekerId);
 	    dto.setCoverLetter(application.getCoverLetter());
+	    dto.setStatus(application.getStatus().toString()); 
+	    dto.setEmployerComment(application.getEmployerComment());
 	    Resume resume = application.getResume();
 	    if (resume != null) {
 	        dto.setObjective(resume.getObjective() != null ? resume.getObjective() : "No objective provided.");
@@ -275,8 +274,16 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
     @Override
     public List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses) {
-        return applicationRepository.findByJobIdAndStatusIn(jobId, statuses).stream()
-                .map(this::mapToDTO)
+        return applicationRepository.findByJobId(jobId).stream()
+                .filter(app -> statuses.contains(app.getStatus())) // Filter by status
+                .map(app -> new ApplicantRowDTO(
+                        app.getId(),
+                        app.getSeeker().getName(),
+                        app.getStatus().name(),
+                        app.getAppliedAt(),
+                        app.getEmployerComment() != null ? app.getEmployerComment() : "-",
+                       getNoteContent(app.getId())
+                ))
                 .collect(Collectors.toList());
     }
     @Override
@@ -328,6 +335,10 @@ public class ApplicantServiceImpl implements ApplicantService {
 	
 	    return apps.stream()
 	            .filter(app -> {
+	            	// Hide applications that are withdrawn
+	                if (app.getStatus() == ApplicationStatus.WITHDRAWN) {
+	                    return false;
+	                }
 	                // DEFENSIVE NULL CHECK: Skip if seeker is null
 	                if (app.getSeeker() == null) return false;
 	
