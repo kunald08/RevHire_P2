@@ -1,7 +1,6 @@
 package com.revhire.employer.entity;
 
-import com.revhire.application.entity.Application; // Adjust package as needed
-import com.revhire.employer.entity.Employer;
+import com.revhire.application.entity.Application;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,7 +15,15 @@ import java.time.LocalDateTime;
 public class ApplicantNote {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "applicant_note_seq",
+            sequenceName = "applicant_note_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "applicant_note_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,7 +34,7 @@ public class ApplicantNote {
     @JoinColumn(name = "employer_id", nullable = false)
     private Employer employer;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "CLOB", nullable = false)
     private String note;
 
     private LocalDateTime createdAt;

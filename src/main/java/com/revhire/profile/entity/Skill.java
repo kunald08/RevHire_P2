@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
+
  * Skill entity — stores skills of a job seeker with proficiency level.
  */
 @Entity
@@ -15,9 +16,16 @@ import lombok.*;
 public class Skill {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "skill_seq",
+            sequenceName = "skill_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "skill_seq"
+    )
     private Long id;
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id", nullable = false)

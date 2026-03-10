@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+
  * JobSeekerProfile entity — stores the seeker's headline, summary, and employment status.
  * Has one-to-many relationships with Education, Experience, Skill, Certification, and Resume.
  */
@@ -21,7 +22,15 @@ import java.util.List;
 public class JobSeekerProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "job_seeker_profile_seq",
+            sequenceName = "job_seeker_profile_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "job_seeker_profile_seq"
+    )
     private Long id;
 
     @OneToOne
@@ -31,7 +40,7 @@ public class JobSeekerProfile {
     @Column(length = 200)
     private String headline;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String summary;
 
     @Column(name = "current_employment_status", length = 50)
@@ -75,13 +84,15 @@ public class JobSeekerProfile {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Resume> resumes = new ArrayList<>();
+
     private Integer totalExperience;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-    
+
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();

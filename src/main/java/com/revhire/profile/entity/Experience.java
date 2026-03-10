@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 /**
+
  * Experience entity — stores work experience entries of a job seeker.
  */
 @Entity
@@ -17,7 +18,15 @@ import java.time.LocalDate;
 public class Experience {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "experience_seq",
+            sequenceName = "experience_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "experience_seq"
+    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,7 +50,7 @@ public class Experience {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String description;
 
     @Column(name = "is_current")
