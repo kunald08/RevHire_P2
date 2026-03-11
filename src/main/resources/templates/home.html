@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RevHire — Find Your Next Opportunity</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" th:href="@{/favicon.ico}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -12,75 +14,190 @@
 <body>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- Hero Section -->
-    <section class="bg-primary text-white py-5">
-        <div class="container text-center">
-            <h1 class="display-4 fw-bold">Find Your Dream Job</h1>
-            <p class="lead mt-3">Connect with top employers. Build your career with RevHire.</p>
-            <div class="mt-4">
-                <a th:href="@{/jobs/search}" class="btn btn-light btn-lg me-3">
-                    <i class="bi bi-search me-2"></i>Search Jobs
-                </a>
-                <a sec:authorize="!isAuthenticated()" th:href="@{/auth/register}" class="btn btn-outline-light btn-lg">
-                    <i class="bi bi-person-plus me-2"></i>Get Started
-                </a>
+    <main class="home-page">
+        <section class="home-hero py-5">
+            <div class="container py-lg-4">
+                <div class="row align-items-center g-5">
+                    <div class="col-lg-7 text-white">
+                        <span class="home-kicker mb-3 d-inline-flex align-items-center">
+                            <i class="bi bi-stars me-2"></i>Career platform for seekers and employers
+                        </span>
+                        <h1 class="home-hero-title mb-3">Find work you love. Hire talent that fits.</h1>
+                        <p class="home-hero-subtitle mb-4">
+                            RevHire helps job seekers discover better opportunities and helps teams hire faster with a single, streamlined workflow.
+                        </p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <a th:href="@{/jobs/search}" class="btn btn-light btn-lg home-primary-btn">
+                                <i class="bi bi-search me-2"></i>Explore Jobs
+                            </a>
+                            <a sec:authorize="!isAuthenticated()" th:href="@{/auth/register}" class="btn btn-outline-light btn-lg">
+                                <i class="bi bi-person-plus me-2"></i>Create Account
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="home-hero-panel">
+                            <h5 class="fw-semibold mb-3">Why candidates choose RevHire</h5>
+                            <div class="home-mini-list d-flex flex-column gap-3">
+                                <div class="home-mini-item">
+                                    <i class="bi bi-lightning-charge-fill text-primary"></i>
+                                    <span>Fast search with role, location, salary and experience filters</span>
+                                </div>
+                                <div class="home-mini-item">
+                                    <i class="bi bi-file-earmark-text-fill text-success"></i>
+                                    <span>Resume upload and profile tools to stand out</span>
+                                </div>
+                                <div class="home-mini-item">
+                                    <i class="bi bi-bell-fill text-warning"></i>
+                                    <span>Timely updates on applications and hiring progress</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Features Section -->
-    <section class="py-5">
-        <div class="container">
-            <h2 class="text-center mb-5">Why RevHire?</h2>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm text-center p-4">
-                        <i class="bi bi-search display-4 text-primary mb-3"></i>
-                        <h5>Smart Job Search</h5>
-                        <p class="text-muted">Filter by role, location, salary, experience and more to find the perfect match.</p>
+        <section class="home-metrics py-4">
+            <div class="container">
+                <div class="row g-3">
+                    <div class="col-6 col-lg-3">
+                        <div class="home-metric-card">
+                            <p class="home-metric-value">1,200+</p>
+                            <p class="home-metric-label mb-0">Open opportunities</p>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm text-center p-4">
-                        <i class="bi bi-file-earmark-person display-4 text-success mb-3"></i>
-                        <h5>Build Your Resume</h5>
-                        <p class="text-muted">Create professional resumes online or upload your existing one.</p>
+                    <div class="col-6 col-lg-3">
+                        <div class="home-metric-card">
+                            <p class="home-metric-value">350+</p>
+                            <p class="home-metric-label mb-0">Hiring companies</p>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm text-center p-4">
-                        <i class="bi bi-bell display-4 text-warning mb-3"></i>
-                        <h5>Real-Time Notifications</h5>
-                        <p class="text-muted">Stay updated on your application status and new job recommendations.</p>
+                    <div class="col-6 col-lg-3">
+                        <div class="home-metric-card">
+                            <p class="home-metric-value">95%</p>
+                            <p class="home-metric-label mb-0">Application transparency</p>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="home-metric-card">
+                            <p class="home-metric-value">24/7</p>
+                            <p class="home-metric-label mb-0">Platform availability</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- For Employers Section -->
-    <section class="bg-light py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h2>For Employers</h2>
-                    <p class="text-muted mt-3">Post jobs, manage applications, shortlist candidates — all in one platform.</p>
-                    <ul class="list-unstyled mt-3">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Post unlimited job openings</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Filter and shortlist applicants</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Track applications with dashboard</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Add internal notes for hiring team</li>
-                    </ul>
-                    <a sec:authorize="!isAuthenticated()" th:href="@{/auth/register}" class="btn btn-primary mt-2">
-                        Register as Employer
-                    </a>
+        <section class="py-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="home-section-title">Everything You Need To Move Faster</h2>
+                    <p class="text-muted mb-0">Built for both sides of hiring so every step feels clear and efficient.</p>
                 </div>
-                <div class="col-md-6 text-center">
-                    <i class="bi bi-building display-1 text-primary"></i>
+                <div class="row g-4">
+                    <div class="col-md-6 col-xl-3">
+                        <article class="home-feature-card h-100">
+                            <div class="home-feature-icon bg-primary-subtle text-primary">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h5 class="mt-3">Smart Discovery</h5>
+                            <p class="text-muted mb-0">Narrow jobs quickly using meaningful filters and role context.</p>
+                        </article>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <article class="home-feature-card h-100">
+                            <div class="home-feature-icon bg-success-subtle text-success">
+                                <i class="bi bi-person-vcard"></i>
+                            </div>
+                            <h5 class="mt-3">Profile Depth</h5>
+                            <p class="text-muted mb-0">Showcase skills, experience, and credentials in one candidate view.</p>
+                        </article>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <article class="home-feature-card h-100">
+                            <div class="home-feature-icon bg-warning-subtle text-warning-emphasis">
+                                <i class="bi bi-megaphone"></i>
+                            </div>
+                            <h5 class="mt-3">Employer Reach</h5>
+                            <p class="text-muted mb-0">Publish openings and reach active talent faster with simple job posting.</p>
+                        </article>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <article class="home-feature-card h-100">
+                            <div class="home-feature-icon bg-info-subtle text-info-emphasis">
+                                <i class="bi bi-bar-chart"></i>
+                            </div>
+                            <h5 class="mt-3">Status Clarity</h5>
+                            <p class="text-muted mb-0">Track every application with clear updates and timeline visibility.</p>
+                        </article>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <section class="home-split py-5">
+            <div class="container">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="home-split-card home-seeker-card h-100">
+                            <p class="home-split-tag">For Job Seekers</p>
+                            <h3 class="mb-3">Land your next role with confidence</h3>
+                            <ul class="home-checklist list-unstyled mb-4">
+                                <li><i class="bi bi-check-circle-fill"></i>Search opportunities that actually match your profile</li>
+                                <li><i class="bi bi-check-circle-fill"></i>Build or upload a resume that recruiters can review instantly</li>
+                                <li><i class="bi bi-check-circle-fill"></i>Monitor applications and interview updates in one place</li>
+                            </ul>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="!isAuthenticated()">
+                                <a th:href="@{/jobs/search}" class="btn btn-outline-primary">Start Job Search</a>
+                                <a th:href="@{/auth/register/seeker}" class="btn btn-link text-decoration-none">Join as Seeker</a>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="hasAuthority('SEEKER')">
+                                <a th:href="@{/jobs/search}" class="btn btn-outline-primary">Find Jobs</a>
+                                <a th:href="@{/applications}" class="btn btn-link text-decoration-none">My Applications</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="home-split-card home-employer-card h-100">
+                            <p class="home-split-tag">For Employers</p>
+                            <h3 class="mb-3">Hire better with organized workflows</h3>
+                            <ul class="home-checklist list-unstyled mb-4">
+                                <li><i class="bi bi-check-circle-fill"></i>Create and manage active openings from one dashboard</li>
+                                <li><i class="bi bi-check-circle-fill"></i>Shortlist candidates with filtering and private notes</li>
+                                <li><i class="bi bi-check-circle-fill"></i>Keep your team aligned with transparent application stages</li>
+                            </ul>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="!isAuthenticated()">
+                                <a th:href="@{/auth/register/employer}" class="btn btn-primary">Register as Employer</a>
+                                <a th:href="@{/auth/login}" class="btn btn-link text-decoration-none">Employer Login</a>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2" sec:authorize="hasAuthority('EMPLOYER')">
+                                <a th:href="@{/employer/dashboard}" class="btn btn-primary">Go to Dashboard</a>
+                                <a th:href="@{/jobs/create}" class="btn btn-link text-decoration-none">Post a Job</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-cta py-5">
+            <div class="container">
+                <div class="home-cta-card text-center text-white">
+                    <h2 class="mb-3">Ready to make your next move?</h2>
+                    <p class="mb-4">Join RevHire to discover jobs, connect with employers, and build a stronger hiring journey.</p>
+                    <div class="d-flex justify-content-center flex-wrap gap-3">
+                        <a th:href="@{/jobs/search}" class="btn btn-light btn-lg">
+                            <i class="bi bi-search me-2"></i>Browse Jobs
+                        </a>
+                        <a sec:authorize="!isAuthenticated()" th:href="@{/auth/register}" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-person-plus me-2"></i>Join Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
 

@@ -10,14 +10,38 @@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
             <span class="navbar-toggler-icon"></span>
         </button>
+        
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/jobs/search}">Find Jobs</a>
+                <li class="nav-item" sec:authorize="!hasAuthority('EMPLOYER')">
+                    <a class="nav-link" th:href="@{/jobs/search}">
+                        <i class="bi bi-search me-1"></i>Find Jobs
+                    </a>
+                </li>
+
+                <li class="nav-item" sec:authorize="hasAuthority('SEEKER')">
+                    <a class="nav-link" th:href="@{/applications}">
+                        <i class="bi bi-file-earmark-text me-1"></i>My Applications
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAuthority('SEEKER')">
+                    <a class="nav-link" th:href="@{/favorites}">
+                        <i class="bi bi-heart me-1"></i>Saved Jobs
+                    </a>
+                </li>
+
+                <li class="nav-item" sec:authorize="hasAuthority('EMPLOYER')">
+                    <a class="nav-link" th:href="@{/employer/dashboard}">Dashboard</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAuthority('EMPLOYER')">
+                    <a class="nav-link" th:href="@{/jobs/my}">
+                        <i class="bi bi-list-task me-1"></i>My Jobs
+                    </a>
                 </li>
             </ul>
-            <ul class="navbar-nav ms-auto">
-                <!-- Show when NOT logged in -->
+
+            <ul class="navbar-nav ms-auto align-items-center">
+
                 <li class="nav-item" sec:authorize="!isAuthenticated()">
                     <a class="nav-link" th:href="@{/auth/login}">
                         <i class="bi bi-box-arrow-in-right me-1"></i>Login
@@ -29,58 +53,49 @@
                     </a>
                 </li>
 
-                <!-- Show when logged in as SEEKER -->
-                <li class="nav-item" sec:authorize="hasRole('SEEKER')">
-                    <a class="nav-link" th:href="@{/profile}">
-                        <i class="bi bi-person me-1"></i>My Profile
-                    </a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('SEEKER')">
-                    <a class="nav-link" th:href="@{/applications}">
-                        <i class="bi bi-file-earmark-text me-1"></i>My Applications
-                    </a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('SEEKER')">
-                    <a class="nav-link" th:href="@{/favorites}">
-                        <i class="bi bi-heart me-1"></i>Saved Jobs
+                <li class="nav-item me-2" sec:authorize="hasAuthority('EMPLOYER')">
+                    <a th:href="@{/jobs/create}" class="btn btn-sm btn-primary fw-semibold" style="border-radius:8px;">
+                        <i class="bi bi-plus-lg me-1"></i>Post Job
                     </a>
                 </li>
 
-                <!-- Show when logged in as EMPLOYER -->
-                <li class="nav-item" sec:authorize="hasRole('EMPLOYER')">
-                    <a class="nav-link" th:href="@{/employer/dashboard}">
-                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link position-relative" href="#" role="button"
+                       id="notifDropdownToggle" data-bs-toggle="dropdown" aria-expanded="false" onclick="loadNotifDropdown()">
+                        <i class="bi bi-bell" style="font-size:1.1rem;"></i>
+                        <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle"
+                              id="notif-count" style="display:none;font-size:0.6rem;"></span>
                     </a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('EMPLOYER')">
-                    <a class="nav-link" th:href="@{/jobs/my}">
-                        <i class="bi bi-list-task me-1"></i>My Jobs
-                    </a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('EMPLOYER')">
-                    <a class="nav-link" th:href="@{/jobs/create}">
-                        <i class="bi bi-plus-circle me-1"></i>Post Job
-                    </a>
-                </li>
-
-                <!-- Notifications — visible to all authenticated users -->
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <a class="nav-link position-relative" th:href="@{/notifications}">
-                        <i class="bi bi-bell me-1"></i>Notifications
-                        <span class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle" 
-                              id="notif-count" style="display:none;"></span>
-                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 notif-dropdown" style="width:380px;">
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-light">
+                            <span class="fw-bold small">Notifications</span>
+                            <button class="btn btn-sm btn-link text-decoration-none p-0 small" onclick="markAllReadFromDropdown(event)">Mark all read</button>
+                        </div>
+                        <div id="notif-dropdown-body" style="max-height:360px; overflow-y:auto;">
+                            </div>
+                        <div class="border-top text-center py-2 bg-light">
+                            <a th:href="@{/notifications}" class="small text-decoration-none fw-semibold">See all notifications</a>
+                        </div>
+                    </div>
                 </li>
 
-                <!-- Logout -->
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <a class="nav-link" th:href="@{/auth/logout}">
-                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle" style="font-size:1.1rem;"></i>
                     </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                        <li sec:authorize="hasAuthority('SEEKER')">
+                            <a class="dropdown-item" th:href="@{/profile}"><i class="bi bi-person me-2"></i>My Profile</a>
+                        </li>
+                        <li sec:authorize="hasAuthority('EMPLOYER')">
+                            <a class="dropdown-item" th:href="@{/employer/dashboard}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+                        </li>
+                        <li><a class="dropdown-item" th:href="@{/auth/me}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/auth/logout}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
-</body>
-</html>

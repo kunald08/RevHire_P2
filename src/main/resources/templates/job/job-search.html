@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>RevHire — Find Your Dream Job</title>
+    <th:block th:replace="~{fragments/layout :: head}"></th:block>
+    <style>
+        .search-hero {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+            border-radius: 0 0 28px 28px;
+            padding: 3.5rem 0 5rem;
+            position: relative;
+            color: #fff;
+        }
+        .search-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            border-radius: 0 0 28px 28px;
+            pointer-events: none;
+        }
+        .search-hero .hero-content { position: relative; z-index: 2; }
+        .search-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            margin-top: -3rem;
+            position: relative;
+            z-index: 5;
+            background: #fff;
+        }
+        .quick-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            border-radius: 24px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .quick-tag:hover {
+            border-color: #7c3aed;
+            color: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124,58,237,0.15);
+        }
+        .tip-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .tip-item:last-child { border-bottom: none; }
+        .tip-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- ══ HERO ══ -->
+    <section class="search-hero">
+        <div class="container hero-content text-center">
+            <h1 class="display-5 fw-bold mb-2">Find Your Dream Job</h1>
+            <p class="lead opacity-90">Browse thousands of opportunities and take the next step in your career</p>
+        </div>
+    </section>
+
+    <!-- ══ SEARCH FORM ══ -->
+    <div class="container" style="max-width: 900px;">
+        <div class="card search-card">
+            <div class="card-body p-4 p-md-5">
+                <form th:action="@{/jobs/search/results}" method="get" class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i> Keywords</label>
+                        <input type="text" class="form-control form-control-lg" name="keyword"
+                               th:value="${filter.keyword}"
+                               placeholder="Job title, skills, or description (e.g. Java, React, Manager)">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-geo-alt me-1"></i> Location</label>
+                        <input type="text" class="form-control" name="location"
+                               th:value="${filter.location}" placeholder="City, state, or Remote">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Company</label>
+                        <input type="text" class="form-control" name="company"
+                               th:value="${filter.company}" placeholder="Company name">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-briefcase me-1"></i> Experience (yrs)</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="number" class="form-control" name="minExperience"
+                                       th:value="${filter.minExperience}" placeholder="Min" min="0">
+                            </div>
+                            <div class="col-auto d-flex align-items-center text-muted">—</div>
+                            <div class="col">
+                                <input type="number" class="form-control" name="maxExperience"
+                                       th:value="${filter.maxExperience}" placeholder="Max" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-currency-dollar me-1"></i> Salary</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="number" class="form-control" name="minSalary"
+                                       th:value="${filter.minSalary}" placeholder="Min" step="1000">
+                            </div>
+                            <div class="col-auto d-flex align-items-center text-muted">—</div>
+                            <div class="col">
+                                <input type="number" class="form-control" name="maxSalary"
+                                       th:value="${filter.maxSalary}" placeholder="Max" step="1000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i> Job Type</label>
+                        <select class="form-select" name="jobType">
+                            <option value="">All Types</option>
+                            <option th:each="type : ${jobTypes}"
+                                    th:value="${type}" th:text="${type}"
+                                    th:selected="${filter.jobType == type}">Full Time</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i> Posted After</label>
+                        <input type="date" class="form-control" name="datePostedAfter"
+                               th:value="${filter.datePostedAfter}">
+                    </div>
+                    <div class="col-12 mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-search me-1"></i> Search Jobs
+                        </button>
+                        <a th:href="@{/jobs/search}" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Popular Searches -->
+        <div class="mt-4 mb-2">
+            <h6 class="text-muted mb-3"><i class="bi bi-fire me-1"></i> Popular Searches</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <a th:href="@{/jobs/search/results(keyword='Java')}" class="quick-tag"><i class="bi bi-code-slash"></i> Java</a>
+                <a th:href="@{/jobs/search/results(keyword='React')}" class="quick-tag"><i class="bi bi-braces-asterisk"></i> React</a>
+                <a th:href="@{/jobs/search/results(keyword='Python')}" class="quick-tag"><i class="bi bi-terminal"></i> Python</a>
+                <a th:href="@{/jobs/search/results(keyword='DevOps')}" class="quick-tag"><i class="bi bi-gear"></i> DevOps</a>
+                <a th:href="@{/jobs/search/results(location='Remote')}" class="quick-tag"><i class="bi bi-house"></i> Remote</a>
+                <a th:href="@{/jobs/search/results(jobType='FULL_TIME')}" class="quick-tag"><i class="bi bi-clock"></i> Full Time</a>
+                <a th:href="@{/jobs/search/results(minSalary=100000)}" class="quick-tag"><i class="bi bi-cash-stack"></i> $100k+</a>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card border-0 shadow-sm mt-4 mb-5" style="border-radius: 16px;">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb text-warning me-1"></i> Search Tips</h6>
+                <div class="tip-item">
+                    <div class="tip-icon bg-primary-subtle text-primary"><i class="bi bi-bullseye"></i></div>
+                    <span>Use specific keywords like <strong>"Java Developer"</strong> or <strong>"Project Manager"</strong></span>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon bg-success-subtle text-success"><i class="bi bi-geo-alt"></i></div>
+                    <span>Search by location: <strong>"New York"</strong>, <strong>"Remote"</strong>, or <strong>"San Francisco"</strong></span>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon bg-info-subtle text-info"><i class="bi bi-cash-coin"></i></div>
+                    <span>Filter by salary range to find jobs matching your expectations</span>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon bg-warning-subtle text-warning"><i class="bi bi-briefcase"></i></div>
+                    <span>Select job type: <strong>Full-time</strong>, <strong>Part-time</strong>, or <strong>Contract</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+
+</html>

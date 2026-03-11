@@ -1,0 +1,61 @@
+package com.revhire.employer.service;
+
+import com.revhire.application.entity.Application;
+import com.revhire.common.enums.ApplicationStatus;
+import com.revhire.employer.dto.ApplicantProfileDTO;
+import com.revhire.employer.dto.ApplicantRowDTO;
+import com.revhire.job.entity.Job;
+import com.revhire.profile.entity.JobSeekerProfile;
+import com.revhire.profile.entity.Resume;
+import com.revhire.employer.dto.ApplicationNoteDTO;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+
+public interface ApplicantService {
+    
+    /**
+     * Retrieves a paginated list of jobs for a specific employer email,
+     * optionally filtered by a keyword in the job title.
+     */
+    Page<Job> getEmployerJobsWithApplications(
+            String email, 
+            String keyword, 
+            Pageable pageable
+    );
+    List<ApplicantRowDTO> getApplicantsByJob(Long jobId);
+
+    long getApplicantCount(Long jobId);
+
+    String getJobTitle(Long jobId);
+    void bulkUpdateStatus(List<Long> applicationIds, String action,String comment);
+
+    Application getApplicationEntity(Long appId);
+    
+    ApplicantProfileDTO getApplicantProfile(Long appId);
+    void addNote(Long appId, String note, String employerEmail);
+    void deleteNote(Long noteId);
+    void updateNote(Long noteId, String newNote);
+    ApplicationNoteDTO getNoteForApplication(Long appId);
+    void saveOrUpdateNote(Long appId, String noteText, String employerEmail);
+    Page<Job> getJobsWithPendingApplications(String email, String keyword, Pageable pageable);
+    long getPendingApplicantCount(Long jobId);
+ // Add to ApplicantService.java
+    List<ApplicantRowDTO> getFilteredApplicantsByJob(Long jobId, List<ApplicationStatus> statuses);
+    ResponseEntity<?> downloadApplicantResume(Long resumeId);
+ // Inside ApplicantService interface
+    List<ApplicantRowDTO> getFilteredApplicants(
+        Long jobId, 
+        String status,
+        String name,
+        Integer experience, 
+        String education, 
+        String certification, 
+        String skills
+    );
+    Resume getLatestResumeByProfileId(Long profileId);
+    Optional<JobSeekerProfile> findProfileByUserId(Long userId);
+}

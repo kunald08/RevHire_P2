@@ -36,13 +36,33 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
     public String handleUnauthorized(UnauthorizedException ex, Model model) {
-        logger.error("Unauthorized access: {}", ex.getMessage());
-        model.addAttribute("errorTitle", "Unauthorized");
+        logger.error("Forbidden access attempt: {}", ex.getMessage());
+        model.addAttribute("errorTitle", "Access Denied");
         model.addAttribute("errorMessage", ex.getMessage());
-        model.addAttribute("errorCode", 401);
+        model.addAttribute("errorCode", 403); // Change from 401 to 403
         return "error";
     }
-
+    
+//    handle 404 page not found errors
+    @ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)
+    public String handleNoHandlerFound(org.springframework.web.servlet.NoHandlerFoundException ex, Model model) {
+        logger.error("404 Error - Page not found: {}", ex.getRequestURL());
+        model.addAttribute("errorTitle", "Page Not Found");
+        model.addAttribute("errorMessage", "The page you are looking for doesn't exist or has been moved.");
+        model.addAttribute("errorCode", 404);
+        return "error"; // Matches your return "error" pattern
+    }
+    
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public String handleStaticResourceNotFound(org.springframework.web.servlet.resource.NoResourceFoundException ex, Model model) {
+        logger.error("404 Resource Error: {}", ex.getMessage());
+        model.addAttribute("errorTitle", "Page Not Found");
+        model.addAttribute("errorMessage", "RevHire couldn't find the resource you requested.");
+        model.addAttribute("errorCode", 404);
+        return "error";
+    }
+    
+    
     @ExceptionHandler(FileStorageException.class)
     public String handleFileStorage(FileStorageException ex, RedirectAttributes redirectAttributes) {
         logger.error("File storage error: {}", ex.getMessage());
@@ -73,9 +93,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public String handleGeneral(Exception ex, Model model, HttpServletRequest request) {
         logger.error("Unexpected error at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
-        model.addAttribute("errorTitle", "Something Went Wrong");
-        model.addAttribute("errorMessage", "An unexpected error occurred. Please try again later.");
-        model.addAttribute("errorCode", 500);
+        
+        // Check if the exception is actually a 404 in disguise
+        if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
+            model.addAttribute("errorTitle", "Page Not Found");
+            model.addAttribute("errorMessage", "The page you requested does not exist.");
+            model.addAttribute("errorCode", 404);
+        } else {
+            model.addAttribute("errorTitle", "Something Went Wrong");
+            model.addAttribute("errorMessage", "An unexpected error occurred. Please try again later.");
+            model.addAttribute("errorCode", 500);
+        }
         return "error";
     }
+    
+    
+
 }

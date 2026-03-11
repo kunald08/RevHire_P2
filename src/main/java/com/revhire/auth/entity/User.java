@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
+
  * User entity — shared across all modules.
- * Aswathy (feature/auth) will enhance this with full auth logic.
  */
 @Entity
 @Table(name = "users")
@@ -19,11 +19,18 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User
-{
+public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "user_seq",
+            sequenceName = "user_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "user_seq"
+    )
     private Long id;
 
     @Column(nullable = false, length = 100)
@@ -51,16 +58,20 @@ public class User
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private Long resetTokenExpiry;
+
     @PrePersist
-    protected void onCreate()
-    {
+    protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    protected void onUpdate()
-    {
+    protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 }
