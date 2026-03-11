@@ -51,7 +51,7 @@ RevHire is a server-side rendered monolithic web application that enables job se
 | **Security** | Spring Security — session-based auth, BCrypt |
 | **Data Access** | Spring Data JPA |
 | **View Layer** | Thymeleaf, Bootstrap 5 |
-| **Database** | MySQL 8.x |
+| **Database** | Oracle 21c XE |
 | **Build** | Maven |
 | **Testing** | JUnit 4 |
 | **Logging** | Log4J2 |
