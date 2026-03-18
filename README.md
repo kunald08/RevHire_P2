@@ -1,203 +1,247 @@
 # RevHire
 
-> A full-stack job portal web application connecting **Job Seekers** with **Employers**, built with Spring Boot and Thymeleaf.
+> A full-stack job portal web application connecting Job Seekers and Employers, built with Spring Boot, Thymeleaf, and Oracle Database.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java">
   <img src="https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot">
   <img src="https://img.shields.io/badge/Thymeleaf-005F0F?style=for-the-badge&logo=thymeleaf&logoColor=white" alt="Thymeleaf">
-  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/Oracle%20DB-21c-F80000?style=for-the-badge&logo=oracle&logoColor=white" alt="Oracle Database">
   <img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white" alt="Maven">
 </p>
 
----
-
 ## Overview
 
-RevHire is a server-side rendered monolithic web application that enables job seekers to build profiles, create and upload resumes, search for openings with advanced filters, and track their applications in real time. Employers can register their companies, post jobs, manage the hiring pipeline, and monitor recruitment metrics through a dedicated dashboard. The platform features role-based access control, session-based authentication, and an in-app notification system.
+RevHire is a server-side rendered recruitment platform designed around two user roles:
 
----
+- Job Seekers can register, build professional profiles, upload or create resumes, search jobs with filters, apply, save favorites, and track application progress.
+- Employers can create company profiles, publish jobs, review applicants, take bulk actions, add internal notes, and monitor hiring activity through a dashboard.
 
-## Features
+The project uses role-based access control with Spring Security, session-based authentication, in-app notifications, OTP-based verification flows, and Oracle-backed persistence with Spring Data JPA.
 
-### For Job Seekers
+## Why This Project Stands Out
 
-- Register and manage a professional profile (education, experience, skills, certifications)
-- Build a structured textual resume or upload one in PDF/DOCX format
-- Search jobs with filters — role, location, experience, salary range, job type, company, date posted
-- One-click apply with saved resume and optional cover letter
-- Track application status — `Applied → Under Review → Shortlisted → Rejected → Withdrawn`
-- Save jobs to favorites for later
-- Receive in-app notifications on status updates and job recommendations
-
-### For Employers
-
-- Create and manage a company profile (industry, size, website, description)
-- Post, edit, close, reopen, and manage job listings
-- View applicant details — profile, resume, cover letter, application date
-- Shortlist or reject candidates individually or in bulk with optional comments
-- Filter applicants by experience, skills, education, status, and date
-- Add internal notes to applications for team tracking
-- Dashboard with key metrics — total jobs, active postings, applications, pending reviews
-
----
+- Separate job seeker and employer workflows
+- Registration OTP verification and OTP-based login flow
+- Forgot-password and reset-password support via email
+- Resume builder and resume upload support
+- Advanced job search, favorites, and application tracking
+- Employer applicant filtering, bulk actions, and internal notes
+- Scheduled auto-closing of expired jobs
+- Thymeleaf UI with reusable layout fragments
+- Unit tests across auth, profile, application, employer, job, and notification modules
 
 ## Tech Stack
 
-| | Technology |
-|---|-----------|
-| **Language** | Java 17+ |
-| **Framework** | Spring Boot 3.2.5 |
-| **Security** | Spring Security — session-based auth, BCrypt |
-| **Data Access** | Spring Data JPA |
-| **View Layer** | Thymeleaf, Bootstrap 5 |
-| **Database** | MySQL 8.x |
-| **Build** | Maven |
-| **Testing** | JUnit 4 |
-| **Logging** | Log4J2 |
-| **Utilities** | Lombok |
+| Area | Technology |
+|---|---|
+| Language | Java 17 |
+| Framework | Spring Boot 3.2.5 |
+| UI | Thymeleaf, Bootstrap 5, custom JS/CSS |
+| Security | Spring Security, BCrypt, session auth |
+| Persistence | Spring Data JPA, Hibernate |
+| Database | Oracle Database XE / Oracle 21c-compatible setup |
+| Mail | Spring Boot Mail |
+| Logging | Log4j2 |
+| Build Tool | Maven |
+| Testing | JUnit 4, Spring Boot Test, Spring Security Test |
 
----
+## Core Modules
 
-## Architecture
-
-```
-                          ┌────────────┐
-                          │  Browser   │
-                          └─────┬──────┘
-                                │
-                   ┌────────────▼────────────┐
-                   │    Spring Boot App      │
-                   │                         │
-                   │  ┌───────────────────┐  │
-                   │  │   Controllers     │──┼──► Thymeleaf Templates
-                   │  └────────┬──────────┘  │
-                   │           │             │
-                   │  ┌────────▼──────────┐  │
-                   │  │  Service Layer    │  │
-                   │  └────────┬──────────┘  │
-                   │           │             │
-                   │  ┌────────▼──────────┐  │
-                   │  │  JPA Repositories │  │
-                   │  └────────┬──────────┘  │
-                   │           │             │
-                   │  ┌────────▼──────────┐  │
-                   │  │     MySQL         │  │
-                   │  └───────────────────┘  │
-                   │                         │
-                   │  Spring Security        │
-                   │  Log4J2 · Lombok        │
-                   │  Global Exception Hdlr  │
-                   └─────────────────────────┘
+```text
+src/main/java/com/revhire/
+├── auth/          Authentication, OTP, password flows, user management
+├── profile/       Job seeker profile, resume upload, resume builder
+├── employer/      Employer profile, applicants, notes, dashboard
+├── job/           Job CRUD, filters, lifecycle, scheduled expiry handling
+├── application/   Job applications, favorites, job search
+├── notification/  In-app notification system
+├── config/        Security, MVC, CORS, app configuration
+├── exception/     Global exception handling
+└── common/        Shared DTOs and enums
 ```
 
----
+## Feature Summary
 
-## Database Schema
+### Job Seekers
 
-The application uses **13 tables** with the following relationships:
+- Register as a seeker and verify account with OTP
+- Maintain profile details including education, experience, skills, and certifications
+- Build a resume in-app or upload a resume file
+- Search jobs by keyword and filters such as location, salary, job type, and experience
+- Apply to jobs and monitor status updates
+- Save jobs to favorites
+- View notifications related to applications and platform activity
 
+### Employers
+
+- Register as an employer and manage company details
+- Create, edit, publish, close, reopen, and manage job postings
+- Review applicants and inspect profile, resume, and cover letter data
+- Filter applicants and apply bulk status actions
+- Add internal notes for recruiting workflow management
+- View dashboard stats for jobs and applications
+
+## Architecture Snapshot
+
+```text
+                         +-------------------+
+                         |   Client Browser  |
+                         +---------+---------+
+                                   |
+                                   v
+                    +--------------+---------------+
+                    | Thymeleaf Templates / Static |
+                    | CSS, JS, Fragments, Views    |
+                    +--------------+---------------+
+                                   |
+                                   v
+                    +--------------+---------------+
+                    |      Spring MVC Controllers  |
+                    | Auth, Profile, Job, Employer |
+                    | Application, Notification    |
+                    +--------------+---------------+
+                                   |
+                                   v
+                    +--------------+---------------+
+                    |         Service Layer        |
+                    | Business rules and workflows |
+                    | OTP, resumes, jobs, apps,    |
+                    | dashboard, notifications     |
+                    +--------------+---------------+
+                                   |
+                                   v
+                    +--------------+---------------+
+                    |    Spring Data JPA Layer     |
+                    | Repositories and persistence |
+                    +--------------+---------------+
+                                   |
+                                   v
+                    +--------------+---------------+
+                    |     Oracle Database XE       |
+                    +------------------------------+
+
+   Cross-cutting: Spring Security | Log4j2 | Scheduler | Global Exception Handler
 ```
-User ──── JobSeekerProfile ──── Education, Experience, Skill, Certification, Resume
-User ──── Employer ──── Job ──── Application ──── ApplicationNote
-User ──── Favorite ──── Job
-User ──── Notification
-```
 
-| Table | Description |
-|-------|-------------|
-| `users` | All registered users (seekers & employers) |
-| `job_seeker_profiles` | Seeker headline, summary, employment status |
-| `educations` | Degrees, institutions, field of study |
-| `experiences` | Work history with company, title, dates |
-| `skills` | Technical and soft skills with proficiency |
-| `certifications` | Professional certifications |
-| `resumes` | Uploaded files (PDF/DOCX) and textual resume data |
-| `employers` | Company name, industry, size, website |
-| `jobs` | Job postings with type, salary, status, deadline |
-| `applications` | Job applications with status and cover letter |
-| `application_notes` | Internal employer notes per application |
-| `favorites` | Bookmarked jobs by seekers |
-| `notifications` | In-app notifications with read status |
+## Security and Workflow Notes
 
----
+- Role-based route protection is configured in Spring Security for `SEEKER` and `EMPLOYER`
+- The app uses form login with a custom success handler
+- OTP flows are used for registration verification and login verification
+- Password reset is email-driven
+- Uploaded files are stored under the configured upload directory, which defaults to `uploads`
+- A scheduled task runs daily to auto-close expired active jobs
 
 ## Project Structure
 
-```
-src/main/java/com/revhire/
-├── RevHireApplication.java       # Entry point
-├── auth/                         # Authentication & user management
-├── config/                       # Security & app configuration
-├── profile/                      # Seeker profiles & resumes
-├── employer/                     # Employer profiles & dashboard
-├── job/                          # Job posting & lifecycle
-├── application/                  # Search, apply, favorites
-├── notification/                 # Notification system
-├── exception/                    # Global exception handling
-└── common/                       # Shared DTOs & utilities
-
+```text
 src/main/resources/
 ├── application.properties
+├── application-local.properties
 ├── log4j2.xml
-├── static/                       # CSS, JS, images
-└── templates/                    # Thymeleaf pages & fragments
+├── static/
+│   ├── css/
+│   ├── js/
+│   └── favicon files
+└── templates/
+    ├── auth/
+    ├── employer/
+    ├── job/
+    ├── profile/
+    ├── application/
+    ├── notification/
+    └── fragments/
 ```
 
----
-
-## Getting Started
+## Local Setup
 
 ### Prerequisites
 
 - Java 17+
 - Maven 3.x
-- MySQL 8.x
+- Oracle Database XE or another Oracle instance
 
-### Installation
+### 1. Default Local Profile
+
+The application starts with:
+
+```properties
+spring.profiles.active=local
+```
+
+The local profile expects Oracle settings from `src/main/resources/application-local.properties`.
+
+### 2. Oracle Database Setup
+
+The current local datasource is configured for:
+
+```properties
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521/XEPDB1
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+```
+
+Create a database user/schema that matches your local setup, then update:
+
+```properties
+spring.datasource.username=YOUR_ORACLE_USERNAME
+spring.datasource.password=YOUR_ORACLE_PASSWORD
+```
+
+### 3. Mail Configuration
+
+Email flows depend on these values:
+
+```properties
+MAIL_USERNAME=your_email
+MAIL_PASSWORD=your_app_password
+mail.from.address=your_email
+```
+
+If you do not want to use the checked-in local values, replace them in `application-local.properties` or externalize them through environment-aware configuration before running the app.
+
+### 4. Run the Project
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/kunald08/RevHire_P2.git
 cd RevHire_P2
-
-# 2. Create the database
-mysql -u root -p -e "CREATE DATABASE revhire;"
-
-# 3. Update database credentials in src/main/resources/application.properties
-#    spring.datasource.username=YOUR_USERNAME
-#    spring.datasource.password=YOUR_PASSWORD
-
-# 4. Build and run
 mvn clean install
 mvn spring-boot:run
 ```
 
-The application will be available at **http://localhost:8080**
+Application URL:
 
-### Running Tests
+```text
+http://localhost:8080
+```
+
+### 5. Run Tests
 
 ```bash
 mvn test
 ```
 
----
+## Important Routes
 
-## API Endpoints
-
-| Area | Endpoints |
-|------|-----------|
+| Area | Route Pattern |
+|---|---|
+| Home | `/` |
 | Authentication | `/auth/*` |
-| Seeker Profiles | `/profile/*`, `/resume/*` |
-| Employer & Jobs | `/employers/*`, `/jobs/*` |
-| Job Search | `/jobs/search` |
+| Profiles and Resume | `/profile/*`, `/resume/*` |
+| Jobs | `/jobs/*` |
 | Applications | `/applications/*` |
 | Favorites | `/favorites/*` |
-| Employer Dashboard | `/employer/dashboard`, `/employer/applicants/*` |
+| Employer | `/employer/*`, `/employers/*` |
 | Notifications | `/notifications/*` |
 
----
+## Development Notes
+
+- JPA schema generation is enabled with `spring.jpa.hibernate.ddl-auto=update`
+- SQL logging is enabled in the default configuration
+- Thymeleaf caching is disabled for local development
+- Session timeout is configured to `30m`
+- Multipart upload limit is set to `5MB`
 
 <p align="center">
-  <sub>Built with Spring Boot & Thymeleaf</sub>
+  <sub>Built with Spring Boot, Thymeleaf, and Oracle Database</sub>
 </p>
