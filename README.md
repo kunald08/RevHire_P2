@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java">
   <img src="https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot">
   <img src="https://img.shields.io/badge/Thymeleaf-005F0F?style=for-the-badge&logo=thymeleaf&logoColor=white" alt="Thymeleaf">
-  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/Oracle%20DB-21c-F80000?style=for-the-badge&logo=oracle&logoColor=white" alt="Oracle">
   <img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white" alt="Maven">
 </p>
 
@@ -14,7 +14,7 @@
 
 ## Overview
 
-RevHire is a server-side rendered monolithic web application that enables job seekers to build profiles, create and upload resumes, search for openings with advanced filters, and track their applications in real time. Employers can register their companies, post jobs, manage the hiring pipeline, and monitor recruitment metrics through a dedicated dashboard. The platform features role-based access control, session-based authentication, and an in-app notification system.
+RevHire is a server-side rendered monolithic web application that enables job seekers to build profiles, create and upload resumes, search for openings with advanced filters, and track their applications in real time. Employers can register their companies, post jobs, manage the hiring pipeline, and monitor recruitment metrics through a dedicated dashboard. The platform features role-based access control, session-based authentication, OTP-based verification flows, password recovery via email, and an in-app notification system.
 
 ---
 
@@ -24,9 +24,9 @@ RevHire is a server-side rendered monolithic web application that enables job se
 
 - Register and manage a professional profile (education, experience, skills, certifications)
 - Build a structured textual resume or upload one in PDF/DOCX format
-- Search jobs with filters — role, location, experience, salary range, job type, company, date posted
+- Search jobs with filters - role, location, experience, salary range, job type, company, date posted
 - One-click apply with saved resume and optional cover letter
-- Track application status — `Applied → Under Review → Shortlisted → Rejected → Withdrawn`
+- Track application status - `Applied -> Under Review -> Shortlisted -> Rejected -> Withdrawn`
 - Save jobs to favorites for later
 - Receive in-app notifications on status updates and job recommendations
 
@@ -34,11 +34,11 @@ RevHire is a server-side rendered monolithic web application that enables job se
 
 - Create and manage a company profile (industry, size, website, description)
 - Post, edit, close, reopen, and manage job listings
-- View applicant details — profile, resume, cover letter, application date
+- View applicant details - profile, resume, cover letter, application date
 - Shortlist or reject candidates individually or in bulk with optional comments
 - Filter applicants by experience, skills, education, status, and date
 - Add internal notes to applications for team tracking
-- Dashboard with key metrics — total jobs, active postings, applications, pending reviews
+- Dashboard with key metrics - total jobs, active postings, applications, pending reviews
 
 ---
 
@@ -48,7 +48,7 @@ RevHire is a server-side rendered monolithic web application that enables job se
 |---|-----------|
 | **Language** | Java 17+ |
 | **Framework** | Spring Boot 3.2.5 |
-| **Security** | Spring Security — session-based auth, BCrypt |
+| **Security** | Spring Security - session-based auth, BCrypt |
 | **Data Access** | Spring Data JPA |
 | **View Layer** | Thymeleaf, Bootstrap 5 |
 | **Database** | Oracle 21c XE |
@@ -61,7 +61,7 @@ RevHire is a server-side rendered monolithic web application that enables job se
 
 ## Architecture
 
-```
+```text
                           ┌────────────┐
                           │  Browser   │
                           └─────┬──────┘
@@ -82,7 +82,7 @@ RevHire is a server-side rendered monolithic web application that enables job se
                    │  └────────┬──────────┘  │
                    │           │             │
                    │  ┌────────▼──────────┐  │
-                   │  │     MySQL         │  │
+                   │  │ Oracle Database   │  │
                    │  └───────────────────┘  │
                    │                         │
                    │  Spring Security        │
@@ -97,16 +97,16 @@ RevHire is a server-side rendered monolithic web application that enables job se
 
 The application uses **13 tables** with the following relationships:
 
-```
-User ──── JobSeekerProfile ──── Education, Experience, Skill, Certification, Resume
-User ──── Employer ──── Job ──── Application ──── ApplicationNote
-User ──── Favorite ──── Job
-User ──── Notification
+```text
+User ---- JobSeekerProfile ---- Education, Experience, Skill, Certification, Resume
+User ---- Employer ---- Job ---- Application ---- ApplicationNote
+User ---- Favorite ---- Job
+User ---- Notification
 ```
 
 | Table | Description |
 |-------|-------------|
-| `users` | All registered users (seekers & employers) |
+| `users` | All registered users (seekers and employers) |
 | `job_seeker_profiles` | Seeker headline, summary, employment status |
 | `educations` | Degrees, institutions, field of study |
 | `experiences` | Work history with company, title, dates |
@@ -124,24 +124,25 @@ User ──── Notification
 
 ## Project Structure
 
-```
+```text
 src/main/java/com/revhire/
 ├── RevHireApplication.java       # Entry point
-├── auth/                         # Authentication & user management
-├── config/                       # Security & app configuration
-├── profile/                      # Seeker profiles & resumes
-├── employer/                     # Employer profiles & dashboard
-├── job/                          # Job posting & lifecycle
+├── auth/                         # Authentication and user management
+├── config/                       # Security and app configuration
+├── profile/                      # Seeker profiles and resumes
+├── employer/                     # Employer profiles and dashboard
+├── job/                          # Job posting and lifecycle
 ├── application/                  # Search, apply, favorites
 ├── notification/                 # Notification system
 ├── exception/                    # Global exception handling
-└── common/                       # Shared DTOs & utilities
+└── common/                       # Shared DTOs and utilities
 
 src/main/resources/
 ├── application.properties
+├── application-local.properties
 ├── log4j2.xml
 ├── static/                       # CSS, JS, images
-└── templates/                    # Thymeleaf pages & fragments
+└── templates/                    # Thymeleaf pages and fragments
 ```
 
 ---
@@ -152,7 +153,7 @@ src/main/resources/
 
 - Java 17+
 - Maven 3.x
-- MySQL 8.x
+- Oracle Database XE / Oracle 21c-compatible instance
 
 ### Installation
 
@@ -161,12 +162,16 @@ src/main/resources/
 git clone https://github.com/kunald08/RevHire_P2.git
 cd RevHire_P2
 
-# 2. Create the database
-mysql -u root -p -e "CREATE DATABASE revhire;"
+# 2. Update Oracle datasource values in src/main/resources/application-local.properties
+#    spring.datasource.url=jdbc:oracle:thin:@localhost:1521/XEPDB1
+#    spring.datasource.username=YOUR_ORACLE_USERNAME
+#    spring.datasource.password=YOUR_ORACLE_PASSWORD
+#    spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
 
-# 3. Update database credentials in src/main/resources/application.properties
-#    spring.datasource.username=YOUR_USERNAME
-#    spring.datasource.password=YOUR_PASSWORD
+# 3. Update mail values if OTP / forgot-password flows are required
+#    MAIL_USERNAME=your_email
+#    MAIL_PASSWORD=your_app_password
+#    mail.from.address=your_email
 
 # 4. Build and run
 mvn clean install
@@ -199,5 +204,5 @@ mvn test
 ---
 
 <p align="center">
-  <sub>Built with Spring Boot & Thymeleaf</sub>
+  <sub>Built with Spring Boot, Thymeleaf, and Oracle Database</sub>
 </p>
